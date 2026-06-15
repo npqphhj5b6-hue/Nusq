@@ -109,42 +109,7 @@ Morocco is not an EU candidate, but CBAM is creating a partial economic equivale
   },
 ];
 
-export const mockEssays: Essay[] = [
-  {
-    slug: "charity-by-the-kilo",
-    title: "Charity by the kilo",
-    date: "2026-06-10",
-    summary:
-      "Walking through Wakalat al-Balah in Cairo, I found British supermarket uniforms and Australian workwear priced at $1. A small story about how Western charity becomes African industrial policy.",
-    tags: ["Trade", "Africa", "Aid"],
-    readingTime: 6,
-    body: `Walking through Wakalat al-Balah, a bustling clothes market in Cairo, I was surprised by the thousands of hangers filled with clothes priced between 50 and 250 EGP ($1 to $5). What caught my interest was that most of these clothes were not manufactured in Egypt. I saw uniforms for British supermarkets, workwear for an Australian construction company, American college T-shirts and hoodies, and much more.
-
-These items travelled a long way to get here, yet each seemed to have the same origin as someone's charity donation in a Western country.
-
-## Where your donations go
-
-So what happens to the bag of clothes you leave at a charity shop? Well, surprisingly, only some of it is sold domestically. Oxfam, which runs a sorting plant in Batley, West Yorkshire, handles around 12,000 tonnes of second-hand clothing per year, keeping some to be sold in its shops and handing the remainder to commercial recyclers who grade it, put it into bales and sell it on for export.
-
-According to WRAP, the UK government-backed waste body, over half of all second-hand clothing collected is sent overseas, approximately a third going to Africa. Ghana alone takes in some 15 million garments per week, most of which lands at Accra's Kantamanto market.
-
-## The costs
-
-As second-hand clothing imports have poured into countries like Zimbabwe and Ghana, local textile manufacturers have been unable to compete. One study in The Economic Journal found that these imports were behind around 40% of the decline in African textile manufacturing between 1981 and 2000. In Zimbabwe, the manufacturing industry's contribution to GDP dropped from 20% in 1990 to 7% in 2024.
-
-## Charity with conditions
-
-In 2016, the East African Community agreed to phase out imports of second-hand clothing to rebuild domestic industry. In response, the United States threatened to remove duty-free trade access for several East African nations. Kenya, Tanzania, and Uganda backed down. Rwanda refused — and the United States suspended Rwanda's duty-free access for clothing exports in 2018, a penalty that still stands today.
-
-That a modest American export interest was enough for Washington to threaten trade access for African nations should raise real questions.
-
-## More than just clothes
-
-This is a small but important example of the wider perception that the Global North benevolently attempts to help the Global South. These forms of aid can ease hardship in the short term; however, we often fail to question the long-term implications and the dependency built around them.
-
-For Zimbabwe and other countries hoping to rebuild domestic industry by halting these imports — a charity turned into a multi-billion industry — it will not be easy. However, evidently, it is an issue of importance to the extent that many are willing to go through a spell of short-term pain to see the reclaiming of domestic industries in the long term.`,
-  },
-];
+export const mockEssays: Essay[] = [];
 
 export function getBriefingBySlug(slug: string): Briefing | undefined {
   return mockBriefings.find((b) => b.slug === slug);
