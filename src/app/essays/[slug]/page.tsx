@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { mockEssays, getEssayBySlug, formatDate } from "@/lib/mockData";
+import { getEssayBySlug, formatDate } from "@/lib/db";
 
-export function generateStaticParams() {
-  return mockEssays.map((e) => ({ slug: e.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function EssayPage({
   params,
@@ -12,7 +10,7 @@ export default async function EssayPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const essay = getEssayBySlug(slug);
+  const essay = await getEssayBySlug(slug);
   if (!essay) notFound();
 
   const bodyParagraphs = essay.body

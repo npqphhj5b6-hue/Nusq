@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { mockEssays, formatDate } from "@/lib/mockData";
+import { getAllEssays, formatDate } from "@/lib/db";
 
-export default function EssaysPage() {
+export const dynamic = "force-dynamic";
+
+export default async function EssaysPage() {
+  const mockEssays = await getAllEssays();
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-10">

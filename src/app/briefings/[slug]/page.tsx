@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { mockBriefings, getBriefingBySlug, formatDate } from "@/lib/mockData";
+import { getBriefingBySlug, formatDate } from "@/lib/db";
 
-export function generateStaticParams() {
-  return mockBriefings.map((b) => ({ slug: b.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function BriefingPage({
   params,
@@ -12,7 +10,7 @@ export default async function BriefingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const briefing = getBriefingBySlug(slug);
+  const briefing = await getBriefingBySlug(slug);
   if (!briefing) notFound();
 
   const bodyParagraphs = briefing.body

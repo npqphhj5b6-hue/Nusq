@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { mockBriefings, mockEssays, formatDate, formatDateShort } from "@/lib/mockData";
+import { getAllBriefings, getAllEssays, formatDate, formatDateShort } from "@/lib/db";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -9,7 +11,9 @@ export default function Home() {
     year: "numeric",
   });
 
-  const [featured, ...rest] = mockBriefings;
+  const briefings = await getAllBriefings();
+  const essays = await getAllEssays();
+  const [featured, ...rest] = briefings;
   const recentBriefings = rest.slice(0, 3);
 
   return (
@@ -106,7 +110,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="flex flex-col gap-3">
-          {mockEssays.map((e) => (
+          {essays.map((e) => (
             <Link key={e.slug} href={`/essays/${e.slug}`} className="group block">
               <div className="bg-white rounded-xl border border-[#E5E2DC] p-5 hover:border-[#1B4F72]/30 hover:shadow-sm transition-all flex items-start justify-between gap-6">
                 <div>

@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { mockBriefings, formatDate } from "@/lib/mockData";
+import { getAllBriefings, formatDate } from "@/lib/db";
 
-export default function BriefingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function BriefingsPage() {
+  const mockBriefings = await getAllBriefings();
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-10">

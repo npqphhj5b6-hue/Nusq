@@ -1,0 +1,88 @@
+import { supabase } from "./supabase";
+import { Briefing, Essay } from "./types";
+
+export async function getAllBriefings(): Promise<Briefing[]> {
+  const { data, error } = await supabase
+    .from("briefings")
+    .select("*")
+    .eq("status", "published")
+    .order("date", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(rowToBriefing);
+}
+
+export async function getBriefingBySlug(slug: string): Promise<Briefing | null> {
+  const { data, error } = await supabase
+    .from("briefings")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error) return null;
+  return rowToBriefing(data);
+}
+
+export async function getAllEssays(): Promise<Essay[]> {
+  const { data, error } = await supabase
+    .from("essays")
+    .select("*")
+    .order("date", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(rowToEssay);
+}
+
+export async function getEssayBySlug(slug: string): Promise<Essay | null> {
+  const { data, error } = await supabase
+    .from("essays")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (error) return null;
+  return rowToEssay(data);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToBriefing(row: any): Briefing {
+  return {
+    slug: row.slug,
+    title: row.title,
+    date: row.date,
+    summary: row.summary,
+    tags: row.tags ?? [],
+    readingTime: row.reading_time,
+    body: row.body,
+    status: row.status,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToEssay(row: any): Essay {
+  return {
+    slug: row.slug,
+    title: row.title,
+    date: row.date,
+    summary: row.summary,
+    tags: row.tags ?? [],
+    readingTime: row.reading_time,
+    body: row.body,
+  };
+}
+
+export function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatDateShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
