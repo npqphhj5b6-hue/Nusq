@@ -3,6 +3,10 @@ import { getAllBriefings, formatDate } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function unsplashUrl(raw: string, w: number, h: number) {
+  return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
+}
+
 export default async function BriefingsPage() {
   const briefings = await getAllBriefings();
   return (
@@ -25,17 +29,24 @@ export default async function BriefingsPage() {
         </p>
       </div>
 
-      <div className="flex flex-col divide-y divide-[#E8E5E0]">
+      <div className="flex flex-col gap-4">
         {briefings.map((b) => (
-          <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block py-5 first:pt-0">
-            <div className="flex items-start justify-between gap-6">
-              <div className="flex-1">
+          <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block">
+            <div className="border border-[#E8E5E0] rounded-xl overflow-hidden hover:border-[#1A4731]/40 transition-all flex">
+              {/* Thumbnail */}
+              {b.coverImageUrl && (
+                <div className="w-32 shrink-0 overflow-hidden">
+                  <img
+                    src={unsplashUrl(b.coverImageUrl, 200, 200)}
+                    alt={b.title}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                  />
+                </div>
+              )}
+              <div className="p-5 flex-1">
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {b.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8F0EC] text-[#1A4731] font-medium"
-                    >
+                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8F0EC] text-[#1A4731] font-medium">
                       {tag}
                     </span>
                   ))}
@@ -46,13 +57,14 @@ export default async function BriefingsPage() {
                 >
                   {b.title}
                 </h3>
-                <p className="text-sm text-[#737373] leading-relaxed line-clamp-2">
+                <p className="text-sm text-[#737373] leading-relaxed line-clamp-2 mb-3">
                   {b.summary}
                 </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <span className="text-xs text-[#A8A8A8]">{formatDate(b.date)}</span>
-                <p className="text-xs text-[#A8A8A8] mt-1">{b.readingTime} min read</p>
+                <div className="flex items-center gap-3 text-xs text-[#A8A8A8]">
+                  <span>{formatDate(b.date)}</span>
+                  <span>·</span>
+                  <span>{b.readingTime} min read</span>
+                </div>
               </div>
             </div>
           </Link>

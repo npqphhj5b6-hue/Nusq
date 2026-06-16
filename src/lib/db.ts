@@ -56,6 +56,10 @@ function rowToBriefing(row: any): Briefing {
     readingTime: row.reading_time,
     body: row.body,
     status: row.status,
+    coverImageUrl: row.cover_image_url ?? null,
+    coverImageCredit: row.cover_image_credit ?? null,
+    coverImageCreditLink: row.cover_image_credit_link ?? null,
+    tickers: row.tickers ?? [],
   };
 }
 

@@ -36,43 +36,22 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
   "title": "A compelling headline for today's briefing — max 12 words, no full stop",
   "summary": "2–3 sentences. A hook that sets up the main theme and makes the reader want more.",
   "tags": ["3 to 5 relevant tags — e.g. 'Saudi Arabia', 'Oil', 'Vision 2030', 'UAE', 'Markets'"],
-  "body": "The full briefing. Use ## for section headings. Use **bold** for key figures, company names, and important terms. Write 4–6 substantive sections in flowing paragraphs — no bullet lists. Minimum 500 words."
+  "body": "The full briefing. Use ## for section headings. Use **bold** for key figures, company names, and important terms. Write 4–6 substantive sections in flowing paragraphs — no bullet lists. Minimum 500 words.",
+  "image_query": "A precise 4–7 word Unsplash search query for a landscape photo that best represents today's main story. Be specific and visual — e.g. 'Riyadh skyline golden hour aerial' or 'oil tanker sea sunset Gulf'. Avoid generic terms like 'business' or 'finance'.",
+  "tickers": ["Array of TradingView ticker symbols for any stocks, indices, or commodities prominently mentioned in the briefing — e.g. 'TADAWUL:2222' for Aramco, 'TVC:UKOIL' for Brent crude, 'TADAWUL:TASI' for the Saudi index, 'ADX:ADI' for Abu Dhabi index, 'FX:USDSAR' for USD/SAR. Include only tickers directly relevant to the stories covered. Empty array if none apply."]
 }`;
 
 async function fetchNewsHeadlines(): Promise<string> {
   const parser = new Parser({ timeout: 10000 });
 
   const queries = [
-    {
-      url: "https://news.google.com/rss/search?q=GCC+economy+finance&hl=en-US&gl=US&ceid=US:en",
-      lang: "EN",
-    },
-    {
-      url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil&hl=en-US&gl=US&ceid=US:en",
-      lang: "EN",
-    },
-    {
-      url: "https://news.google.com/rss/search?q=UAE+economy+finance+investment&hl=en-US&gl=US&ceid=US:en",
-      lang: "EN",
-    },
-    {
-      url: "https://news.google.com/rss/search?q=MENA+economy+markets&hl=en-US&gl=US&ceid=US:en",
-      lang: "EN",
-    },
-    {
-      url: "https://news.google.com/rss/search?q=Aramco+SABIC+Saudi+stocks&hl=en-US&gl=US&ceid=US:en",
-      lang: "EN",
-    },
-    {
-      // Arabic: اقتصاد السعودية (Saudi economy)
-      url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9&hl=ar&gl=SA&ceid=SA:ar",
-      lang: "AR",
-    },
-    {
-      // Arabic: اقتصاد الإمارات (UAE economy)
-      url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%A5%D9%85%D8%A7%D8%B1%D8%A7%D8%AA&hl=ar&gl=AE&ceid=AE:ar",
-      lang: "AR",
-    },
+    { url: "https://news.google.com/rss/search?q=GCC+economy+finance&hl=en-US&gl=US&ceid=US:en", lang: "EN" },
+    { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil&hl=en-US&gl=US&ceid=US:en", lang: "EN" },
+    { url: "https://news.google.com/rss/search?q=UAE+economy+finance+investment&hl=en-US&gl=US&ceid=US:en", lang: "EN" },
+    { url: "https://news.google.com/rss/search?q=MENA+economy+markets&hl=en-US&gl=US&ceid=US:en", lang: "EN" },
+    { url: "https://news.google.com/rss/search?q=Aramco+SABIC+Saudi+stocks&hl=en-US&gl=US&ceid=US:en", lang: "EN" },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9&hl=ar&gl=SA&ceid=SA:ar", lang: "AR" },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%A5%D9%85%D8%A7%D8%B1%D8%A7%D8%AA&hl=ar&gl=AE&ceid=AE:ar", lang: "AR" },
   ];
 
   const enItems: string[] = [];
@@ -95,22 +74,40 @@ async function fetchNewsHeadlines(): Promise<string> {
     })
   );
 
-  const total = enItems.length + arItems.length;
-  if (total === 0) {
+  if (enItems.length + arItems.length === 0) {
     throw new Error("No news fetched from any RSS feed");
   }
 
   const sections: string[] = [];
-  if (enItems.length > 0) {
-    sections.push(`## English headlines\n${enItems.join("\n")}`);
-  }
-  if (arItems.length > 0) {
-    sections.push(
-      `## Arabic headlines (translate relevant ones into your briefing)\n${arItems.join("\n")}`
-    );
-  }
-
+  if (enItems.length > 0) sections.push(`## English headlines\n${enItems.join("\n")}`);
+  if (arItems.length > 0) sections.push(`## Arabic headlines (translate relevant ones)\n${arItems.join("\n")}`);
   return sections.join("\n\n");
+}
+
+async function fetchUnsplashImage(query: string): Promise<{
+  url: string;
+  credit: string;
+  creditLink: string;
+} | null> {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${key}` } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { results: Array<{ urls: { raw: string }; user: { name: string; links: { html: string } } }> };
+    const photo = data.results?.[0];
+    if (!photo) return null;
+    return {
+      url: photo.urls.raw,
+      credit: `Photo by ${photo.user.name} on Unsplash`,
+      creditLink: `${photo.user.links.html}?utm_source=nusq&utm_medium=referral`,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -122,7 +119,6 @@ export async function GET(request: NextRequest) {
   const slug = todaySlug();
   const date = todayISO();
 
-  // Prevent duplicate runs on the same day
   const { data: existing } = await supabaseAdmin
     .from("briefings")
     .select("id")
@@ -156,7 +152,6 @@ export async function GET(request: NextRequest) {
     .map((block: { type: string; text: string }) => block.text)
     .join("");
 
-  // Strip code fences if the model wrapped the JSON
   const jsonText = rawText
     .replace(/^```(?:json)?\n?/m, "")
     .replace(/\n?```$/m, "")
@@ -167,10 +162,14 @@ export async function GET(request: NextRequest) {
     summary: string;
     tags: string[];
     body: string;
+    image_query: string;
+    tickers: string[];
   };
 
   const wordCount = generated.body.split(/\s+/).length;
   const readingTime = Math.max(1, Math.round(wordCount / 200));
+
+  const image = await fetchUnsplashImage(generated.image_query);
 
   const { data: briefing, error: insertError } = await supabaseAdmin
     .from("briefings")
@@ -183,6 +182,10 @@ export async function GET(request: NextRequest) {
       reading_time: readingTime,
       date,
       status: "draft",
+      cover_image_url: image?.url ?? null,
+      cover_image_credit: image?.credit ?? null,
+      cover_image_credit_link: image?.creditLink ?? null,
+      tickers: generated.tickers ?? [],
     })
     .select("id")
     .single();
