@@ -14,6 +14,10 @@ function unsplashUrl(raw: string, w: number, h: number) {
   return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
 }
 
+function unsplashUrlFull(raw: string, w: number) {
+  return `${raw}&w=${w}&auto=format&q=80`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -113,14 +117,11 @@ export default async function BriefingPage({
       {/* Cover image */}
       {briefing.coverImageUrl && (
         <ScrollReveal>
-          <div
-            className="relative w-full mb-12 overflow-hidden rounded-xl"
-            style={{ aspectRatio: "16/7" }}
-          >
+          <div className="relative w-full mb-12 overflow-hidden rounded-xl">
             <img
-              src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
+              src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
               alt={briefing.title}
-              className="w-full h-full object-cover"
+              className="w-full h-auto block"
             />
             {/* Vignette */}
             <div
