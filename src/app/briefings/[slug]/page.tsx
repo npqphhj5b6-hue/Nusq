@@ -62,116 +62,114 @@ export default async function BriefingPage({
     .filter((p) => p.trim().length > 0);
 
   return (
-    <>
-      <div className="max-w-2xl mx-auto px-6 py-10">
+    <div className="max-w-2xl mx-auto px-6 py-10">
+      <Link
+        href="/briefings"
+        className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#1A4731] transition-colors mb-10"
+      >
+        ← Briefings
+      </Link>
+
+      {/* Tags */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {briefing.tags.map((tag) => (
+          <span
+            key={tag}
+            className="text-[10px] font-semibold tracking-[0.12em] text-[#1A4731] uppercase"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Big headline */}
+      <h1
+        className="text-[2.75rem] md:text-[3.5rem] leading-[1.08] text-[#111111] mb-5"
+        style={{ fontFamily: "var(--font-dm-serif)" }}
+      >
+        {briefing.title}
+      </h1>
+
+      {/* Summary — prominent deck */}
+      <p className="text-[1.15rem] text-[#444444] leading-[1.65] mb-6 font-light">
+        {briefing.summary}
+      </p>
+
+      {/* Meta row */}
+      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#E8E5E0]">
+        <div className="flex items-center gap-3 text-xs text-[#A8A8A8]">
+          <span>{formatDate(briefing.date)}</span>
+          <span>·</span>
+          <span>{briefing.readingTime} min read</span>
+        </div>
+        <ShareButtons title={briefing.title} url={pageUrl} />
+      </div>
+
+      {/* Cover image — bleeds wider than text column */}
+      {briefing.coverImageUrl && (
+        <div className="relative -mx-6 md:-mx-20 mb-12 overflow-hidden" style={{ aspectRatio: "16/7" }}>
+          <img
+            src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
+            alt={briefing.title}
+            className="w-full h-full object-cover"
+          />
+          {briefing.coverImageCredit && (
+            <a
+              href={briefing.coverImageCreditLink ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-2 right-3 text-[10px] text-white/60 hover:text-white/90 transition-colors"
+            >
+              {briefing.coverImageCredit}
+            </a>
+          )}
+        </div>
+      )}
+
+      <div className="prose-nusq">
+        {bodyParagraphs.map((para, i) => {
+          if (para.startsWith("## ")) {
+            return <h2 key={i}>{para.replace("## ", "")}</h2>;
+          }
+          if (para.startsWith("**") && para.endsWith("**")) {
+            return (
+              <p key={i}>
+                <strong>{para.slice(2, -2)}</strong>
+              </p>
+            );
+          }
+          const withBold = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+          return <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
+        })}
+      </div>
+
+      {/* Bottom share row */}
+      <div className="mt-10 pt-8 border-t border-[#E8E5E0] flex items-center justify-between">
         <Link
           href="/briefings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#1A4731] transition-colors mb-10"
+          className="text-sm text-[#737373] hover:text-[#1A4731] transition-colors"
         >
-          ← Briefings
+          ← All briefings
         </Link>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-5">
-          {briefing.tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-xs font-medium px-3 py-1 rounded-full bg-[#E8F0EC] text-[#1A4731] transition-colors hover:bg-[#1A4731] hover:text-white cursor-default"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* Title */}
-        <h1
-          className="text-[2.25rem] leading-[1.15] text-[#111111] mb-4"
-          style={{ fontFamily: "var(--font-dm-serif)" }}
-        >
-          {briefing.title}
-        </h1>
-
-        {/* Summary */}
-        <p className="text-[#555555] leading-relaxed mb-5 text-[1.05rem]">
-          {briefing.summary}
-        </p>
-
-        {/* Meta row */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3 text-xs text-[#A8A8A8]">
-            <span>{formatDate(briefing.date)}</span>
-            <span>·</span>
-            <span>{briefing.readingTime} min read</span>
-          </div>
-          <ShareButtons title={briefing.title} url={pageUrl} />
-        </div>
-
-        {/* Cover image */}
-        {briefing.coverImageUrl && (
-          <div className="relative w-full mb-10 overflow-hidden" style={{ aspectRatio: "16/7" }}>
-            <img
-              src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
-              alt={briefing.title}
-              className="w-full h-full object-cover"
-            />
-            {briefing.coverImageCredit && (
-              <a
-                href={briefing.coverImageCreditLink ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute bottom-2 right-3 text-[10px] text-white/60 hover:text-white/90 transition-colors"
-              >
-                {briefing.coverImageCredit}
-              </a>
-            )}
-          </div>
-        )}
-
-        <div className="prose-nusq">
-          {bodyParagraphs.map((para, i) => {
-            if (para.startsWith("## ")) {
-              return <h2 key={i}>{para.replace("## ", "")}</h2>;
-            }
-            if (para.startsWith("**") && para.endsWith("**")) {
-              return (
-                <p key={i}>
-                  <strong>{para.slice(2, -2)}</strong>
-                </p>
-              );
-            }
-            const withBold = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-            return <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
-          })}
-        </div>
-
-        {/* Bottom share row */}
-        <div className="mt-10 pt-8 border-t border-[#E8E5E0] flex items-center justify-between">
-          <Link
-            href="/briefings"
-            className="text-sm text-[#737373] hover:text-[#1A4731] transition-colors"
-          >
-            ← All briefings
-          </Link>
-          <ShareButtons title={briefing.title} url={pageUrl} />
-        </div>
-
-        {/* Markets */}
-        {briefing.tickers && briefing.tickers.length > 0 && (
-          <div className="mt-10 pt-10 border-t border-[#E8E5E0]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-5 h-[2px] bg-[#1A4731]" />
-              <h2 className="text-[10px] font-medium tracking-[0.15em] text-[#1A4731] uppercase">
-                Markets
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {briefing.tickers.map((ticker) => (
-                <TradingViewChart key={ticker} ticker={ticker} />
-              ))}
-            </div>
-          </div>
-        )}
+        <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
-    </>
+
+      {/* Markets */}
+      {briefing.tickers && briefing.tickers.length > 0 && (
+        <div className="mt-10 pt-10 border-t border-[#E8E5E0]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-5 h-[2px] bg-[#1A4731]" />
+            <h2 className="text-[10px] font-medium tracking-[0.15em] text-[#1A4731] uppercase">
+              Markets
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {briefing.tickers.map((ticker) => (
+              <TradingViewChart key={ticker} ticker={ticker} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
