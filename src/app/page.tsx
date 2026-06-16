@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { getAllBriefings, getAllEssays, formatDate, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
+import BriefingCover from "@/components/BriefingCover";
 
 export const dynamic = "force-dynamic";
-
-function unsplashUrl(raw: string, w: number, h: number) {
-  return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
-}
 
 export default async function Home() {
   const today = new Date().toLocaleDateString("en-GB", {
@@ -20,6 +17,10 @@ export default async function Home() {
   const essays = await getAllEssays();
   const [featured, ...rest] = briefings;
   const recentBriefings = rest.slice(0, 3);
+
+  const issueNumbers = new Map(
+    [...briefings].reverse().map((b, i) => [b.slug, i + 1])
+  );
 
   return (
     <div>
@@ -115,18 +116,12 @@ export default async function Home() {
           <ScrollReveal>
             <Link href={`/briefings/${featured.slug}`} className="group block cursor-pointer">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-10 items-start">
-                {featured.coverImageUrl && (
-                  <div
-                    className="md:col-span-3 img-wrap rounded-xl overflow-hidden"
-                    style={{ aspectRatio: "16/10" }}
-                  >
-                    <img
-                      src={unsplashUrl(featured.coverImageUrl, 900, 562)}
-                      alt={featured.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
+                <div
+                  className="md:col-span-3 rounded-xl overflow-hidden"
+                  style={{ aspectRatio: "16/10" }}
+                >
+                  <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} />
+                </div>
                 <div className="md:col-span-2 md:pt-3">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
@@ -189,17 +184,9 @@ export default async function Home() {
               <ScrollReveal key={b.slug} delay={i * 90}>
                 <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
                   <div className="flex flex-col h-full card-lift rounded-xl overflow-hidden bg-[#091422] border border-[#132030]">
-                    {b.coverImageUrl ? (
-                      <div className="img-wrap shrink-0" style={{ aspectRatio: "3/2" }}>
-                        <img
-                          src={unsplashUrl(b.coverImageUrl, 600, 400)}
-                          alt={b.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="shrink-0 bg-[#0D1E30]" style={{ aspectRatio: "3/2" }} />
-                    )}
+                    <div className="shrink-0" style={{ aspectRatio: "3/2" }}>
+                      <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
+                    </div>
                     <div className="flex flex-col flex-1 p-5">
                       {b.tags[0] && (
                         <span className="text-[9px] font-bold tracking-[0.14em] text-[#15A06E] uppercase mb-3">
