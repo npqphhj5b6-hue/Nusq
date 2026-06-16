@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
   const reviewUrl = `${siteUrl}/admin/drafts/${briefing.id}`;
 
   const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
+  const { error: emailError } = await resend.emails.send({
     from: "nusq <onboarding@resend.dev>",
     to: "yousefquaba@icloud.com",
     subject: `nusq draft ready: ${generated.title}`,
@@ -206,6 +206,7 @@ export async function GET(request: NextRequest) {
       </div>
     `,
   });
+  if (emailError) throw new Error(`Resend error: ${emailError.message}`);
 
   return NextResponse.json({ ok: true, slug, id: briefing.id });
 }
