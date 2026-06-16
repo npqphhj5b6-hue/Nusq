@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ReadingProgress from "./ReadingProgress";
+import AuthButton from "./AuthButton";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -55,6 +56,9 @@ export default function Header() {
               {label}
             </Link>
           ))}
+          <div className="ml-2">
+            <AuthButton />
+          </div>
         </nav>
       </div>
 
