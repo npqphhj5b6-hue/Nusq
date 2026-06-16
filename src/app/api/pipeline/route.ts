@@ -132,11 +132,9 @@ export async function GET(request: NextRequest) {
   const newsText = await fetchNewsHeadlines();
 
   const client = new Anthropic();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stream = (client.messages as any).stream({
+  const message = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 8000,
-    thinking: { type: "adaptive" },
     system: SYSTEM_PROMPT,
     messages: [
       {
@@ -145,7 +143,6 @@ export async function GET(request: NextRequest) {
       },
     ],
   });
-  const message = await stream.finalMessage();
 
   const rawText = message.content
     .filter((block: { type: string }) => block.type === "text")
