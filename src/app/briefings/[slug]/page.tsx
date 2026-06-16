@@ -79,7 +79,7 @@ export default async function BriefingPage({
     .split("\n\n")
     .filter((p) => p.trim().length > 0);
 
-  // Find the best paragraph index to inject the chart after
+  // Keyword maps for inline injection
   const CHART_KEYWORDS: Record<string, RegExp> = {
     brent_price: /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
     gold: /\b(gold|precious metal|safe.haven|bullion|xau)/i,
@@ -88,18 +88,51 @@ export default async function BriefingPage({
     gdp_growth: /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
     inflation: /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
   };
-  const chartInsertAfter = (() => {
-    if (!briefing.chartData) return -1;
-    const pattern = CHART_KEYWORDS[briefing.chartData.type];
-    if (!pattern) return -1;
-    // Find first non-heading paragraph that matches
+  const TICKER_KEYWORDS: Record<string, RegExp> = {
+    "TVC:UKOIL": /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
+    "TVC:NGAS": /\b(natural gas|lng|gas price)/i,
+    "TVC:GOLD": /\b(gold|precious metal|safe.haven|bullion)/i,
+    "TVC:SILVER": /\bsilver\b/i,
+    "FX:USDSAR": /\b(saudi.+riyal|riyal.+saudi|sar\b|saudi.+currency|saudi.+monetary)/i,
+    "FX:USDAED": /\b(dirham|aed\b|uae.+currency|uae.+monetary)/i,
+    "FX:USDKWD": /\b(dinar|kwd\b|kuwaiti)/i,
+    "FX:USDQAR": /\b(qatari|qar\b|qatar.+currency)/i,
+    "FOREXCOM:SPXUSD": /\b(s&p|sp 500|us stocks|wall street|american market)/i,
+    "TVC:DXY": /\b(dollar index|dxy\b|usd strength|dollar strength)/i,
+  };
+
+  // Compute all inline injections, avoiding paragraph index collisions
+  const usedIndices = new Set<number>();
+
+  const findInsertIndex = (pattern: RegExp): number => {
     for (let i = 0; i < bodyParagraphs.length; i++) {
-      if (!bodyParagraphs[i].startsWith("## ") && pattern.test(bodyParagraphs[i])) {
+      if (!bodyParagraphs[i].startsWith("## ") && !usedIndices.has(i) && pattern.test(bodyParagraphs[i])) {
         return i;
       }
     }
     return -1;
+  };
+
+  const chartInsertAfter = (() => {
+    if (!briefing.chartData) return -1;
+    const pattern = CHART_KEYWORDS[briefing.chartData.type];
+    if (!pattern) return -1;
+    const idx = findInsertIndex(pattern);
+    if (idx !== -1) usedIndices.add(idx);
+    return idx;
   })();
+
+  // Map paragraph index → ticker symbol for inline widgets
+  const tickerInsertMap = new Map<number, string>();
+  for (const ticker of (briefing.tickers ?? []).filter(isValidTicker)) {
+    const pattern = TICKER_KEYWORDS[ticker];
+    if (!pattern) continue;
+    const idx = findInsertIndex(pattern);
+    if (idx !== -1) {
+      tickerInsertMap.set(idx, ticker);
+      usedIndices.add(idx);
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -207,6 +240,13 @@ export default async function BriefingPage({
               {i === chartInsertAfter && briefing.chartData && (
                 <ScrollReveal>
                   <DataChart data={briefing.chartData} />
+                </ScrollReveal>
+              )}
+              {tickerInsertMap.has(i) && (
+                <ScrollReveal>
+                  <div className="my-6">
+                    <TradingViewChart ticker={tickerInsertMap.get(i)!} />
+                  </div>
                 </ScrollReveal>
               )}
             </React.Fragment>
