@@ -31,11 +31,42 @@ export default async function BriefingPage({
         ← Briefings
       </Link>
 
-      {/* Cover image — landscape */}
+      {/* Tags */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {briefing.tags.map((tag) => (
+          <span
+            key={tag}
+            className="text-xs font-medium px-3 py-1 rounded-full bg-[#E8F0EC] text-[#1A4731]"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Title */}
+      <h1
+        className="text-[2.25rem] leading-[1.15] text-[#111111] mb-4"
+        style={{ fontFamily: "var(--font-dm-serif)" }}
+      >
+        {briefing.title}
+      </h1>
+
+      {/* Summary */}
+      <p className="text-[#555555] leading-relaxed mb-5 text-[1.05rem]">
+        {briefing.summary}
+      </p>
+
+      <div className="flex items-center gap-3 text-xs text-[#A8A8A8] mb-8">
+        <span>{formatDate(briefing.date)}</span>
+        <span>·</span>
+        <span>{briefing.readingTime} min read</span>
+      </div>
+
+      {/* Cover image — full width, sharp edges like Finimize */}
       {briefing.coverImageUrl && (
-        <div className="relative w-full h-[340px] mb-8 rounded-2xl overflow-hidden">
+        <div className="relative w-full mb-10 overflow-hidden" style={{ aspectRatio: "16/7" }}>
           <img
-            src={unsplashUrl(briefing.coverImageUrl, 1200, 680)}
+            src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
             alt={briefing.title}
             className="w-full h-full object-cover"
           />
@@ -51,34 +82,6 @@ export default async function BriefingPage({
           )}
         </div>
       )}
-
-      <div className="flex flex-wrap gap-2 mb-5">
-        {briefing.tags.map((tag) => (
-          <span
-            key={tag}
-            className="text-xs font-medium px-3 py-1 rounded-full bg-[#E8F0EC] text-[#1A4731]"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-
-      <h1
-        className="text-[2rem] leading-[1.2] text-[#111111] mb-5"
-        style={{ fontFamily: "var(--font-dm-serif)" }}
-      >
-        {briefing.title}
-      </h1>
-
-      <p className="text-[#737373] leading-relaxed mb-6 text-base border-l-[3px] border-[#1A4731] pl-4">
-        {briefing.summary}
-      </p>
-
-      <div className="flex items-center gap-3 text-xs text-[#A8A8A8] mb-10 pb-10 border-b border-[#E8E5E0]">
-        <span>{formatDate(briefing.date)}</span>
-        <span>·</span>
-        <span>{briefing.readingTime} min read</span>
-      </div>
 
       <div className="prose-nusq">
         {bodyParagraphs.map((para, i) => {

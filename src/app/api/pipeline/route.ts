@@ -38,7 +38,7 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
   "tags": ["3 to 5 relevant tags — e.g. 'Saudi Arabia', 'Oil', 'Vision 2030', 'UAE', 'Markets'"],
   "body": "The full briefing. Use ## for section headings. Use **bold** for key figures, company names, and important terms. Write 4–6 substantive sections in flowing paragraphs — no bullet lists. Minimum 500 words.",
   "image_query": "A precise 4–7 word Unsplash search query for a landscape photo that best represents today's main story. Be specific and visual — e.g. 'Riyadh skyline golden hour aerial' or 'oil tanker sea sunset Gulf'. Avoid generic terms like 'business' or 'finance'.",
-  "tickers": ["Array of TradingView ticker symbols for any stocks, indices, or commodities prominently mentioned in the briefing — e.g. 'TADAWUL:2222' for Aramco, 'TVC:UKOIL' for Brent crude, 'TADAWUL:TASI' for the Saudi index, 'ADX:ADI' for Abu Dhabi index, 'FX:USDSAR' for USD/SAR. Include only tickers directly relevant to the stories covered. Empty array if none apply."]
+  "tickers": ["Array of up to 3 TradingView ticker symbols relevant to today's briefing. IMPORTANT: only use tickers from this supported list — anything else will not render. Commodities: 'TVC:UKOIL' (Brent crude), 'TVC:NGAS' (natural gas), 'TVC:GOLD', 'TVC:SILVER'. FX pairs: 'FX:USDSAR', 'FX:USDAED', 'FX:USDKWD', 'FX:USDQAR'. Global indices: 'FOREXCOM:SPXUSD' (S&P 500), 'TVC:DXY' (USD index). Pick only what is directly relevant. Empty array if nothing fits."]
 }`;
 
 async function fetchNewsHeadlines(): Promise<string> {
