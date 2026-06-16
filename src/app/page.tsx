@@ -24,19 +24,34 @@ export default async function Home() {
     <div>
       {/* ── Hero ── */}
       <section className="border-b border-[#E8E5E0]">
-        <div className="max-w-5xl mx-auto px-6 pt-10 pb-16">
+        {/* Brand statement — large, centred */}
+        <div className="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
+          <p className="text-[10px] tracking-[0.18em] text-[#A8A8A8] uppercase mb-8">{today}</p>
+          <h1
+            className="text-[3.5rem] md:text-[5.5rem] leading-[1.0] text-[#111111] mb-6"
+            style={{ fontFamily: "var(--font-dm-serif)" }}
+          >
+            MENA markets,<br />
+            <span className="text-[#1A4731]">made clear.</span>
+          </h1>
+          <p className="text-[#737373] text-lg leading-relaxed max-w-md mx-auto mb-10">
+            A daily briefing on what moved the Gulf and why — written for
+            people who need to know, not just want to know.
+          </p>
+          {featured && (
+            <Link
+              href={`/briefings/${featured.slug}`}
+              className="inline-flex items-center gap-2 bg-[#1A4731] text-white text-sm font-medium px-7 py-3.5 rounded-full hover:bg-[#143829] transition-colors btn-press"
+            >
+              Read today&apos;s briefing →
+            </Link>
+          )}
+        </div>
 
-          {/* Date label */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-4 h-[2px] bg-[#8C1C13]" />
-            <span className="text-[10px] font-medium tracking-[0.18em] text-[#8C1C13] uppercase">
-              {today}
-            </span>
-          </div>
-
-          {featured ? (
+        {/* Featured briefing card below tagline */}
+        {featured && (
+          <div className="max-w-5xl mx-auto px-6 pb-16">
             <Link href={`/briefings/${featured.slug}`} className="group block">
-              {/* Hero image — full width, cinematic */}
               {featured.coverImageUrl && (
                 <div className="w-full overflow-hidden rounded-xl mb-7" style={{ aspectRatio: "21/9" }}>
                   <img
@@ -46,60 +61,33 @@ export default async function Home() {
                   />
                 </div>
               )}
-
               <div className="max-w-3xl">
-                {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {featured.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-[#E8F0EC] text-[#1A4731]">
+                    <span key={tag} className="text-[10px] font-semibold tracking-[0.12em] text-[#1A4731] uppercase">
                       {tag}
                     </span>
                   ))}
                 </div>
-
-                {/* Big headline */}
-                <h1
-                  className="text-[2.6rem] md:text-[3.5rem] leading-[1.08] text-[#111111] mb-5 group-hover:text-[#1A4731] transition-colors duration-200"
+                <h2
+                  className="text-[2rem] md:text-[2.75rem] leading-[1.1] text-[#111111] mb-4 group-hover:text-[#1A4731] transition-colors duration-200"
                   style={{ fontFamily: "var(--font-dm-serif)" }}
                 >
                   {featured.title}
-                </h1>
-
-                <p className="text-[#555555] text-[1.05rem] leading-relaxed mb-6 max-w-2xl">
+                </h2>
+                <p className="text-[#555555] text-[1.05rem] leading-relaxed mb-5 max-w-2xl">
                   {featured.summary}
                 </p>
-
-                <div className="flex items-center gap-5 text-sm text-[#A8A8A8]">
+                <div className="flex items-center gap-4 text-sm text-[#A8A8A8]">
                   <span>{formatDate(featured.date)}</span>
                   <span>·</span>
                   <span>{featured.readingTime} min read</span>
-                  <span className="text-[#1A4731] font-medium group-hover:underline ml-2">
-                    Read briefing →
-                  </span>
+                  <span className="text-[#1A4731] font-medium group-hover:underline ml-1">Read →</span>
                 </div>
               </div>
             </Link>
-          ) : (
-            <div>
-              <h1
-                className="text-[3.5rem] leading-[1.1] text-[#111111] mb-6"
-                style={{ fontFamily: "var(--font-dm-serif)" }}
-              >
-                MENA markets,<br />
-                <span className="text-[#1A4731]">made clear.</span>
-              </h1>
-              <p className="text-[#737373] text-lg leading-relaxed max-w-lg mb-8">
-                A daily briefing on what moved the Gulf and why.
-              </p>
-              <Link
-                href="/briefings"
-                className="inline-flex items-center gap-2 bg-[#1A4731] text-white text-sm font-medium px-6 py-3 rounded-full hover:bg-[#143829] transition-colors btn-press"
-              >
-                Browse briefings →
-              </Link>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* ── Recent Briefings ── */}

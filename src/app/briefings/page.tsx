@@ -34,17 +34,17 @@ export default async function BriefingsPage() {
       {/* Featured — latest briefing, large */}
       {featured && (
         <Link href={`/briefings/${featured.slug}`} className="group block mb-14">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-start">
             {featured.coverImageUrl && (
-              <div className="overflow-hidden rounded-xl" style={{ aspectRatio: "3/2" }}>
+              <div className="md:col-span-3 overflow-hidden rounded-xl" style={{ aspectRatio: "16/10" }}>
                 <img
-                  src={unsplashUrl(featured.coverImageUrl, 800, 534)}
+                  src={unsplashUrl(featured.coverImageUrl, 900, 562)}
                   alt={featured.title}
                   className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                 />
               </div>
             )}
-            <div>
+            <div className="md:col-span-2 md:pt-2">
               {featured.tags[0] && (
                 <span className="text-[10px] font-semibold tracking-[0.12em] text-[#8C1C13] uppercase block mb-3">
                   Latest
