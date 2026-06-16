@@ -32,7 +32,7 @@ export default async function BriefingsPage() {
       <div className="flex flex-col gap-4">
         {briefings.map((b) => (
           <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block">
-            <div className="border border-[#E8E5E0] rounded-xl overflow-hidden hover:border-[#1A4731]/40 transition-all flex">
+            <div className="border border-[#E8E5E0] rounded-xl overflow-hidden hover:border-[#1A4731]/40 transition-all flex card-lift">
               {/* Thumbnail */}
               {b.coverImageUrl && (
                 <div className="w-32 shrink-0 overflow-hidden">

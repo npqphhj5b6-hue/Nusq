@@ -47,7 +47,7 @@ export default async function Home() {
                 {featured && (
                   <Link
                     href={`/briefings/${featured.slug}`}
-                    className="inline-flex items-center gap-2 bg-[#1A4731] text-white text-sm font-medium px-6 py-3 rounded-full hover:bg-[#143829] transition-colors"
+                    className="inline-flex items-center gap-2 bg-[#1A4731] text-white text-sm font-medium px-6 py-3 rounded-full hover:bg-[#143829] transition-colors btn-press"
                   >
                     Read today&apos;s briefing →
                   </Link>
@@ -65,7 +65,7 @@ export default async function Home() {
             {featured && (
               <div className="md:col-span-2">
                 <Link href={`/briefings/${featured.slug}`} className="group block">
-                  <div className="border border-[#E8E5E0] rounded-2xl overflow-hidden hover:border-[#1A4731]/40 hover:shadow-[0_4px_24px_rgba(26,71,49,0.06)] transition-all">
+                  <div className="border border-[#E8E5E0] rounded-2xl overflow-hidden hover:border-[#1A4731]/40 transition-all card-lift">
                     {/* Thumbnail image */}
                     {featured.coverImageUrl ? (
                       <div className="h-40 overflow-hidden">
@@ -132,7 +132,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recentBriefings.map((b, i) => (
               <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block">
-                <div className="border border-[#E8E5E0] rounded-xl overflow-hidden h-full hover:border-[#1A4731]/40 transition-all flex flex-col">
+                <div className="border border-[#E8E5E0] rounded-xl overflow-hidden h-full hover:border-[#1A4731]/40 transition-all flex flex-col card-lift">
                   {/* Thumbnail */}
                   {b.coverImageUrl ? (
                     <div className="h-28 overflow-hidden shrink-0">
