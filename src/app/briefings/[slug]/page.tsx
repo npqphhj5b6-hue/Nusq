@@ -265,22 +265,27 @@ export default async function BriefingPage({
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
 
-      {/* Markets */}
-      {briefing.tickers && briefing.tickers.length > 0 && (
-        <ScrollReveal>
-          <div className="mt-10 pt-10 border-t border-[#132030]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
-              <span className="eyebrow">Markets</span>
+      {/* Markets — only tickers not already shown inline */}
+      {(() => {
+        const inlinedTickers = new Set(tickerInsertMap.values());
+        const remaining = (briefing.tickers ?? []).filter(isValidTicker).filter(t => !inlinedTickers.has(t));
+        if (remaining.length === 0) return null;
+        return (
+          <ScrollReveal>
+            <div className="mt-10 pt-10 border-t border-[#132030]">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
+                <span className="eyebrow">Markets</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {remaining.map((ticker) => (
+                  <TradingViewChart key={ticker} ticker={ticker} />
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {briefing.tickers.filter(isValidTicker).map((ticker) => (
-                <TradingViewChart key={ticker} ticker={ticker} />
-              ))}
-            </div>
-          </div>
-        </ScrollReveal>
-      )}
+          </ScrollReveal>
+        );
+      })()}
     </div>
   );
 }
