@@ -7,8 +7,8 @@
 
 /* ── Base ── */
 body {
-  background-color: #070D1A;
-  color: #EDE8DF;
+  background-color: #040C1A;
+  color: #F0ECE5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -17,14 +17,14 @@ body {
 .prose-nusq {
   font-size: 1.0625rem;
   line-height: 1.85;
-  color: #C8C2BC;
+  color: #B8B2AB;
 }
 .prose-nusq h2 {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 2.5rem;
   margin-bottom: 0.875rem;
-  color: #C9A967;
+  color: #F0ECE5;
   letter-spacing: -0.01em;
 }
 .prose-nusq p {
@@ -32,7 +32,7 @@ body {
 }
 .prose-nusq strong {
   font-weight: 600;
-  color: #EDE8DF;
+  color: #F0ECE5;
 }
 
 /* ── Page entrance ── */
@@ -48,8 +48,8 @@ body {
 @keyframes hero-word-in {
   from {
     opacity: 0;
-    transform: translateY(28px);
-    filter: blur(6px);
+    transform: translateY(36px);
+    filter: blur(8px);
   }
   to {
     opacity: 1;
@@ -58,9 +58,9 @@ body {
   }
 }
 .hero-word {
-  display: inline-block;
+  display: block;
   opacity: 0;
-  animation: hero-word-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: hero-word-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ── Hero subtitle + CTA fade ── */
@@ -71,6 +71,22 @@ body {
 .hero-fade {
   opacity: 0;
   animation: hero-fade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Ambient orb pulse (very slow, subtle) ── */
+@keyframes orb-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
+}
+.orb {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orb-breathe 10s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none; }
 }
 
 /* ── Scroll reveal ── */
@@ -88,12 +104,14 @@ body {
 /* ── Card lift ── */
 .card-lift {
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.3s ease;
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
 }
 .card-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(201, 169, 103, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(245, 158, 11, 0.2),
+              0 0 30px rgba(245, 158, 11, 0.06);
 }
 
 /* ── Button press ── */
@@ -116,21 +134,36 @@ body {
   transform: scale(1.05);
 }
 
-/* ── Gold line expand ── */
-@keyframes gold-expand {
+/* ── Amber line expand ── */
+@keyframes amber-expand {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }
 }
 .gold-line {
   transform-origin: left;
-  animation: gold-expand 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: amber-expand 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Section label eyebrow ── */
 .eyebrow {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #C9A967;
+  color: #F59E0B;
+}
+
+/* ── Amber glow text ── */
+.text-glow {
+  text-shadow: 0 0 40px rgba(245, 158, 11, 0.4),
+               0 0 80px rgba(245, 158, 11, 0.15);
+}
+
+/* ── Barlow display shorthand ── */
+.font-display {
+  font-family: var(--font-barlow);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 0.92;
 }

@@ -17,31 +17,31 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-[#070D1A]/90 backdrop-blur-xl border-b border-[#1A2B40]/80"
+          ? "bg-[#040C1A]/92 backdrop-blur-xl border-b border-[#132030]/80"
           : "bg-transparent"
       }`}
     >
-      {/* Gold top bar */}
-      <div className="h-[2px] bg-gradient-to-r from-[#C9A967] via-[#E8C97A] to-[#C9A967]" />
+      {/* Amber accent line */}
+      <div className="h-[1px] bg-gradient-to-r from-transparent via-[#F59E0B]/60 to-transparent" />
 
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
           <span
-            className="text-[1.35rem] font-semibold tracking-[-0.01em] text-[#C9A967] transition-opacity duration-200 group-hover:opacity-80"
-            style={{ fontFamily: "var(--font-geist-sans)" }}
+            className="text-[1.3rem] font-bold tracking-[-0.02em] text-[#F59E0B] transition-opacity duration-200 group-hover:opacity-80"
+            style={{ fontFamily: "var(--font-barlow)" }}
           >
-            Nusq
+            NUSQ
           </span>
-          <span className="w-px h-4 bg-[#C9A967]/30" />
+          <span className="w-px h-4 bg-[#F59E0B]/25" />
           <span
-            className="text-[1.1rem] font-medium text-[#C9A967] transition-opacity duration-200 group-hover:opacity-80"
+            className="text-[1.05rem] font-medium text-[#F59E0B]/80 transition-opacity duration-200 group-hover:opacity-60"
             style={{ fontFamily: "var(--font-arabic)" }}
           >
             نسق
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-1">
           {[
             { label: "Briefings", href: "/briefings" },
             { label: "Essays", href: "/essays" },
@@ -50,7 +50,7 @@ export default function Header() {
             <Link
               key={label}
               href={href}
-              className="text-sm text-[#7A8FA6] hover:text-[#EDE8DF] transition-colors duration-200"
+              className="text-xs font-semibold tracking-[0.08em] uppercase text-[#4E6880] hover:text-[#F0ECE5] transition-colors duration-200 px-3 py-1.5 cursor-pointer"
             >
               {label}
             </Link>

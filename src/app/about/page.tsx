@@ -10,17 +10,18 @@ export default function AboutPage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
       <ScrollReveal>
-        <div className="mb-12">
+        <div className="mb-14">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-5 h-[1px] bg-[#C9A967] gold-line" />
+            <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
             <span className="eyebrow">About</span>
           </div>
           <h1
-            className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#EDE8DF]"
-            style={{ fontFamily: "var(--font-dm-serif)" }}
+            className="font-display mb-6"
+            style={{ fontSize: "clamp(3rem, 8vw, 6rem)" }}
           >
-            MENA markets,<br />
-            <span className="text-[#C9A967]">made clear.</span>
+            <span className="text-[#F0ECE5] block">MENA</span>
+            <span className="text-[#F0ECE5] block">MARKETS,</span>
+            <span className="text-[#F59E0B] text-glow block">MADE CLEAR.</span>
           </h1>
         </div>
       </ScrollReveal>
@@ -47,12 +48,12 @@ export default function AboutPage() {
       </ScrollReveal>
 
       <ScrollReveal delay={200}>
-        <div className="border-t border-[#1A2B40] pt-10">
+        <div className="border-t border-[#132030] pt-10">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-5 h-[1px] bg-[#C9A967] gold-line" />
+            <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
             <span className="eyebrow">The author</span>
           </div>
-          <p className="text-[#3A4F66] text-sm leading-relaxed">
+          <p className="text-[#2A3F55] text-sm leading-relaxed">
             More on the person behind Nusq coming soon.
           </p>
         </div>

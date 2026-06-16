@@ -67,7 +67,7 @@ export default async function BriefingPage({
       {/* Back */}
       <Link
         href="/briefings"
-        className="inline-flex items-center gap-1.5 text-sm text-[#3A4F66] hover:text-[#C9A967] transition-colors mb-10"
+        className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55] hover:text-[#F59E0B] transition-colors mb-10 cursor-pointer"
       >
         ← Briefings
       </Link>
@@ -77,7 +77,7 @@ export default async function BriefingPage({
         {briefing.tags.map((tag) => (
           <span
             key={tag}
-            className="text-[10px] font-semibold tracking-[0.12em] text-[#15A06E] uppercase bg-[#0A1F15] px-2 py-0.5 rounded"
+            className="text-[9px] font-bold tracking-[0.14em] text-[#15A06E] uppercase bg-[#0A1F15] px-2.5 py-1 rounded-full"
           >
             {tag}
           </span>
@@ -86,21 +86,21 @@ export default async function BriefingPage({
 
       {/* Headline */}
       <h1
-        className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#EDE8DF] mb-5"
+        className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#F0ECE5] mb-5"
         style={{ fontFamily: "var(--font-dm-serif)" }}
       >
         {briefing.title}
       </h1>
 
       {/* Summary deck */}
-      <p className="text-[1.125rem] text-[#7A8FA6] leading-[1.7] mb-6 font-light">
+      <p className="text-[1.125rem] text-[#4E6880] leading-[1.7] mb-6 font-light">
         {briefing.summary}
       </p>
 
       {/* Meta row */}
-      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#1A2B40]">
+      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#132030]">
         <div
-          className="flex items-center gap-3 text-xs text-[#3A4F66]"
+          className="flex items-center gap-3 text-xs text-[#2A3F55]"
           style={{ fontFamily: "var(--font-geist-mono)" }}
         >
           <span>{formatDate(briefing.date)}</span>
@@ -127,7 +127,7 @@ export default async function BriefingPage({
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(7,13,26,0.4) 0%, transparent 40%)",
+                  "linear-gradient(to top, rgba(4,12,26,0.5) 0%, transparent 40%)",
               }}
             />
             {briefing.coverImageCredit && (
@@ -135,7 +135,7 @@ export default async function BriefingPage({
                 href={briefing.coverImageCreditLink ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute bottom-2 right-3 text-[10px] text-white/50 hover:text-white/80 transition-colors"
+                className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors"
               >
                 {briefing.coverImageCredit}
               </a>
@@ -167,10 +167,10 @@ export default async function BriefingPage({
       </div>
 
       {/* Bottom share row */}
-      <div className="mt-10 pt-8 border-t border-[#1A2B40] flex items-center justify-between">
+      <div className="mt-10 pt-8 border-t border-[#132030] flex items-center justify-between">
         <Link
           href="/briefings"
-          className="text-sm text-[#3A4F66] hover:text-[#C9A967] transition-colors"
+          className="text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55] hover:text-[#F59E0B] transition-colors cursor-pointer"
         >
           ← All briefings
         </Link>
@@ -180,9 +180,9 @@ export default async function BriefingPage({
       {/* Markets */}
       {briefing.tickers && briefing.tickers.length > 0 && (
         <ScrollReveal>
-          <div className="mt-10 pt-10 border-t border-[#1A2B40]">
+          <div className="mt-10 pt-10 border-t border-[#132030]">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-5 h-[1px] bg-[#C9A967] gold-line" />
+              <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
               <span className="eyebrow">Markets</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
