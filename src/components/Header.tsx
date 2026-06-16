@@ -44,7 +44,7 @@ export default function Header() {
         <nav className="flex items-center gap-1">
           {[
             { label: "Briefings", href: "/briefings" },
-            { label: "Essays", href: "/essays" },
+            { label: "Research", href: "/essays" },
             { label: "About", href: "/about" },
           ].map(({ label, href }) => (
             <Link

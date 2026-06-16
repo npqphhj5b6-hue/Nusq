@@ -18,7 +18,7 @@ export default async function EssaysPage() {
           className="text-3xl text-[#111111] mb-2"
           style={{ fontFamily: "var(--font-dm-serif)" }}
         >
-          Essays
+          Research
         </h1>
         <p className="text-sm text-[#737373]">
           Longer analysis on MENA political economy, trade, and capital.

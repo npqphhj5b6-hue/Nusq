@@ -236,7 +236,7 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-12">
               <div className="flex items-center gap-3">
                 <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
-                <span className="eyebrow">Essays</span>
+                <span className="eyebrow">Research</span>
               </div>
               <Link
                 href="/essays"
