@@ -145,8 +145,8 @@ export async function GET(request: NextRequest) {
   });
 
   const rawText = message.content
-    .filter((block: { type: string }) => block.type === "text")
-    .map((block: { type: string; text: string }) => block.text)
+    .filter((block) => block.type === "text")
+    .map((block) => (block as { type: "text"; text: string }).text)
     .join("");
 
   const jsonText = rawText
