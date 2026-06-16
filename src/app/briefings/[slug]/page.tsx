@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -77,6 +78,28 @@ export default async function BriefingPage({
   const bodyParagraphs = briefing.body
     .split("\n\n")
     .filter((p) => p.trim().length > 0);
+
+  // Find the best paragraph index to inject the chart after
+  const CHART_KEYWORDS: Record<string, RegExp> = {
+    brent_price: /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
+    gold: /\b(gold|precious metal|safe.haven|bullion|xau)/i,
+    fx_egp: /\b(egypt|egyptian|pound|egp|piast)/i,
+    fx_sar: /\b(riyal|sar|saudi.+monetary|currency peg)/i,
+    gdp_growth: /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
+    inflation: /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
+  };
+  const chartInsertAfter = (() => {
+    if (!briefing.chartData) return -1;
+    const pattern = CHART_KEYWORDS[briefing.chartData.type];
+    if (!pattern) return -1;
+    // Find first non-heading paragraph that matches
+    for (let i = 0; i < bodyParagraphs.length; i++) {
+      if (!bodyParagraphs[i].startsWith("## ") && pattern.test(bodyParagraphs[i])) {
+        return i;
+      }
+    }
+    return -1;
+  })();
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -160,22 +183,34 @@ export default async function BriefingPage({
       {/* Body */}
       <div className="prose-nusq">
         {bodyParagraphs.map((para, i) => {
+          let node: React.ReactNode;
           if (para.startsWith("## ")) {
-            return (
+            node = (
               <ScrollReveal key={i} delay={0}>
                 <h2>{para.replace("## ", "")}</h2>
               </ScrollReveal>
             );
-          }
-          if (para.startsWith("**") && para.endsWith("**")) {
-            return (
+          } else if (para.startsWith("**") && para.endsWith("**")) {
+            node = (
               <p key={i}>
                 <strong>{para.slice(2, -2)}</strong>
               </p>
             );
+          } else {
+            const withBold = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+            node = <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
           }
-          const withBold = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-          return <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
+
+          return (
+            <React.Fragment key={i}>
+              {node}
+              {i === chartInsertAfter && briefing.chartData && (
+                <ScrollReveal>
+                  <DataChart data={briefing.chartData} />
+                </ScrollReveal>
+              )}
+            </React.Fragment>
+          );
         })}
       </div>
 
@@ -189,13 +224,6 @@ export default async function BriefingPage({
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
-
-      {/* Data chart */}
-      {briefing.chartData && (
-        <ScrollReveal>
-          <DataChart data={briefing.chartData} />
-        </ScrollReveal>
-      )}
 
       {/* Markets */}
       {briefing.tickers && briefing.tickers.length > 0 && (
