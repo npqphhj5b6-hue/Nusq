@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBriefingBySlug, formatDate } from "@/lib/db";
 import TradingViewChart from "@/components/TradingViewChart";
-import ReadingProgress from "@/components/ReadingProgress";
 import ShareButtons from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +63,6 @@ export default async function BriefingPage({
 
   return (
     <>
-      <ReadingProgress />
       <div className="max-w-2xl mx-auto px-6 py-10">
         <Link
           href="/briefings"

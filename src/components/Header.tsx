@@ -1,8 +1,9 @@
 import Link from "next/link";
+import ReadingProgress from "./ReadingProgress";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-[#E8E5E0]">
+    <header className="sticky top-0 z-50 bg-white">
       <div className="h-[3px] bg-[#1A4731]" />
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
@@ -38,6 +39,7 @@ export default function Header() {
           </Link>
         </nav>
       </div>
+      <ReadingProgress />
     </header>
   );
 }
