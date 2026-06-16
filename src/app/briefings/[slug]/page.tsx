@@ -10,6 +10,17 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
 
+// Only tickers supported by the free TradingView mini-widget
+const VALID_TICKERS = new Set([
+  "TVC:UKOIL", "TVC:NGAS", "TVC:GOLD", "TVC:SILVER",
+  "FX:USDSAR", "FX:USDAED", "FX:USDKWD", "FX:USDQAR",
+  "FOREXCOM:SPXUSD", "TVC:DXY",
+]);
+
+function isValidTicker(t: string) {
+  return VALID_TICKERS.has(t);
+}
+
 function unsplashUrl(raw: string, w: number, h: number) {
   return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
 }
@@ -187,7 +198,7 @@ export default async function BriefingPage({
               <span className="eyebrow">Markets</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {briefing.tickers.map((ticker) => (
+              {briefing.tickers.filter(isValidTicker).map((ticker) => (
                 <TradingViewChart key={ticker} ticker={ticker} />
               ))}
             </div>

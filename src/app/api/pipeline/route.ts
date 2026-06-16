@@ -6,6 +6,13 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const maxDuration = 300;
 
+// Tickers supported by the free TradingView mini-widget
+const ALLOWED_TICKERS = new Set([
+  "TVC:UKOIL", "TVC:NGAS", "TVC:GOLD", "TVC:SILVER",
+  "FX:USDSAR", "FX:USDAED", "FX:USDKWD", "FX:USDQAR",
+  "FOREXCOM:SPXUSD", "TVC:DXY",
+]);
+
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",
   "july", "august", "september", "october", "november", "december",
@@ -42,7 +49,7 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "topic": "A 4–7 word Unsplash query tied to today's specific economic topic — e.g. 'oil tanker sea horizon', 'gold bars vault close-up', 'container ship port aerial', 'solar panels desert Sahara', 'stock exchange trading floor'. Atmospheric over generic.",
     "cinematic": "A 4–7 word Unsplash query for a dramatic, abstract, or landscape image that captures the mood of today's story — e.g. 'desert dunes golden hour', 'stormy sea dramatic sky', 'city lights long exposure night'. No people, no text in frame."
   },
-  "tickers": ["Array of up to 3 TradingView ticker symbols relevant to today's briefing. IMPORTANT: only use tickers from this supported list — anything else will not render. Commodities: 'TVC:UKOIL' (Brent crude), 'TVC:NGAS' (natural gas), 'TVC:GOLD', 'TVC:SILVER'. FX pairs: 'FX:USDSAR', 'FX:USDAED', 'FX:USDKWD', 'FX:USDQAR'. Global indices: 'FOREXCOM:SPXUSD' (S&P 500), 'TVC:DXY' (USD index). Pick only what is directly relevant. Empty array if nothing fits."]
+  "tickers": ["Array of up to 3 TradingView ticker symbols. CRITICAL: you MUST only use symbols from this exact list — any other symbol (including TADAWUL:, ADX:, DFM:, or any stock ticker) will fail to render and must never be used. Allowed symbols: 'TVC:UKOIL' (Brent crude), 'TVC:NGAS' (natural gas), 'TVC:GOLD', 'TVC:SILVER', 'FX:USDSAR' (Saudi riyal), 'FX:USDAED' (UAE dirham), 'FX:USDKWD' (Kuwaiti dinar), 'FX:USDQAR' (Qatari riyal), 'FOREXCOM:SPXUSD' (S&P 500), 'TVC:DXY' (USD index). Pick only what is directly relevant. Empty array if nothing fits well."]
 }`;
 
 async function fetchNewsHeadlines(): Promise<string> {
@@ -272,7 +279,9 @@ export async function GET(request: NextRequest) {
       cover_image_url: image?.url ?? null,
       cover_image_credit: image?.credit ?? null,
       cover_image_credit_link: image?.creditLink ?? null,
-      tickers: generated.tickers ?? [],
+      tickers: (generated.tickers ?? []).filter((t: string) =>
+        ALLOWED_TICKERS.has(t)
+      ).slice(0, 3),
     })
     .select("id")
     .single();
