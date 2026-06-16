@@ -6,15 +6,15 @@
 }
 
 body {
-  background-color: #F7F6F3;
-  color: #1C1C1C;
+  background-color: #ffffff;
+  color: #111111;
   -webkit-font-smoothing: antialiased;
 }
 
 .prose-nusq {
   font-size: 1rem;
   line-height: 1.8;
-  color: #1C1C1C;
+  color: #111111;
 }
 
 .prose-nusq h2 {
@@ -22,7 +22,7 @@ body {
   font-weight: 600;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
-  color: #1C1C1C;
+  color: #1a4731;
 }
 
 .prose-nusq p {

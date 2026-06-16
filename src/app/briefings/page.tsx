@@ -4,32 +4,46 @@ import { getAllBriefings, formatDate } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function BriefingsPage() {
-  const mockBriefings = await getAllBriefings();
+  const briefings = await getAllBriefings();
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-10">
-        <h1 className="text-2xl font-bold text-[#1C1C1C] mb-2">Briefings</h1>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-5 h-[2px] bg-[#1A4731]" />
+          <span className="text-[10px] font-medium tracking-[0.15em] text-[#1A4731] uppercase">
+            Archive
+          </span>
+        </div>
+        <h1
+          className="text-3xl text-[#111111] mb-2"
+          style={{ fontFamily: "var(--font-dm-serif)" }}
+        >
+          Briefings
+        </h1>
         <p className="text-sm text-[#737373]">
           Daily summaries of what moved in MENA markets and why it matters.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {mockBriefings.map((b) => (
-          <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block">
-            <div className="bg-white rounded-xl border border-[#E5E2DC] p-5 hover:border-[#1B4F72]/30 hover:shadow-sm transition-all flex items-start justify-between gap-6">
+      <div className="flex flex-col divide-y divide-[#E8E5E0]">
+        {briefings.map((b) => (
+          <Link key={b.slug} href={`/briefings/${b.slug}`} className="group block py-5 first:pt-0">
+            <div className="flex items-start justify-between gap-6">
               <div className="flex-1">
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {b.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-xs px-2 py-0.5 rounded-full bg-[#EBF4FB] text-[#1B4F72]"
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8F0EC] text-[#1A4731] font-medium"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-                <h3 className="text-sm font-semibold text-[#1C1C1C] leading-snug mb-1.5 group-hover:text-[#1B4F72] transition-colors">
+                <h3
+                  className="text-base text-[#111111] leading-snug mb-1.5 group-hover:text-[#1A4731] transition-colors"
+                  style={{ fontFamily: "var(--font-dm-serif)" }}
+                >
                   {b.title}
                 </h3>
                 <p className="text-sm text-[#737373] leading-relaxed line-clamp-2">
