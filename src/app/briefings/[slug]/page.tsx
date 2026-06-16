@@ -87,7 +87,7 @@ export default async function BriefingPage({
       {/* Headline */}
       <h1
         className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#F0ECE5] mb-5"
-        style={{ fontFamily: "var(--font-dm-serif)" }}
+        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
       >
         {briefing.title}
       </h1>

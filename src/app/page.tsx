@@ -144,7 +144,7 @@ export default async function Home() {
                   </div>
                   <h2
                     className="text-[1.75rem] md:text-[2rem] leading-[1.1] text-[#F0ECE5] mb-4 group-hover:text-[#F59E0B] transition-colors duration-300"
-                    style={{ fontFamily: "var(--font-dm-serif)" }}
+                    style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                   >
                     {featured.title}
                   </h2>
@@ -208,7 +208,7 @@ export default async function Home() {
                       )}
                       <h3
                         className="text-[1rem] leading-[1.35] text-[#F0ECE5] mb-4 group-hover:text-[#F59E0B] transition-colors duration-300 flex-1"
-                        style={{ fontFamily: "var(--font-dm-serif)" }}
+                        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                       >
                         {b.title}
                       </h3>
@@ -263,7 +263,7 @@ export default async function Home() {
                       )}
                       <h3
                         className="text-lg text-[#F0ECE5] mb-1.5 group-hover:text-[#F59E0B] transition-colors duration-300 leading-snug"
-                        style={{ fontFamily: "var(--font-dm-serif)" }}
+                        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                       >
                         {e.title}
                       </h3>
