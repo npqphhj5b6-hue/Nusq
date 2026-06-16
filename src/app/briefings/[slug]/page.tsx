@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getBriefingBySlug, formatDate } from "@/lib/db";
 import TradingViewChart from "@/components/TradingViewChart";
 import ShareButtons from "@/components/ShareButtons";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +64,10 @@ export default async function BriefingPage({
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
+      {/* Back */}
       <Link
         href="/briefings"
-        className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#1A4731] transition-colors mb-10"
+        className="inline-flex items-center gap-1.5 text-sm text-[#3A4F66] hover:text-[#C9A967] transition-colors mb-10"
       >
         ← Briefings
       </Link>
@@ -75,29 +77,32 @@ export default async function BriefingPage({
         {briefing.tags.map((tag) => (
           <span
             key={tag}
-            className="text-[10px] font-semibold tracking-[0.12em] text-[#1A4731] uppercase"
+            className="text-[10px] font-semibold tracking-[0.12em] text-[#15A06E] uppercase bg-[#0A1F15] px-2 py-0.5 rounded"
           >
             {tag}
           </span>
         ))}
       </div>
 
-      {/* Big headline */}
+      {/* Headline */}
       <h1
-        className="text-[2.75rem] md:text-[3.5rem] leading-[1.08] text-[#111111] mb-5"
+        className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#EDE8DF] mb-5"
         style={{ fontFamily: "var(--font-dm-serif)" }}
       >
         {briefing.title}
       </h1>
 
-      {/* Summary — prominent deck */}
-      <p className="text-[1.15rem] text-[#444444] leading-[1.65] mb-6 font-light">
+      {/* Summary deck */}
+      <p className="text-[1.125rem] text-[#7A8FA6] leading-[1.7] mb-6 font-light">
         {briefing.summary}
       </p>
 
       {/* Meta row */}
-      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#E8E5E0]">
-        <div className="flex items-center gap-3 text-xs text-[#A8A8A8]">
+      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#1A2B40]">
+        <div
+          className="flex items-center gap-3 text-xs text-[#3A4F66]"
+          style={{ fontFamily: "var(--font-geist-mono)" }}
+        >
           <span>{formatDate(briefing.date)}</span>
           <span>·</span>
           <span>{briefing.readingTime} min read</span>
@@ -105,31 +110,49 @@ export default async function BriefingPage({
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
 
-      {/* Cover image — matches text column width */}
+      {/* Cover image */}
       {briefing.coverImageUrl && (
-        <div className="relative w-full mb-12 overflow-hidden rounded-lg" style={{ aspectRatio: "16/7" }}>
-          <img
-            src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
-            alt={briefing.title}
-            className="w-full h-full object-cover"
-          />
-          {briefing.coverImageCredit && (
-            <a
-              href={briefing.coverImageCreditLink ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-2 right-3 text-[10px] text-white/60 hover:text-white/90 transition-colors"
-            >
-              {briefing.coverImageCredit}
-            </a>
-          )}
-        </div>
+        <ScrollReveal>
+          <div
+            className="relative w-full mb-12 overflow-hidden rounded-xl"
+            style={{ aspectRatio: "16/7" }}
+          >
+            <img
+              src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
+              alt={briefing.title}
+              className="w-full h-full object-cover"
+            />
+            {/* Vignette */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(7,13,26,0.4) 0%, transparent 40%)",
+              }}
+            />
+            {briefing.coverImageCredit && (
+              <a
+                href={briefing.coverImageCreditLink ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-2 right-3 text-[10px] text-white/50 hover:text-white/80 transition-colors"
+              >
+                {briefing.coverImageCredit}
+              </a>
+            )}
+          </div>
+        </ScrollReveal>
       )}
 
+      {/* Body */}
       <div className="prose-nusq">
         {bodyParagraphs.map((para, i) => {
           if (para.startsWith("## ")) {
-            return <h2 key={i}>{para.replace("## ", "")}</h2>;
+            return (
+              <ScrollReveal key={i} delay={0}>
+                <h2>{para.replace("## ", "")}</h2>
+              </ScrollReveal>
+            );
           }
           if (para.startsWith("**") && para.endsWith("**")) {
             return (
@@ -144,10 +167,10 @@ export default async function BriefingPage({
       </div>
 
       {/* Bottom share row */}
-      <div className="mt-10 pt-8 border-t border-[#E8E5E0] flex items-center justify-between">
+      <div className="mt-10 pt-8 border-t border-[#1A2B40] flex items-center justify-between">
         <Link
           href="/briefings"
-          className="text-sm text-[#737373] hover:text-[#1A4731] transition-colors"
+          className="text-sm text-[#3A4F66] hover:text-[#C9A967] transition-colors"
         >
           ← All briefings
         </Link>
@@ -156,19 +179,19 @@ export default async function BriefingPage({
 
       {/* Markets */}
       {briefing.tickers && briefing.tickers.length > 0 && (
-        <div className="mt-10 pt-10 border-t border-[#E8E5E0]">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-5 h-[2px] bg-[#1A4731]" />
-            <h2 className="text-[10px] font-medium tracking-[0.15em] text-[#1A4731] uppercase">
-              Markets
-            </h2>
+        <ScrollReveal>
+          <div className="mt-10 pt-10 border-t border-[#1A2B40]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-5 h-[1px] bg-[#C9A967] gold-line" />
+              <span className="eyebrow">Markets</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {briefing.tickers.map((ticker) => (
+                <TradingViewChart key={ticker} ticker={ticker} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {briefing.tickers.map((ticker) => (
-              <TradingViewChart key={ticker} ticker={ticker} />
-            ))}
-          </div>
-        </div>
+        </ScrollReveal>
       )}
     </div>
   );

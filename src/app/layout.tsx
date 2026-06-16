@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, DM_Serif_Display, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, DM_Serif_Display, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -18,7 +23,7 @@ const dmSerif = DM_Serif_Display({
 const arabicSans = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic"],
-  weight: ["700"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${dmSerif.variable} ${arabicSans.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dmSerif.variable} ${arabicSans.variable} h-full`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <Header />

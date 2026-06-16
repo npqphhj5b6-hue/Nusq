@@ -5,57 +5,132 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ── Base ── */
 body {
-  background-color: #ffffff;
-  color: #111111;
+  background-color: #070D1A;
+  color: #EDE8DF;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Prose (article body) ── */
 .prose-nusq {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: #111111;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: #C8C2BC;
 }
-
 .prose-nusq h2 {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  color: #1a4731;
+  margin-top: 2.5rem;
+  margin-bottom: 0.875rem;
+  color: #C9A967;
+  letter-spacing: -0.01em;
 }
-
 .prose-nusq p {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.375rem;
 }
-
 .prose-nusq strong {
   font-weight: 600;
+  color: #EDE8DF;
 }
 
-/* Page entrance */
+/* ── Page entrance ── */
 @keyframes nusq-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 .page-enter {
-  animation: nusq-fade-up 0.4s ease-out both;
+  animation: nusq-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Card lift on hover */
+/* ── Hero word stagger ── */
+@keyframes hero-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.hero-word {
+  display: inline-block;
+  opacity: 0;
+  animation: hero-word-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Hero subtitle + CTA fade ── */
+@keyframes hero-fade-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-fade {
+  opacity: 0;
+  animation: hero-fade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Card lift ── */
 .card-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s ease;
 }
 .card-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
+  transform: translateY(-5px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(201, 169, 103, 0.18);
 }
 
-/* Button press */
+/* ── Button press ── */
 .btn-press {
-  transition: transform 0.1s ease, background-color 0.15s ease;
+  transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 .btn-press:active {
   transform: scale(0.96);
+}
+
+/* ── Ken Burns image hover ── */
+.img-wrap {
+  overflow: hidden;
+}
+.img-wrap img {
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.img-wrap:hover img {
+  transform: scale(1.05);
+}
+
+/* ── Gold line expand ── */
+@keyframes gold-expand {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.gold-line {
+  transform-origin: left;
+  animation: gold-expand 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Section label eyebrow ── */
+.eyebrow {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #C9A967;
 }
