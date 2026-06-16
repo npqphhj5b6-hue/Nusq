@@ -105,9 +105,9 @@ export default async function BriefingPage({
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
 
-      {/* Cover image — bleeds wider than text column */}
+      {/* Cover image — matches text column width */}
       {briefing.coverImageUrl && (
-        <div className="relative -mx-6 md:-mx-20 mb-12 overflow-hidden" style={{ aspectRatio: "16/7" }}>
+        <div className="relative w-full mb-12 overflow-hidden rounded-lg" style={{ aspectRatio: "16/7" }}>
           <img
             src={unsplashUrl(briefing.coverImageUrl, 1400, 612)}
             alt={briefing.title}
