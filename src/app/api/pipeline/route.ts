@@ -49,7 +49,11 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "topic": "A 4–7 word Unsplash query tied to today's specific economic topic — e.g. 'oil tanker sea horizon', 'gold bars vault close-up', 'container ship port aerial', 'solar panels desert Sahara', 'stock exchange trading floor'. Atmospheric over generic.",
     "cinematic": "A 4–7 word Unsplash query for a dramatic, abstract, or landscape image that captures the mood of today's story — e.g. 'desert dunes golden hour', 'stormy sea dramatic sky', 'city lights long exposure night'. No people, no text in frame."
   },
-  "tickers": ["Array of up to 3 TradingView ticker symbols. CRITICAL: you MUST only use symbols from this exact list — any other symbol (including TADAWUL:, ADX:, DFM:, or any stock ticker) will fail to render and must never be used. Allowed symbols: 'TVC:UKOIL' (Brent crude), 'TVC:NGAS' (natural gas), 'TVC:GOLD', 'TVC:SILVER', 'FX:USDSAR' (Saudi riyal), 'FX:USDAED' (UAE dirham), 'FX:USDKWD' (Kuwaiti dinar), 'FX:USDQAR' (Qatari riyal), 'FOREXCOM:SPXUSD' (S&P 500), 'TVC:DXY' (USD index). Pick only what is directly relevant. Empty array if nothing fits well."]
+  "tickers": ["Array of up to 3 TradingView ticker symbols. CRITICAL: you MUST only use symbols from this exact list — any other symbol (including TADAWUL:, ADX:, DFM:, or any stock ticker) will fail to render and must never be used. Allowed symbols: 'TVC:UKOIL' (Brent crude), 'TVC:NGAS' (natural gas), 'TVC:GOLD', 'TVC:SILVER', 'FX:USDSAR' (Saudi riyal), 'FX:USDAED' (UAE dirham), 'FX:USDKWD' (Kuwaiti dinar), 'FX:USDQAR' (Qatari riyal), 'FOREXCOM:SPXUSD' (S&P 500), 'TVC:DXY' (USD index). Pick only what is directly relevant. Empty array if nothing fits well."],
+  "chart": {
+    "type": "Choose ONE or null: 'brent_price' (oil prices, OPEC, Gulf energy, Aramco), 'gold' (gold price, commodities, safe-haven), 'fx_egp' (Egypt, pound, EGP devaluation, IMF/Egypt), 'fx_sar' (Saudi monetary policy, riyal), 'gdp_growth' (country economic growth trajectory), 'inflation' (inflation, cost of living, rate decisions). Use null if none clearly fit.",
+    "country": "2-letter ISO code — required only when type is gdp_growth or inflation. One of: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null."
+  }
 }`;
 
 async function fetchNewsHeadlines(): Promise<string> {
@@ -196,6 +200,90 @@ Reply with ONLY the number of the best image (1–${candidates.length}). No othe
   return candidates[index];
 }
 
+
+// ── Chart data via FRED & World Bank ─────────────────────────────────────────
+
+const FRED_SERIES: Record<string, string> = {
+  brent_price: "MCOILBRENTEU",
+  gold: "GOLDPMGBD228NLBM",
+  fx_egp: "EXEGUS",
+  fx_sar: "EXSAUS",
+};
+
+const WB_INDICATORS: Record<string, string> = {
+  gdp_growth: "NY.GDP.MKTP.KD.ZG",
+  inflation: "FP.CPI.TOTL.ZG",
+};
+
+const CHART_TITLES: Record<string, string> = {
+  brent_price: "Brent Crude Oil (USD/barrel)",
+  gold: "Gold Price (USD/troy oz)",
+  fx_egp: "USD/EGP Exchange Rate",
+  fx_sar: "USD/SAR Exchange Rate",
+  gdp_growth: "GDP Growth Rate (%)",
+  inflation: "Inflation Rate (CPI, %)",
+};
+
+interface FredObservation { date: string; value: string }
+
+async function fetchFredSeries(seriesId: string, limit = 24): Promise<{ labels: string[]; values: number[] }> {
+  const key = process.env.FRED_API_KEY;
+  if (!key) throw new Error("FRED_API_KEY not set");
+  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${key}&file_type=json&sort_order=desc&limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FRED error ${res.status}`);
+  const data = await res.json() as { observations: FredObservation[] };
+  const obs = data.observations
+    .filter((o) => o.value !== "." && !isNaN(parseFloat(o.value)))
+    .reverse();
+  return {
+    labels: obs.map((o) => o.date.slice(0, 7)), // YYYY-MM
+    values: obs.map((o) => parseFloat(parseFloat(o.value).toFixed(2))),
+  };
+}
+
+async function fetchWorldBankSeries(countryCode: string, indicator: string, limit = 10): Promise<{ labels: string[]; values: number[] }> {
+  const url = `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicator}?format=json&per_page=${limit}&mrv=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`World Bank error ${res.status}`);
+  const data = await res.json() as [unknown, Array<{ date: string; value: number | null }>];
+  const rows = (data[1] ?? [])
+    .filter((r) => r.value !== null)
+    .reverse();
+  return {
+    labels: rows.map((r) => r.date),
+    values: rows.map((r) => parseFloat((r.value as number).toFixed(2))),
+  };
+}
+
+interface ChartSpec { type: string | null; country?: string | null }
+
+async function buildChartData(spec: ChartSpec): Promise<import("@/lib/types").ChartData | null> {
+  if (!spec.type) return null;
+  try {
+    let series: { labels: string[]; values: number[] };
+    if (spec.type in FRED_SERIES) {
+      series = await fetchFredSeries(FRED_SERIES[spec.type]);
+    } else if (spec.type in WB_INDICATORS && spec.country) {
+      series = await fetchWorldBankSeries(spec.country, WB_INDICATORS[spec.type]);
+    } else {
+      return null;
+    }
+    if (series.labels.length < 3) return null;
+    return {
+      type: spec.type,
+      title: CHART_TITLES[spec.type] ?? spec.type,
+      labels: series.labels,
+      values: series.values,
+      unit: spec.type.startsWith("fx_") ? "rate" : spec.type === "brent_price" || spec.type === "gold" ? "USD" : "%",
+      source: spec.type in FRED_SERIES ? "FRED / St. Louis Fed" : "World Bank Open Data",
+    };
+  } catch {
+    return null;
+  }
+}
+
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -247,6 +335,7 @@ export async function GET(request: NextRequest) {
     body: string;
     image_queries: { mena: string; topic: string; cinematic: string };
     tickers: string[];
+    chart?: { type: string | null; country?: string | null } | null;
   };
 
   const wordCount = generated.body.split(/\s+/).length;
@@ -265,6 +354,8 @@ export async function GET(request: NextRequest) {
       }
     : null;
 
+  const chartData = await buildChartData(generated.chart ?? { type: null });
+
   const { data: briefing, error: insertError } = await supabaseAdmin
     .from("briefings")
     .insert({
@@ -282,6 +373,7 @@ export async function GET(request: NextRequest) {
       tickers: (generated.tickers ?? []).filter((t: string) =>
         ALLOWED_TICKERS.has(t)
       ).slice(0, 3),
+      chart_data: chartData ?? null,
     })
     .select("id")
     .single();

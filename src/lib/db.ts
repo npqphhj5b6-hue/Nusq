@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Briefing, Essay } from "./types";
+import { Briefing, ChartData, Essay } from "./types";
 
 export async function getAllBriefings(): Promise<Briefing[]> {
   const { data, error } = await supabase
@@ -60,6 +60,7 @@ function rowToBriefing(row: any): Briefing {
     coverImageCredit: row.cover_image_credit ?? null,
     coverImageCreditLink: row.cover_image_credit_link ?? null,
     tickers: row.tickers ?? [],
+    chartData: (row.chart_data as ChartData | null) ?? null,
   };
 }
 

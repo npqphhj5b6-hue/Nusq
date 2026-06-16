@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBriefingBySlug, formatDate } from "@/lib/db";
 import TradingViewChart from "@/components/TradingViewChart";
+import DataChart from "@/components/DataChart";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
 
@@ -188,6 +189,13 @@ export default async function BriefingPage({
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
+
+      {/* Data chart */}
+      {briefing.chartData && (
+        <ScrollReveal>
+          <DataChart data={briefing.chartData} />
+        </ScrollReveal>
+      )}
 
       {/* Markets */}
       {briefing.tickers && briefing.tickers.length > 0 && (

@@ -1,3 +1,12 @@
+export interface ChartData {
+  type: string;
+  title: string;
+  labels: string[];
+  values: number[];
+  unit: string;
+  source: string;
+}
+
 export interface Briefing {
   slug: string;
   title: string;
@@ -11,6 +20,7 @@ export interface Briefing {
   coverImageCredit?: string | null;
   coverImageCreditLink?: string | null;
   tickers?: string[];
+  chartData?: ChartData | null;
 }
 
 export interface Essay {
