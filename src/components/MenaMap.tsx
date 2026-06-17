@@ -11,9 +11,7 @@ interface Props {
   stories: MapStory[];
 }
 
-// Approximate centre-point coordinates for MENA countries and cities
 const GEO_LOOKUP: Record<string, [number, number]> = {
-  // Countries
   "Saudi Arabia": [24.0, 45.0],
   "UAE": [24.2, 54.4],
   "United Arab Emirates": [24.2, 54.4],
@@ -39,7 +37,6 @@ const GEO_LOOKUP: Record<string, [number, number]> = {
   "GCC": [24.0, 50.0],
   "MENA": [27.0, 40.0],
   "Gulf": [26.0, 51.0],
-  // Cities
   "Riyadh": [24.69, 46.72],
   "Jeddah": [21.49, 39.19],
   "Dubai": [25.2, 55.27],
@@ -66,10 +63,11 @@ function resolveCoords(location: string, city?: string): [number, number] | null
 }
 
 const MAP_BOUNDS = { minLng: -10, maxLng: 65, minLat: 10, maxLat: 45 };
+const W = 700, H = 320;
 
-function project(lat: number, lng: number, w: number, h: number): [number, number] {
-  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * w;
-  const y = ((MAP_BOUNDS.maxLat - lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * h;
+function project(lat: number, lng: number): [number, number] {
+  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * W;
+  const y = ((MAP_BOUNDS.maxLat - lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * H;
   return [x, y];
 }
 
@@ -83,9 +81,6 @@ export default function MenaMap({ stories }: Props) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const W = 700;
-  const H = 320;
-
   return (
     <div className="relative w-full rounded-xl overflow-hidden border border-[var(--c-border)]">
       {/* Header */}
@@ -94,64 +89,35 @@ export default function MenaMap({ stories }: Props) {
         <span className="eyebrow text-[10px]">Stories in this briefing</span>
       </div>
 
-      {/* Map SVG */}
-      <div className="relative" style={{ background: "#04101E" }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          width="100%"
-          className="block"
-          style={{ maxHeight: "300px" }}
-        >
-          {/* Ocean background */}
+      {/* Map */}
+      <div style={{ background: "#04101E" }}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block" style={{ maxHeight: "300px" }}>
+          {/* Ocean */}
           <rect width={W} height={H} fill="#04101E" />
 
-          {/* Grid lines — barely visible */}
-          {[15, 20, 25, 30, 35, 40].map((lat) => {
-            const [, y] = project(lat, 0, W, H);
-            return <line key={`lat-${lat}`} x1={0} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />;
-          })}
-          {[0, 15, 30, 45, 60].map((lng) => {
-            const [x] = project(0, lng, W, H);
-            return <line key={`lng-${lng}`} x1={x} y1={0} x2={x} y2={H} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />;
-          })}
-
-          {/* Country fills + borders */}
+          {/* Countries — paths pre-projected from Natural Earth GeoJSON */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d}
-              fill="#0C1F38"
-              stroke="rgba(255,255,255,0.22)"
-              strokeWidth="0.9"
-              strokeLinejoin="round"
-            />
+            <path key={name} d={d} fill="#0D2240" stroke="#1E4060" strokeWidth="0.8" strokeLinejoin="round" />
           ))}
 
-          {/* Pins */}
+          {/* Story pins */}
           {pins.map(({ story, coords }) => {
             const [lat, lng] = coords;
-            const [x, y] = project(lat, lng, W, H);
+            const [x, y] = project(lat, lng);
             return (
-              <g
-                key={story.number}
-                onClick={() => scrollToStory(story.number)}
-                style={{ cursor: "pointer" }}
-                className="group"
-              >
-                {/* Outer glow ring */}
+              <g key={story.number} onClick={() => scrollToStory(story.number)} style={{ cursor: "pointer" }} className="group">
                 <circle cx={x} cy={y} r="14" fill="#F59E0B" fillOpacity="0.1" />
-                {/* Mid ring */}
-                <circle cx={x} cy={y} r="8" fill="#F59E0B" fillOpacity="0.18" />
-                {/* Dot */}
-                <circle cx={x} cy={y} r="6" fill="#F59E0B" stroke="#04101E" strokeWidth="1.5" />
-                {/* Number */}
-                <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"
-                  style={{ fontSize: "7px", fontWeight: 700, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}>
+                <circle cx={x} cy={y} r="8" fill="#F59E0B" fillOpacity="0.2" />
+                <circle cx={x} cy={y} r="5.5" fill="#F59E0B" stroke="#04101E" strokeWidth="1.5" />
+                <text x={x} y={y + 0.5} textAnchor="middle" dominantBaseline="middle"
+                  style={{ fontSize: "6.5px", fontWeight: 700, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}>
                   {story.number}
                 </text>
-                {/* Tooltip label — appears above pin on hover */}
+                {/* Hover tooltip */}
                 <g transform={`translate(${x}, ${y - 18})`} className="opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s" }}>
-                  <rect x={-55} y={-18} width="110" height="16" rx="3" fill="#04101E" stroke="rgba(245,158,11,0.3)" strokeWidth="0.8" />
+                  <rect x={-55} y={-18} width="110" height="16" rx="3" fill="#04101E" stroke="rgba(245,158,11,0.35)" strokeWidth="0.8" />
                   <text x={0} y={-7} textAnchor="middle"
-                    style={{ fontSize: "8px", fill: "rgba(255,255,255,0.7)", fontFamily: "monospace", pointerEvents: "none" }}>
+                    style={{ fontSize: "7.5px", fill: "rgba(255,255,255,0.75)", fontFamily: "monospace", pointerEvents: "none" }}>
                     {story.headline.length > 26 ? story.headline.slice(0, 26) + "…" : story.headline}
                   </text>
                 </g>
@@ -162,7 +128,7 @@ export default function MenaMap({ stories }: Props) {
       </div>
 
       {/* Story index row */}
-      <div className="px-5 py-3 flex flex-wrap gap-2 bg-[var(--c-surface)] border-t border-[var(--c-border)]">
+      <div className="px-5 py-3 flex flex-wrap gap-3 bg-[var(--c-surface)] border-t border-[var(--c-border)]">
         {stories.map((s) => (
           <button
             key={s.number}
@@ -181,158 +147,26 @@ export default function MenaMap({ stories }: Props) {
   );
 }
 
-function buildPath(points: [number, number][], w: number, h: number): string {
-  return points.map((p, i) => {
-    const [x, y] = project(p[0], p[1], w, h);
-    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ") + " Z";
-}
-
-const W = 700, H = 320;
-
+// Country shapes pre-projected from Natural Earth 110m GeoJSON into our
+// equirectangular viewport (bounds: lng -10→65, lat 10→45, W=700, H=320).
 const COUNTRY_SHAPES: { name: string; d: string }[] = [
-  // ── North Africa ─────────────────────────────────────────────────────────────
-  {
-    name: "Morocco",
-    d: buildPath([
-      [35.9, -5.4], [35.5, -2.0], [34.8, -1.7], [33.5, -1.2], [29.0, -8.7],
-      [27.6, -13.1], [27.9, -13.2], [30.0, -10.5], [33.5, -7.0], [35.8, -5.8],
-    ], W, H),
-  },
-  {
-    name: "Algeria",
-    d: buildPath([
-      [37.0, -1.5], [37.0, 8.0], [33.5, 8.5], [30.0, 8.0], [22.0, 8.5],
-      [19.0, 5.5], [19.5, -2.0], [21.5, -5.5], [27.5, -8.5], [29.0, -8.5],
-      [33.5, -1.2],
-    ], W, H),
-  },
-  {
-    name: "Tunisia",
-    d: buildPath([
-      [37.3, 8.2], [37.5, 10.5], [37.0, 11.5], [33.5, 11.5], [30.5, 9.5],
-      [30.5, 8.0], [33.5, 8.5],
-    ], W, H),
-  },
-  {
-    name: "Libya",
-    d: buildPath([
-      [33.0, 11.5], [33.0, 25.0], [25.0, 25.0], [22.0, 25.0], [20.0, 20.5],
-      [20.5, 14.0], [23.0, 11.5], [26.5, 10.0], [30.0, 9.5], [33.5, 11.5],
-    ], W, H),
-  },
-  {
-    name: "Egypt",
-    d: buildPath([
-      [22.0, 25.0], [31.5, 25.0], [31.5, 34.0], [30.0, 34.9],
-      [29.9, 32.5], [28.0, 30.0], [25.0, 28.0], [22.0, 28.0],
-    ], W, H),
-  },
-  {
-    name: "Sudan",
-    d: buildPath([
-      [22.0, 25.0], [22.0, 37.0], [19.5, 37.0], [17.0, 38.5], [14.5, 36.5],
-      [12.5, 36.0], [12.0, 33.0], [12.5, 30.0], [15.0, 27.5], [19.0, 27.0],
-      [22.0, 28.0],
-    ], W, H),
-  },
-  // ── Levant & Near East ────────────────────────────────────────────────────────
-  {
-    name: "Turkey",
-    d: buildPath([
-      [42.0, 26.5], [41.5, 36.5], [42.0, 40.5], [40.5, 43.5], [39.5, 44.5],
-      [37.0, 44.5], [36.5, 42.0], [36.8, 36.5], [36.0, 36.0],
-      [36.2, 29.5], [38.5, 26.5],
-    ], W, H),
-  },
-  {
-    name: "Syria",
-    d: buildPath([
-      [37.0, 36.5], [37.0, 42.0], [33.5, 42.0], [32.5, 38.5],
-      [33.5, 36.5], [35.5, 36.0],
-    ], W, H),
-  },
-  {
-    name: "Lebanon",
-    d: buildPath([
-      [34.5, 35.1], [34.7, 36.6], [33.1, 35.6], [33.0, 35.1],
-    ], W, H),
-  },
-  {
-    name: "Jordan",
-    d: buildPath([
-      [32.5, 35.0], [33.5, 36.5], [33.5, 38.9], [29.5, 39.0],
-      [29.2, 35.0], [29.9, 34.9], [31.0, 35.0],
-    ], W, H),
-  },
-  // ── Arabian Peninsula ─────────────────────────────────────────────────────────
-  {
-    name: "Saudi Arabia",
-    d: buildPath([
-      [29.5, 35.0], [29.5, 39.2], [27.5, 41.5], [25.0, 44.5], [22.5, 46.0],
-      [21.0, 47.5], [19.0, 51.0], [18.0, 50.5], [17.5, 47.0], [18.5, 45.5],
-      [19.5, 42.0], [22.0, 38.5], [24.5, 37.0], [26.0, 37.5], [27.5, 36.5],
-      [29.0, 36.5],
-    ], W, H),
-  },
-  {
-    name: "Kuwait",
-    d: buildPath([
-      [28.5, 46.5], [29.1, 46.7], [29.4, 47.4], [29.5, 48.4], [28.5, 48.5],
-      [28.0, 47.5],
-    ], W, H),
-  },
-  {
-    name: "Qatar",
-    d: buildPath([
-      [24.5, 50.8], [25.0, 51.0], [26.2, 51.2], [26.1, 50.8], [25.5, 50.7],
-    ], W, H),
-  },
-  {
-    name: "Bahrain",
-    d: buildPath([
-      [25.9, 50.3], [26.3, 50.4], [26.3, 50.7], [25.9, 50.7],
-    ], W, H),
-  },
-  {
-    name: "UAE",
-    d: buildPath([
-      [24.1, 51.6], [24.5, 52.6], [25.1, 54.0], [25.6, 55.9], [25.8, 56.4],
-      [24.2, 56.3], [23.6, 58.1], [22.9, 55.5], [23.0, 54.0], [24.0, 53.0],
-    ], W, H),
-  },
-  {
-    name: "Oman",
-    d: buildPath([
-      [22.0, 55.6], [23.0, 56.8], [22.6, 59.5], [21.0, 59.8],
-      [19.5, 57.5], [18.0, 53.5], [19.0, 52.5], [21.5, 55.0],
-    ], W, H),
-  },
-  {
-    name: "Yemen",
-    d: buildPath([
-      [18.5, 42.5], [17.5, 44.0], [16.0, 47.5], [14.5, 50.5],
-      [12.5, 44.0], [13.5, 45.5], [14.5, 49.5], [16.0, 52.5], [18.0, 54.0],
-      [19.5, 52.0], [22.5, 55.0],
-    ], W, H),
-  },
-  // ── Iraq & Iran ───────────────────────────────────────────────────────────────
-  {
-    name: "Iraq",
-    d: buildPath([
-      [37.0, 38.8], [37.0, 42.0], [34.5, 44.5], [33.5, 46.5],
-      [30.0, 47.5], [29.5, 48.5], [29.5, 46.5], [30.5, 46.0],
-      [31.0, 44.5], [31.0, 41.5], [29.5, 39.0],
-    ], W, H),
-  },
-  {
-    name: "Iran",
-    d: buildPath([
-      [39.5, 44.5], [38.0, 47.0], [37.5, 50.0], [37.5, 54.0],
-      [36.5, 57.5], [35.0, 61.0], [31.0, 61.5], [26.5, 61.5],
-      [25.0, 59.0], [23.5, 57.5], [25.0, 56.5], [26.5, 54.5],
-      [27.5, 51.5], [29.0, 50.5], [29.5, 48.5], [30.0, 47.5],
-      [33.5, 46.5], [34.5, 44.5], [37.0, 44.5],
-    ], W, H),
-  },
+  { name: "Lebanon", d: "M421.0,108.9 L424.1,103.2 L424.4,101.5 L425.3,101.4 L426.0,100.6 L426.2,97.7 L427.5,96.3 L429.2,95.6 L429.1,94.6 L431.8,94.8 L432.2,94.3 L433.4,94.8 L432.3,95.9 L434.2,96.7 L435.0,98.8 L432.0,101.1 L432.8,102.1 L429.8,102.2 L428.6,103.9 L429.7,104.5 L425.6,107.5 L425.1,107.1 L424.5,108.9 L421.0,108.9 Z" },
+  { name: "Syria", d: "M427.1,112.1 L428.3,110.2 L427.1,106.7 L429.7,104.5 L428.9,103.2 L432.7,102.2 L432.0,101.1 L435.0,98.8 L432.3,95.9 L433.4,94.8 L429.1,94.6 L428.6,87.6 L426.8,86.1 L427.5,83.7 L430.8,83.9 L432.8,80.2 L435.5,80.2 L434.3,77.9 L435.3,74.7 L439.2,76.6 L442.8,76.5 L450.1,74.0 L459.6,76.2 L473.3,72.2 L488.6,71.0 L488.9,72.6 L483.9,76.6 L479.6,77.6 L478.6,79.0 L479.4,85.4 L477.9,93.3 L475.7,96.9 L437.0,116.0 L433.0,115.4 L427.1,112.1 Z" },
+  { name: "Morocco", d: "M11.0,158.5 L11.3,163.5 L1.7,165.9 L-7.1,164.4 L-13.0,165.6 L-16.0,172.8 L-19.2,173.8 L-22.7,184.4 L-36.3,194.8 L-39.4,207.5 L-44.3,214.9 L-65.5,215.6 L-53.9,192.8 L-55.4,194.1 L-45.7,185.5 L-41.7,171.9 L-33.2,166.9 L-27.6,156.1 L-13.9,152.5 L-2.3,143.5 L3.2,136.0 L3.6,133.4 L1.0,131.2 L1.4,124.3 L6.7,117.1 L6.9,113.6 L13.7,107.3 L29.7,100.2 L38.0,84.3 L42.9,83.0 L46.0,87.6 L52.5,90.0 L62.4,89.6 L65.6,87.3 L66.7,90.2 L72.1,90.4 L76.8,93.8 L77.7,107.5 L83.7,114.3 L82.0,118.0 L66.4,118.2 L66.9,120.7 L59.2,122.1 L57.5,126.4 L60.2,128.4 L59.3,130.6 L52.5,132.5 L41.6,141.5 L21.9,142.8 L12.4,148.9 L11.0,158.5 Z" },
+  { name: "Oman", d: "M619.6,183.1 L626.7,192.4 L641.8,196.2 L648.8,205.2 L651.7,205.6 L651.6,208.1 L639.5,224.8 L636.6,224.9 L636.6,223.0 L633.3,226.2 L632.9,237.8 L623.5,240.0 L619.3,247.4 L610.8,248.3 L606.9,255.9 L598.1,255.9 L588.8,259.3 L578.5,237.8 L606.5,228.6 L612.6,210.5 L608.4,203.9 L610.9,192.3 L616.0,191.3 L613.7,189.9 L614.4,183.6 L616.9,185.3 L619.6,183.1 Z M616.7,173.2 L620.7,170.4 L618.6,177.1 L616.7,173.2 Z" },
+  { name: "UAE", d: "M618.6,177.1 L619.6,183.1 L616.9,185.3 L615.8,183.1 L614.1,183.9 L613.7,189.9 L615.4,190.0 L616.0,191.3 L610.9,192.3 L611.7,194.1 L607.8,204.6 L583.9,201.7 L574.7,191.1 L574.9,188.5 L578.0,192.3 L581.9,191.9 L584.3,190.1 L596.2,191.4 L601.3,189.3 L602.7,187.9 L601.2,187.1 L603.3,185.2 L609.7,181.0 L611.8,177.6 L615.6,175.8 L616.7,173.2 L617.7,173.6 L617.4,176.7 L618.6,177.1 Z" },
+  { name: "Turkey", d: "M498.8,35.6 L500.9,44.7 L511.5,49.0 L504.1,51.4 L508.3,60.9 L505.9,64.9 L509.6,66.6 L511.2,71.8 L506.7,73.4 L504.8,70.3 L492.6,69.7 L459.6,76.2 L435.3,74.7 L435.6,80.1 L430.6,83.9 L427.3,79.5 L431.3,76.4 L429.5,73.8 L423.2,77.3 L417.1,74.8 L410.3,80.3 L399.5,82.0 L379.7,74.1 L377.3,80.2 L370.3,81.2 L358.9,74.2 L355.0,77.1 L349.1,76.2 L357.7,72.8 L347.8,73.5 L347.6,64.1 L338.2,61.4 L346.9,59.9 L344.8,49.6 L336.7,50.3 L342.9,42.0 L364.5,42.4 L372.8,39.0 L365.6,34.4 L384.8,35.7 L404.4,27.3 L420.2,26.6 L433.0,34.2 L451.1,37.3 L468.0,37.3 L480.9,31.9 L491.5,31.2 L498.8,35.6 Z" },
+  { name: "Libya", d: "M200.7,108.1 L235.0,115.2 L240.4,124.5 L259.9,128.7 L271.2,134.7 L280.9,128.6 L280.7,117.2 L295.2,110.3 L309.0,113.0 L310.9,117.4 L326.8,119.3 L323.8,135.8 L326.5,144.6 L326.5,228.6 L317.2,228.6 L317.2,233.2 L242.5,197.1 L226.0,204.7 L219.2,199.5 L205.0,196.4 L200.7,189.1 L189.1,186.7 L180.9,172.2 L185.3,168.9 L186.1,156.6 L185.0,145.1 L180.0,136.1 L188.5,130.5 L189.1,121.8 L201.1,114.9 L200.7,108.1 Z" },
+  { name: "Tunisia", d: "M200.7,108.1 L201.1,114.9 L189.1,121.8 L187.7,124.1 L189.0,129.4 L185.5,133.9 L182.2,135.1 L177.8,118.2 L171.1,114.0 L168.8,108.9 L165.4,107.6 L163.2,101.9 L163.5,99.7 L170.2,94.7 L172.0,89.2 L170.3,83.9 L171.3,78.4 L173.6,73.7 L184.3,70.0 L196.5,72.4 L197.5,89.4 L192.2,95.6 L186.7,99.0 L189.7,103.3 L200.7,108.1 Z" },
+  { name: "Sudan", d: "M306.7,311.6 L302.8,296.1 L296.9,294.5 L303.8,282.2 L307.1,269.3 L317.2,267.7 L317.2,228.6 L326.5,228.6 L326.5,210.3 L437.6,210.3 L442.7,239.0 L453.6,246.7 L438.4,255.4 L430.5,295.1 L411.3,325.0 L402.6,313.2 L403.3,299.8 L392.8,301.7 L396.0,310.1 L384.2,322.2 L373.5,317.5 L362.5,326.2 L341.8,324.7 L334.4,316.2 L318.4,332.1 L312.6,331.6 L306.7,311.6 Z" },
+  { name: "Iraq", d: "M511.2,71.8 L516.3,82.3 L525.7,84.1 L524.1,90.4 L519.6,93.2 L516.9,100.8 L524.1,107.3 L535.8,115.2 L539.8,120.6 L538.3,128.0 L541.5,132.9 L546.6,137.6 L533.8,136.8 L527.6,145.4 L510.5,144.4 L486.0,127.3 L470.6,119.6 L458.7,117.8 L455.2,106.3 L475.7,96.9 L479.4,85.4 L478.6,79.0 L492.0,69.9 L504.8,70.3 L511.2,71.8 Z" },
+  { name: "Iran", d: "M511.5,49.0 L517.4,54.8 L523.8,56.1 L541.1,48.4 L551.9,67.4 L577.8,77.0 L597.5,74.8 L627.0,61.5 L646.9,68.3 L664.2,76.5 L665.4,86.4 L658.6,109.2 L661.0,123.5 L670.4,127.9 L661.2,138.4 L679.1,153.2 L682.9,167.8 L670.4,171.7 L666.5,182.3 L635.3,177.7 L623.5,163.3 L594.7,167.2 L573.1,156.1 L560.7,135.4 L545.7,137.2 L541.5,132.9 L538.3,128.0 L535.8,115.2 L516.9,100.8 L525.7,84.1 L516.3,82.3 L504.1,51.4 L511.5,49.0 Z" },
+  { name: "Qatar", d: "M567.5,185.2 L567.0,178.3 L569.2,173.9 L571.7,172.3 L574.7,174.8 L575.0,182.7 L572.5,186.8 L567.5,185.2 Z" },
+  { name: "Saudi Arabia", d: "M567.5,185.2 L574.0,186.7 L571.9,189.2 L574.6,189.7 L583.9,201.7 L608.4,203.9 L612.6,210.5 L606.5,228.6 L578.5,237.8 L551.0,241.6 L542.8,245.5 L533.5,256.5 L503.2,253.2 L498.5,251.2 L496.3,259.1 L492.7,261.8 L480.6,244.8 L473.6,230.6 L464.4,225.4 L459.0,218.4 L452.2,194.0 L440.1,184.2 L422.0,154.9 L416.0,154.4 L419.5,143.1 L430.0,144.5 L447.8,132.6 L438.3,123.5 L458.8,117.7 L470.1,119.4 L486.0,127.3 L510.5,144.4 L545.9,150.9 L567.5,185.2 Z" },
+  { name: "Kuwait", d: "M540.8,137.2 L543.0,141.3 L542.8,146.1 L545.4,150.5 L538.2,150.6 L536.1,146.3 L527.6,145.4 L533.4,137.1 L540.8,137.2 Z" },
+  { name: "Algeria", d: "M48.3,182.9 L12.3,162.0 L12.3,149.1 L41.6,141.5 L52.5,132.5 L59.3,130.6 L82.0,118.0 L76.8,93.8 L105.9,77.3 L153.2,72.3 L173.6,73.7 L177.8,118.2 L182.2,135.1 L180.0,136.1 L185.0,145.1 L180.9,172.2 L205.0,196.4 L147.4,233.6 L123.2,230.2 L48.3,182.9 Z" },
+  { name: "Jordan", d: "M425.7,112.6 L436.9,116.0 L455.2,106.3 L460.1,116.6 L438.3,123.5 L447.8,132.6 L443.1,137.2 L429.5,144.5 L419.5,143.1 L424.1,127.1 L425.7,112.6 Z" },
+  { name: "Egypt", d: "M414.1,128.8 L418.9,141.8 L413.1,157.9 L395.2,140.9 L427.4,192.9 L426.5,201.8 L437.6,210.3 L326.5,210.3 L326.5,144.6 L323.8,135.5 L327.5,122.4 L414.1,128.8 Z" },
+  { name: "Yemen", d: "M578.5,237.8 L588.8,259.3 L580.8,268.7 L499.0,295.5 L491.0,272.1 L492.7,261.8 L496.3,259.1 L497.5,251.8 L529.3,253.5 L533.5,256.5 L542.8,245.5 L551.0,241.6 L578.5,237.8 Z" },
+  { name: "Bahrain", d: "M565.1,171.9 L565.6,172.2 L566.0,172.4 L565.6,175.0 L565.3,175.6 L564.4,174.1 L564.2,172.2 L565.5,171.5 L565.1,171.9 Z" },
 ];
