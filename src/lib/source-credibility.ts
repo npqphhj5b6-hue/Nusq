@@ -304,6 +304,22 @@ const PUBLISHER_NAME_TO_DOMAIN: Record<string, string> = {
   "اقتصاد الشرق مع بلومبرغ": "asharqbusiness.com",
   "asharq bloomberg": "asharqbusiness.com",
   "mubasher": "mubasher.info", "مباشر": "mubasher.info",
+  // Additional regional outlets (English transliterated names)
+  "al khaleej": "alkhaleej.ae",
+  "al bayan": "albayan.ae",
+  "sabq": "sabq.org",
+  "mal": "mal.com.sa",
+  "asharq bloomberg": "asharqbusiness.com",
+  "energynow.com": "energynow.com",
+  "enterpriseam": "enterpriseam.com",
+  "al youm": "alyaum.com",
+  "al watan": "alwatan.com.sa",
+  "al riyadh": "alriyadh.com",
+  "okaz": "okaz.com.sa",
+  "al madinah": "al-madina.com",
+  "al bilad": "albilad-sa.com",
+  "al anbaa": "anba.com.kw",
+  "al rai": "alraimedia.com",
 };
 
 export function getPublisherDomain(publisherName: string): string {
