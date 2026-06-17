@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSourceTier, getSourceTierByName, getSourceType, getSourceTypeByName, getPublisherName, getPublisherDomain, isPrimarySource } from "@/lib/source-credibility";
+import { getSourceTier, getSourceTierByName, getSourceType, getSourceTypeByName, getPublisherName, getPublisherDomain, isPrimarySource, normalizePublisherName } from "@/lib/source-credibility";
 import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence } from "@/lib/types";
 
 export const maxDuration = 300;
@@ -232,7 +232,7 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
             }
           }
 
-          const resolvedPublisher = publisher || getPublisherName(itemUrl);
+          const resolvedPublisher = normalizePublisherName(publisher || getPublisherName(itemUrl));
           // Drop unrecognised (Tier 3) sources — only ingest established outlets
           if (getSourceTierByName(resolvedPublisher) === 3) continue;
 

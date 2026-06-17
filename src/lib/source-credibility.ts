@@ -310,6 +310,39 @@ export function getPublisherDomain(publisherName: string): string {
   return PUBLISHER_NAME_TO_DOMAIN[publisherName.trim().toLowerCase()] ?? "";
 }
 
+// Arabic publisher names → English transliterations for display
+const ARABIC_PUBLISHER_NAMES: Record<string, string> = {
+  "الجزيرة": "Al Jazeera",
+  "العربية": "Al Arabiya",
+  "الشرق الأوسط": "Asharq Al-Awsat",
+  "الاقتصادية": "Al-Eqtisadiah",
+  "مباشر": "Mubasher",
+  "اقتصاد الشرق مع بلومبرغ": "Asharq Bloomberg",
+  "صحيفة الخليج": "Al Khaleej",
+  "الخليج": "Al Khaleej",
+  "البيان": "Al Bayan",
+  "صحيفة سبق الإلكترونية": "Sabq",
+  "سبق": "Sabq",
+  "صحيفة مال": "Mal",
+  "مال": "Mal",
+  "الوطن": "Al Watan",
+  "صحيفة الوطن": "Al Watan",
+  "اليوم": "Al Youm",
+  "الرياض": "Al Riyadh",
+  "عكاظ": "Okaz",
+  "المدينة": "Al Madinah",
+  "البلاد": "Al Bilad",
+  "الأنباء": "Al Anbaa",
+  "الراي": "Al Rai",
+  "عرب نيوز": "Arab News",
+  "بلومبرغ": "Bloomberg Arabic",
+  "رويترز": "Reuters Arabic",
+};
+
+export function normalizePublisherName(name: string): string {
+  return ARABIC_PUBLISHER_NAMES[name.trim()] ?? name;
+}
+
 export function getPublisherName(url: string): string {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");
