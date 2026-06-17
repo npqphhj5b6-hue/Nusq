@@ -101,6 +101,24 @@ interface RawSourceItem {
   publisher: string;
 }
 
+// Follow Google News redirect to get the real publisher URL for accurate tier scoring.
+async function resolveRedirect(url: string): Promise<string> {
+  if (!url.includes("news.google.com")) return url;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    return res.url || url;
+  } catch {
+    return url;
+  }
+}
+
 async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSourceItem[] }> {
   const parser = new Parser({ timeout: 10000 });
 
@@ -174,6 +192,17 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
     if (b.pubDate) return 1;
     return 0;
   });
+
+  // Resolve Google News redirect URLs to actual publisher domains for accurate tier scoring
+  await Promise.allSettled(
+    sorted.map(async (s) => {
+      const resolved = await resolveRedirect(s.url);
+      if (resolved !== s.url) {
+        s.url = resolved;
+        s.publisher = getPublisherName(resolved) || s.publisher;
+      }
+    })
+  );
 
   // Build the numbered source list for the prompt
   const numbered = sorted.map((s, i) => {
