@@ -2,6 +2,12 @@ import type { SourceTier, SourceType } from "./source-credibility";
 
 export type { SourceType };
 
+export interface ChartDataset {
+  label: string;
+  values: number[];
+  color?: string;
+}
+
 export interface ChartData {
   type: string;
   title: string;
@@ -9,6 +15,7 @@ export interface ChartData {
   values: number[];
   unit: string;
   source: string;
+  datasets?: ChartDataset[];
 }
 
 export interface SourceRef {
@@ -67,6 +74,18 @@ export interface BriefingIntelligence {
   conflictingSourcesDetected: boolean;
 }
 
+export interface BriefingStory {
+  number: number;
+  headline: string;
+  location: string;
+  city?: string;
+  body: string;
+  imageUrl?: string | null;
+  imageCredit?: string | null;
+  imageCreditLink?: string | null;
+  chartData?: ChartData | null;
+}
+
 export interface Briefing {
   id: string;
   slug: string;
@@ -86,6 +105,9 @@ export interface Briefing {
   validation?: ValidationResult | null;
   intelligence?: BriefingIntelligence | null;
   claims?: BriefingClaim[];
+  // Multi-story format
+  stories?: BriefingStory[] | null;
+  tldrBullets?: string[] | null;
 }
 
 export interface Essay {

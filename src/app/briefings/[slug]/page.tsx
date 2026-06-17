@@ -9,6 +9,7 @@ import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
 import BookmarkButton from "@/components/BookmarkButton";
 import ReadTracker from "@/components/ReadTracker";
+import MenaMap from "@/components/MenaMap";
 import { createClient } from "@/lib/supabase-server";
 import type { SourceRef, BriefingIntelligence } from "@/lib/types";
 import { getPublisherDomain, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
@@ -30,7 +31,6 @@ function unsplashUrlFull(raw: string, w: number) {
   return `${raw}&w=${w}&auto=format&q=80`;
 }
 
-// Render a paragraph: bold + inline citation [N] → superscript link
 function renderParagraph(para: string, sourceMap: Map<number, SourceRef>): string {
   let html = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\[(\d+)\]/g, (_, n) => {
@@ -50,14 +50,6 @@ const IMPACT_COLOURS: Record<string, string> = {
   neutral:  "text-[var(--c-text-3)]",
   unclear:  "text-[var(--c-text-3)]",
 };
-
-const FRESHNESS_COLOURS: Record<string, string> = {
-  fresh:       "text-emerald-500",
-  developing:  "text-amber-400",
-  background:  "text-[var(--c-text-3)]",
-  "stale-risk":"text-red-400",
-};
-
 
 export async function generateMetadata({
   params,
@@ -101,7 +93,6 @@ export default async function BriefingPage({
 
   const pageUrl = `${SITE_URL}/briefings/${slug}`;
 
-  // User context for bookmark + read tracking
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   let initialSaved = false;
@@ -115,59 +106,9 @@ export default async function BriefingPage({
     initialSaved = !!data;
   }
 
-  const bodyParagraphs = briefing.body
-    .split("\n\n")
-    .filter((p) => p.trim().length > 0);
-
-  // Build source lookup map for citation rendering
   const sourceMap = new Map<number, SourceRef>(
     (briefing.sources ?? []).map((s) => [s.index, s])
   );
-
-  // Keyword maps for inline chart/ticker injection
-  const CHART_KEYWORDS: Record<string, RegExp> = {
-    brent_price: /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
-    gold:        /\b(gold|precious metal|safe.haven|bullion|xau)/i,
-    fx_egp:      /\b(egypt|egyptian|pound|egp|piast)/i,
-    fx_sar:      /\b(riyal|sar|saudi.+monetary|currency peg)/i,
-    gdp_growth:  /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
-    inflation:   /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
-  };
-  const TICKER_KEYWORDS: Record<string, RegExp> = {
-    "TVC:UKOIL":       /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
-    "TVC:NGAS":        /\b(natural gas|lng|gas price)/i,
-    "TVC:GOLD":        /\b(gold|precious metal|safe.haven|bullion)/i,
-    "TVC:SILVER":      /\bsilver\b/i,
-    "FOREXCOM:SPXUSD": /\b(s&p|sp 500|us stocks|wall street|american market)/i,
-    "TVC:DXY":         /\b(dollar index|dxy\b|usd strength|dollar strength)/i,
-  };
-
-  const usedIndices = new Set<number>();
-  const findInsertIndex = (pattern: RegExp): number => {
-    for (let i = 0; i < bodyParagraphs.length; i++) {
-      if (!bodyParagraphs[i].startsWith("## ") && !usedIndices.has(i) && pattern.test(bodyParagraphs[i])) {
-        return i;
-      }
-    }
-    return -1;
-  };
-
-  const chartInsertAfter = (() => {
-    if (!briefing.chartData) return -1;
-    const pattern = CHART_KEYWORDS[briefing.chartData.type];
-    if (!pattern) return -1;
-    const idx = findInsertIndex(pattern);
-    if (idx !== -1) usedIndices.add(idx);
-    return idx;
-  })();
-
-  const tickerInsertMap = new Map<number, string>();
-  for (const ticker of (briefing.tickers ?? []).filter(isValidTicker)) {
-    const pattern = TICKER_KEYWORDS[ticker];
-    if (!pattern) continue;
-    const idx = findInsertIndex(pattern);
-    if (idx !== -1) { tickerInsertMap.set(idx, ticker); usedIndices.add(idx); }
-  }
 
   const intel: BriefingIntelligence | null = briefing.intelligence ?? null;
   const sources: SourceRef[] = briefing.sources ?? [];
@@ -187,6 +128,51 @@ export default async function BriefingPage({
     if (hours > 0) return `${hours}h ago`;
     return `${mins}m ago`;
   })();
+
+  const hasStories = Array.isArray(briefing.stories) && briefing.stories.length > 0;
+  const hasTldr = Array.isArray(briefing.tldrBullets) && briefing.tldrBullets.length > 0;
+
+  // ── Legacy body rendering (single-article format) ──────────────────────────
+  const CHART_KEYWORDS: Record<string, RegExp> = {
+    brent_price: /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
+    gold:        /\b(gold|precious metal|safe.haven|bullion|xau)/i,
+    fx_egp:      /\b(egypt|egyptian|pound|egp|piast)/i,
+    fx_sar:      /\b(riyal|sar|saudi.+monetary|currency peg)/i,
+    gdp_growth:  /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
+    inflation:   /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
+  };
+  const TICKER_KEYWORDS: Record<string, RegExp> = {
+    "TVC:UKOIL":       /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
+    "TVC:NGAS":        /\b(natural gas|lng|gas price)/i,
+    "TVC:GOLD":        /\b(gold|precious metal|safe.haven|bullion)/i,
+    "TVC:SILVER":      /\bsilver\b/i,
+    "FOREXCOM:SPXUSD": /\b(s&p|sp 500|us stocks|wall street|american market)/i,
+    "TVC:DXY":         /\b(dollar index|dxy\b|usd strength|dollar strength)/i,
+  };
+
+  const bodyParagraphs = briefing.body.split("\n\n").filter((p) => p.trim().length > 0);
+  const usedIndices = new Set<number>();
+  const findInsertIndex = (pattern: RegExp): number => {
+    for (let i = 0; i < bodyParagraphs.length; i++) {
+      if (!bodyParagraphs[i].startsWith("## ") && !usedIndices.has(i) && pattern.test(bodyParagraphs[i])) return i;
+    }
+    return -1;
+  };
+  const chartInsertAfter = (() => {
+    if (!briefing.chartData) return -1;
+    const pattern = CHART_KEYWORDS[briefing.chartData.type];
+    if (!pattern) return -1;
+    const idx = findInsertIndex(pattern);
+    if (idx !== -1) usedIndices.add(idx);
+    return idx;
+  })();
+  const tickerInsertMap = new Map<number, string>();
+  for (const ticker of (briefing.tickers ?? []).filter(isValidTicker)) {
+    const pattern = TICKER_KEYWORDS[ticker];
+    if (!pattern) continue;
+    const idx = findInsertIndex(pattern);
+    if (idx !== -1) { tickerInsertMap.set(idx, ticker); usedIndices.add(idx); }
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -220,11 +206,10 @@ export default async function BriefingPage({
         {briefing.summary}
       </p>
 
-      {/* Read tracker — fires silently on mount */}
       <ReadTracker briefingId={briefing.id} userId={user?.id ?? null} />
 
       {/* Meta row */}
-      <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--c-border)]">
+      <div className="flex items-center justify-between mb-6 pb-6 border-b border-[var(--c-border)]">
         <div className="flex items-center gap-3 text-xs text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-geist-mono)" }}>
           <span>{formatDate(briefing.date)}</span>
           <span>·</span>
@@ -236,6 +221,28 @@ export default async function BriefingPage({
         </div>
       </div>
 
+      {/* ── TL;DR card ── */}
+      {hasTldr && (
+        <ScrollReveal>
+          <div className="mb-8 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/[0.06] overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#F59E0B]/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--c-amber)]" />
+              <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[var(--c-amber)]">
+                Key takeaways
+              </span>
+            </div>
+            <ul className="px-5 py-4 space-y-2.5">
+              {briefing.tldrBullets!.map((bullet, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="text-[var(--c-amber)] mt-[3px] shrink-0 text-xs">→</span>
+                  <span className="text-sm text-[var(--c-text-1)] leading-relaxed">{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ScrollReveal>
+      )}
+
       {/* ── Intelligence box ── */}
       {(hasSources || intel) && (
         <div className="mb-10 flex rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] overflow-hidden">
@@ -243,7 +250,6 @@ export default async function BriefingPage({
           <div className="flex-1 p-4 min-w-0">
             <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-[var(--c-amber)] mb-3">Intelligence</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              {/* Left: primary signals */}
               <div className="space-y-2.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
                 {hasSources && (
                   <div className="flex items-baseline justify-between gap-2">
@@ -251,9 +257,9 @@ export default async function BriefingPage({
                     <span className="text-[11px] text-[var(--c-text-1)] font-medium">
                       {sources.length}
                       {(() => {
-                        const t1 = sources.filter(s => s.tier === 1).length;
                         const primary = sources.filter(s => s.isPrimarySource).length;
-                        if (t1 > 0 || primary > 0) {
+                        const t1 = sources.filter(s => s.tier === 1).length;
+                        if (primary > 0 || t1 > 0) {
                           const parts: string[] = [];
                           if (primary > 0) parts.push(`${primary} primary`);
                           else if (t1 > 0) parts.push(`${t1} official`);
@@ -295,7 +301,6 @@ export default async function BriefingPage({
                   </div>
                 )}
               </div>
-              {/* Right: tag groups */}
               <div className="mt-4 sm:mt-0 space-y-3">
                 {intel?.affectedGeographies && intel.affectedGeographies.length > 0 && (
                   <div>
@@ -323,58 +328,150 @@ export default async function BriefingPage({
         </div>
       )}
 
-      {/* Cover image */}
-      {briefing.coverImageUrl && (
+      {/* ── MENA Map (multi-story only) ── */}
+      {hasStories && (
         <ScrollReveal>
-          <div className="relative w-full mb-12 overflow-hidden rounded-xl">
-            <img
-              src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
-              alt={briefing.title}
-              className="w-full h-auto block"
+          <div className="mb-10">
+            <MenaMap
+              stories={briefing.stories!.map((s) => ({
+                number: s.number,
+                headline: s.headline,
+                location: s.location,
+                city: s.city,
+              }))}
             />
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(4,12,26,0.5) 0%, transparent 40%)" }} />
-            {briefing.coverImageCredit && (
-              <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
-                className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
-                {briefing.coverImageCredit}
-              </a>
-            )}
           </div>
         </ScrollReveal>
       )}
 
-      {/* Body */}
-      <div className="prose-nusq">
-        {bodyParagraphs.map((para, i) => {
-          let node: React.ReactNode;
-          if (para.startsWith("## ")) {
-            node = (
-              <ScrollReveal key={i} delay={0}>
-                <h2>{para.replace("## ", "")}</h2>
+      {/* ── MULTI-STORY FORMAT ── */}
+      {hasStories ? (
+        <div className="space-y-0">
+          {briefing.stories!.map((story, si) => {
+            const storyParagraphs = (story.body ?? "").split("\n\n").filter((p) => p.trim().length > 0);
+            return (
+              <ScrollReveal key={story.number} delay={si * 60}>
+                <article
+                  id={`story-${story.number}`}
+                  className="pt-10 pb-12 border-b border-[var(--c-border)] last:border-b-0 scroll-mt-20"
+                >
+                  {/* Story number + headline */}
+                  <div className="flex items-start gap-5 mb-6">
+                    <span
+                      className="shrink-0 text-[4rem] leading-none font-black text-[var(--c-amber)]/15 select-none"
+                      style={{ fontFamily: "var(--font-barlow)", lineHeight: 0.9 }}
+                      aria-hidden="true"
+                    >
+                      {story.number}
+                    </span>
+                    <div className="pt-1">
+                      {story.location && (
+                        <p className="text-[9px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-2" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                          {story.city ? `${story.city}, ${story.location}` : story.location}
+                        </p>
+                      )}
+                      <h2
+                        className="text-[1.4rem] sm:text-[1.75rem] leading-[1.1] text-[var(--c-text-1)]"
+                        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
+                      >
+                        {story.headline}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {/* Story image */}
+                  {story.imageUrl && (
+                    <div className="relative w-full mb-7 overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
+                      <img
+                        src={unsplashUrlFull(story.imageUrl, 1200)}
+                        alt={story.headline}
+                        className="w-full h-full object-cover block"
+                      />
+                      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(4,12,26,0.45) 0%, transparent 45%)" }} />
+                      {story.imageCredit && (
+                        <a
+                          href={story.imageCreditLink ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors"
+                        >
+                          {story.imageCredit}
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Story body */}
+                  <div className="prose-nusq">
+                    {storyParagraphs.map((para, pi) => {
+                      if (para.startsWith("## ")) {
+                        return <h3 key={pi} className="text-base font-bold uppercase tracking-wide text-[var(--c-text-1)] mt-5 mb-2">{para.replace("## ", "")}</h3>;
+                      }
+                      const html = renderParagraph(para, sourceMap);
+                      return <p key={pi} dangerouslySetInnerHTML={{ __html: html }} />;
+                    })}
+                  </div>
+
+                  {/* Story chart */}
+                  {story.chartData && (
+                    <ScrollReveal>
+                      <DataChart data={story.chartData} />
+                    </ScrollReveal>
+                  )}
+                </article>
               </ScrollReveal>
             );
-          } else if (para.startsWith("**") && para.endsWith("**")) {
-            node = <p key={i}><strong>{para.slice(2, -2)}</strong></p>;
-          } else {
-            const html = renderParagraph(para, sourceMap);
-            node = <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-          }
-
-          return (
-            <React.Fragment key={i}>
-              {node}
-              {i === chartInsertAfter && briefing.chartData && (
-                <ScrollReveal><DataChart data={briefing.chartData} /></ScrollReveal>
-              )}
-              {tickerInsertMap.has(i) && (
-                <ScrollReveal>
-                  <div className="my-6"><TradingViewChart ticker={tickerInsertMap.get(i)!} /></div>
-                </ScrollReveal>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      ) : (
+        /* ── LEGACY SINGLE-ARTICLE FORMAT ── */
+        <>
+          {briefing.coverImageUrl && (
+            <ScrollReveal>
+              <div className="relative w-full mb-12 overflow-hidden rounded-xl">
+                <img
+                  src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
+                  alt={briefing.title}
+                  className="w-full h-auto block"
+                />
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(4,12,26,0.5) 0%, transparent 40%)" }} />
+                {briefing.coverImageCredit && (
+                  <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
+                    className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
+                    {briefing.coverImageCredit}
+                  </a>
+                )}
+              </div>
+            </ScrollReveal>
+          )}
+          <div className="prose-nusq">
+            {bodyParagraphs.map((para, i) => {
+              let node: React.ReactNode;
+              if (para.startsWith("## ")) {
+                node = <ScrollReveal key={i}><h2>{para.replace("## ", "")}</h2></ScrollReveal>;
+              } else if (para.startsWith("**") && para.endsWith("**")) {
+                node = <p key={i}><strong>{para.slice(2, -2)}</strong></p>;
+              } else {
+                const html = renderParagraph(para, sourceMap);
+                node = <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+              }
+              return (
+                <React.Fragment key={i}>
+                  {node}
+                  {i === chartInsertAfter && briefing.chartData && (
+                    <ScrollReveal><DataChart data={briefing.chartData} /></ScrollReveal>
+                  )}
+                  {tickerInsertMap.has(i) && (
+                    <ScrollReveal>
+                      <div className="my-6"><TradingViewChart ticker={tickerInsertMap.get(i)!} /></div>
+                    </ScrollReveal>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Bottom share row */}
       <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
@@ -404,7 +501,7 @@ export default async function BriefingPage({
         );
       })()}
 
-      {/* ── Sources section ── */}
+      {/* Sources */}
       {hasSources && (
         <ScrollReveal>
           <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
@@ -418,9 +515,7 @@ export default async function BriefingPage({
                   ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                   : null;
                 const domain = s.domain || getPublisherDomain(s.publisher);
-                const faviconUrl = domain
-                  ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-                  : null;
+                const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
                 const typeLabel = s.sourceType && s.sourceType !== "news_report" && s.sourceType !== "unknown"
                   ? SOURCE_TYPE_LABELS[s.sourceType]
                   : null;
@@ -434,13 +529,7 @@ export default async function BriefingPage({
                   >
                     <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
                       {faviconUrl ? (
-                        <img
-                          src={faviconUrl}
-                          width={16}
-                          height={16}
-                          alt=""
-                          className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity"
-                        />
+                        <img src={faviconUrl} width={16} height={16} alt="" className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
                       ) : (
                         <div className="w-4 h-4 rounded-sm bg-[var(--c-border)] shrink-0" />
                       )}

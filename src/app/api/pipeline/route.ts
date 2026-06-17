@@ -100,21 +100,48 @@ Also output a "claims" array with the 5–10 most important verifiable claims in
 
 Output ONLY a valid JSON object — no prose before or after, no markdown code fences.
 
+The briefing is structured as 3–5 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories.
+
 {
-  "title": "A compelling headline for today's briefing — max 12 words, no full stop",
+  "title": "A compelling headline for today's overall briefing — max 12 words, no full stop",
   "summary": "2–3 sentences. A hook that sets up the main theme and makes the reader want more.",
-  "tags": ["3 to 5 relevant tags"],
-  "body": "The full briefing. Use ## for section headings. Use **bold** for key figures, company names, and important terms. Add [N] citation markers inline where you reference specific facts from the numbered sources. Write 4–6 substantive sections in flowing paragraphs — no bullet lists. Minimum 500 words.",
-  "image_queries": {
-    "mena": "A 4–7 word Unsplash query for a MENA-specific landscape photo. Moody and cinematic preferred.",
-    "topic": "A 4–7 word Unsplash query tied to today's specific economic topic.",
-    "cinematic": "A 4–7 word Unsplash query for a dramatic or atmospheric image."
-  },
+  "tldr_bullets": [
+    "First key takeaway — one short sharp sentence, max 15 words, citing the specific figure or development",
+    "Second key takeaway",
+    "Third key takeaway",
+    "Fourth key takeaway (optional)",
+    "Fifth key takeaway (optional)"
+  ],
+  "tags": ["3 to 5 relevant tags for the whole briefing"],
+  "stories": [
+    {
+      "number": 1,
+      "headline": "Short story headline — max 8 words, no full stop",
+      "location": "Saudi Arabia",
+      "city": "Riyadh",
+      "body": "The full story. Use **bold** for key figures, company names, and important terms. Add [N] citation markers inline. Write 2–4 substantive paragraphs — no bullet lists. 150–250 words. Start with a specific fact or scene, never a thesis.",
+      "image_query": "A 4–7 word Unsplash query specific to this story's subject and location. Moody and cinematic preferred.",
+      "chart": {
+        "type": "ONE of the predefined types: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — OR use 'bar' to provide inline data — OR null if no chart fits",
+        "country": "2-letter ISO required only for gdp_growth or inflation: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null.",
+        "title": "Required only for type='bar': descriptive chart title",
+        "labels": ["Required only for type='bar': x-axis labels, e.g. quarters or countries"],
+        "values": [0, 0, 0],
+        "unit": "Required only for type='bar': e.g. 'AED billion' or '%' or 'USD/barrel'",
+        "source": "Required only for type='bar': the specific source this data comes from, matching a cited [N] source"
+      }
+    },
+    {
+      "number": 2,
+      "headline": "Second story headline",
+      "location": "UAE",
+      "city": "Dubai",
+      "body": "...",
+      "image_query": "...",
+      "chart": null
+    }
+  ],
   "tickers": ["Array of up to 3 TradingView symbols from this exact list only: TVC:UKOIL, TVC:NGAS, TVC:GOLD, TVC:SILVER, FOREXCOM:SPXUSD, TVC:DXY. Empty array if nothing fits well."],
-  "chart": {
-    "type": "ONE of: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — or null",
-    "country": "2-letter ISO code required only for gdp_growth or inflation: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null."
-  },
   "sources_used": [1, 3, 5],
   "source_annotations": {
     "1": {
@@ -123,13 +150,6 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
       "claims_supported": ["Saudi GDP grew 4.6% in Q1 2026"],
       "summary": "Provides official GDP data cited as the headline figure",
       "event_date": "2026-03-31"
-    },
-    "3": {
-      "is_primary": true,
-      "is_background": false,
-      "claims_supported": ["SAMA held rates at 5.5% in June 2026"],
-      "summary": "SAMA's official monetary policy statement",
-      "event_date": "2026-06-17"
     }
   },
   "claims": [
@@ -142,9 +162,9 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
   ],
   "intelligence": {
     "market_impact": "positive|negative|mixed|neutral|unclear",
-    "market_impact_detail": "One specific sentence describing what the impact means for investors — e.g. 'Bearish for energy equities given oil supply pressure; bullish for non-oil sectors and infrastructure spending.'",
+    "market_impact_detail": "One specific sentence describing what the impact means for investors.",
     "investor_relevance": "high|medium|low",
-    "relevance_reason": "A short clause (5–10 words) explaining why allocators should care — e.g. 'sovereign fund positioning and rate-sensitive sectors'",
+    "relevance_reason": "A short clause (5–10 words) explaining why allocators should care.",
     "time_horizon": "immediate|3-6 months|long-term|unclear",
     "affected_sectors": ["energy", "banking", "real estate", "logistics", "technology", "sovereign funds", "tourism", "defence", "infrastructure"],
     "affected_geographies": ["Saudi Arabia", "UAE", "Qatar", "Egypt", "Kuwait", "Oman", "Bahrain", "Jordan", "GCC", "MENA"],
@@ -152,7 +172,13 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "freshness_status": "fresh|developing|background|stale-risk",
     "conflicting_sources": false
   }
-}`;
+}
+
+CHART RULES FOR 'bar' TYPE:
+- Only use numbers that are explicitly stated in the cited sources. Do not invent or estimate values.
+- Include the source name as the "source" field (e.g. "UAE Federal Competitiveness Authority", "Saudi Vision 2030 report").
+- Use 4–8 labels maximum. Keep labels short (e.g. "Q1 2025", "Saudi Arabia", "Jan 2026").
+- Good candidates: trade volumes by quarter, country comparison of a single metric, year-over-year figures, sector breakdown percentages.`;
 
 // ── Source annotation from model ─────────────────────────────────────────────
 
@@ -546,6 +572,23 @@ async function selectBestPhoto(candidates: UnsplashPhoto[], title: string, summa
   return (isNaN(index) || index < 0 || index >= candidates.length) ? candidates[0] : candidates[index];
 }
 
+async function fetchStoryPhoto(query: string): Promise<UnsplashPhoto | null> {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${key}` } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { results: UnsplashPhoto[] };
+    const sorted = (data.results ?? []).sort((a, b) => b.likes - a.likes);
+    return sorted[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Chart data ────────────────────────────────────────────────────────────────
 
 const FRED_SERIES: Record<string, string> = {
@@ -614,6 +657,31 @@ async function buildChartData(spec: ChartSpec): Promise<import("@/lib/types").Ch
   }
 }
 
+interface StoryChartSpec {
+  type?: string | null;
+  country?: string | null;
+  title?: string;
+  labels?: string[];
+  values?: number[];
+  unit?: string;
+  source?: string;
+}
+
+async function buildStoryChartData(spec: StoryChartSpec | null | undefined): Promise<import("@/lib/types").ChartData | null> {
+  if (!spec?.type) return null;
+  if (spec.type === "bar" && Array.isArray(spec.labels) && Array.isArray(spec.values) && spec.labels.length > 0) {
+    return {
+      type: "bar",
+      title: spec.title ?? "Data",
+      labels: spec.labels,
+      values: spec.values.map((v) => parseFloat(String(v))),
+      unit: spec.unit ?? "",
+      source: spec.source ?? "",
+    };
+  }
+  return buildChartData({ type: spec.type, country: spec.country ?? null });
+}
+
 // ── Main route handler ────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -667,12 +735,24 @@ export async function GET(request: NextRequest) {
     .replace(/\n?```$/m, "")
     .trim();
 
+  interface RawStory {
+    number?: number;
+    headline?: string;
+    location?: string;
+    city?: string;
+    body?: string;
+    image_query?: string;
+    chart?: StoryChartSpec | null;
+  }
+
   const generated = JSON.parse(jsonText) as {
     title: string;
     summary: string;
+    tldr_bullets?: string[];
     tags: string[];
-    body: string;
-    image_queries: { mena: string; topic: string; cinematic: string };
+    body?: string;
+    stories?: RawStory[];
+    image_queries?: { mena: string; topic: string; cinematic: string };
     tickers: string[];
     chart?: { type: string | null; country?: string | null } | null;
     sources_used?: number[];
@@ -681,7 +761,9 @@ export async function GET(request: NextRequest) {
     intelligence?: RawIntelligence | null;
   };
 
-  const wordCount = generated.body.split(/\s+/).length;
+  const rawStories = generated.stories ?? [];
+  const combinedBody = rawStories.map((s) => `## ${s.headline ?? ""}\n\n${s.body ?? ""}`).join("\n\n") || (generated.body ?? "");
+  const wordCount = combinedBody.split(/\s+/).length;
   const readingTime = Math.max(1, Math.round(wordCount / 200));
 
   // Build structured sources
@@ -702,23 +784,47 @@ export async function GET(request: NextRequest) {
   // Build intelligence metadata
   const intelligence = buildIntelligence(generated.intelligence ?? null, sourceRefs);
 
-  // Run validation
-  const validation = validateBriefing(generated.body, sourcesUsed, rawSources, date);
+  // Run validation against combined body
+  const validation = validateBriefing(combinedBody, sourcesUsed, rawSources, date);
 
-  // Fetch cover image
-  const queries = Object.values(generated.image_queries).filter(Boolean);
-  const candidates = await fetchUnsplashCandidates(queries);
-  const photo = await selectBestPhoto(candidates, generated.title, generated.summary);
-  const image = photo
+  // Fetch per-story images in parallel
+  const storyPhotos = await Promise.all(
+    rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title))
+  );
+
+  // Fetch per-story chart data in parallel
+  const storyCharts = await Promise.all(
+    rawStories.map((s) => buildStoryChartData(s.chart))
+  );
+
+  // Assemble stories with images and charts
+  const stories = rawStories.map((s, i) => {
+    const photo = storyPhotos[i];
+    return {
+      number: s.number ?? i + 1,
+      headline: s.headline ?? "",
+      location: s.location ?? "",
+      city: s.city ?? "",
+      body: s.body ?? "",
+      imageUrl: photo?.urls.raw ?? null,
+      imageCredit: photo ? `Photo by ${photo.user.name} on Unsplash` : null,
+      imageCreditLink: photo ? `${photo.user.links.html}?utm_source=nusq&utm_medium=referral` : null,
+      chartData: storyCharts[i] ?? null,
+    };
+  });
+
+  // Cover image: use first story's photo (or fetch a separate one if no stories)
+  const coverPhoto = storyPhotos[0] ?? null;
+  const image = coverPhoto
     ? {
-        url: photo.urls.raw,
-        credit: `Photo by ${photo.user.name} on Unsplash`,
-        creditLink: `${photo.user.links.html}?utm_source=nusq&utm_medium=referral`,
+        url: coverPhoto.urls.raw,
+        credit: `Photo by ${coverPhoto.user.name} on Unsplash`,
+        creditLink: `${coverPhoto.user.links.html}?utm_source=nusq&utm_medium=referral`,
       }
     : null;
 
-  // Fetch chart data
-  const chartData = await buildChartData(generated.chart ?? { type: null });
+  // Legacy single chart (kept for backwards compat)
+  const chartData = generated.chart ? await buildChartData(generated.chart) : null;
 
   // Insert with all new fields
   const { data: briefing, error: insertError } = await supabaseAdmin
@@ -728,10 +834,10 @@ export async function GET(request: NextRequest) {
       title: generated.title,
       summary: generated.summary,
       tags: generated.tags,
-      body: generated.body,
+      body: combinedBody,
       reading_time: readingTime,
       date,
-      status: validation.needsReview ? "draft" : "draft", // always draft; admin decides
+      status: "draft",
       cover_image_url: image?.url ?? null,
       cover_image_credit: image?.credit ?? null,
       cover_image_credit_link: image?.creditLink ?? null,
@@ -741,6 +847,8 @@ export async function GET(request: NextRequest) {
       validation,
       intelligence,
       claims: briefingClaims.length > 0 ? briefingClaims : null,
+      stories: stories.length > 0 ? stories : null,
+      tldr_bullets: (generated.tldr_bullets ?? []).filter(Boolean).slice(0, 5),
     })
     .select("id")
     .single();
