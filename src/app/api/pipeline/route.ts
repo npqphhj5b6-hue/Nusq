@@ -54,12 +54,19 @@ WHAT MAKES THIS VOICE WORK:
 
 DO NOT write:
 - Em dashes (—). Use commas, parentheses, or a new sentence instead.
-- "The honest read", "the whole point", "what this means", "sophisticated investors", "the bigger picture", "the bottom line", "in short".
-- Symmetrical "on one hand / on the other hand" framing. State your finding, acknowledge the counter in one sentence, move on.
+- "The honest read", "the whole point", "what this means", "sophisticated investors", "the bigger picture", "the bottom line", "in short", "the point is", "what's clear is".
+- Symmetrical "on one hand / on the other hand" or "bull case / bear case" framing. State your finding, acknowledge the counter in one sentence, move on.
+- Clever contrasts constructed as a frame: "the X bet versus the Y warning", "the [country] paradox", "two readings of the same data". Just report the facts.
 - A grand takeaway at the end of every paragraph. Some paragraphs simply end on the last fact.
 - Explanatory filler: "it's important to understand that", "to put this in context", "what makes this significant is".
-- Abstract finance language: "capital deployment", "risk-on sentiment", "macro headwinds", "tailwinds". Use concrete wording: "banks are lending more", "investors are buying equities", "oil prices are falling".
+- Abstract finance language: "capital deployment", "risk-on sentiment", "macro headwinds", "tailwinds", "growth story", "investment momentum", "fiscal pressure", "long-term thesis", "macro narrative", "structural shift". Use concrete wording: "banks are lending more", "investors are buying equities", "oil prices are falling", "the government is spending more than it earns".
 - Staccato sentence bursts. Use medium-length sentences with precise vocabulary — not breathless fragments.
+- Neat, symmetrical conclusions that artificially balance two sides. If the evidence favours one reading, say so.
+
+MARKET SENTIMENT DISCIPLINE:
+- Never write that markets "are pricing in", "are betting on", "reflect", or "have responded to" anything unless your cited sources contain CONCRETE MARKET DATA: specific index levels, spread changes, bond yields, CDS moves, options pricing, or fund flow figures.
+- If sources contain only analyst commentary or media framing about sentiment, write: "analysts have framed this as supportive for investor sentiment" or "regional media coverage has emphasised the de-escalation" — not a market fact.
+- "Gulf markets are pricing in a return to calm" is PROHIBITED unless [N] cites an index or spread with specific numbers.
 
 ═══ ANTI-HALLUCINATION RULES — NON-NEGOTIABLE ═══
 
@@ -208,19 +215,51 @@ interface RawSourceItem {
   publisher: string;
 }
 
+// Decode the actual article URL from a Google News RSS article path.
+// The path after /articles/ is a base64url-encoded protobuf that embeds the real URL.
+function decodeGoogleNewsArticleUrl(gnUrl: string): string | null {
+  try {
+    const match = gnUrl.match(/\/articles\/([A-Za-z0-9_-]+)/);
+    if (!match) return null;
+    // Convert base64url to standard base64
+    const b64 = match[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64.padEnd(b64.length + (4 - (b64.length % 4)) % 4, "=");
+    const decoded = Buffer.from(padded, "base64").toString("binary");
+    // Find https:// or http:// in the protobuf bytes
+    let idx = decoded.indexOf("https://");
+    if (idx === -1) idx = decoded.indexOf("http://");
+    if (idx === -1) return null;
+    // Slice from URL start and stop at first control character (protobuf field boundary)
+    const raw = decoded.substring(idx);
+    const end = raw.search(/[\x00-\x1f]/);
+    return end === -1 ? raw : raw.substring(0, end);
+  } catch {
+    return null;
+  }
+}
+
 // Follow Google News redirect to get the real publisher URL for accurate tier scoring.
+// Strategy: (1) try to decode the URL from the base64 path, (2) fall back to GET redirect follow.
 async function resolveRedirect(url: string): Promise<string> {
   if (!url.includes("news.google.com")) return url;
+
+  // Try base64 decode first — fast, no network call
+  const decoded = decodeGoogleNewsArticleUrl(url);
+  if (decoded && !decoded.includes("news.google.com")) return decoded;
+
+  // Fall back to GET (not HEAD — Google News requires GET to trigger redirects)
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(url, {
-      method: "HEAD",
+      method: "GET",
       redirect: "follow",
       signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Nusq/1.0)" },
     });
     clearTimeout(timeout);
-    return res.url || url;
+    const resolved = res.url || url;
+    return resolved.includes("news.google.com") ? url : resolved;
   } catch {
     return url;
   }
