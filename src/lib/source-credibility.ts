@@ -90,6 +90,38 @@ const PUBLISHER_MAP: Record<string, string> = {
   "al-monitor.com": "Al-Monitor",
 };
 
+// Reverse map: publisher display name → tier (for when only the name is known, e.g. Google News RSS)
+const PUBLISHER_NAME_TIERS: Record<string, SourceTier> = {
+  // Tier 1 – official
+  "saudi central bank (sama)": 1, "sama": 1, "public investment fund": 1, "pif": 1,
+  "imf": 1, "international monetary fund": 1, "world bank": 1, "opec": 1, "iea": 1,
+  "saudi exchange": 1, "tadawul": 1, "abu dhabi securities exchange": 1, "adx": 1,
+  "dubai financial market": 1, "dfm": 1, "moody's": 1, "moodys": 1,
+  "s&p global": 1, "sp global": 1, "fitch ratings": 1, "fitch": 1,
+  // Tier 2 – established media & research
+  "reuters": 2, "bloomberg": 2, "financial times": 2, "ft": 2,
+  "wall street journal": 2, "wsj": 2, "the economist": 2, "cnbc": 2,
+  "bbc": 2, "ap news": 2, "associated press": 2,
+  "zawya": 2, "arabian business": 2, "meed": 2, "the national": 2,
+  "gulf news": 2, "khaleej times": 2, "صحيفة الخليج": 2,
+  "argaam": 2, "asharq news": 2, "asharq business": 2, "agbi": 2,
+  "al jazeera": 2, "aljazeera": 2, "الجزيرة": 2,
+  "asharq al-awsat": 2, "aawsat": 2, "الشرق الأوسط": 2,
+  "al-eqtisadiah": 2, "aleqt": 2, "الاقتصادية": 2,
+  "middle east eye": 2, "al-monitor": 2, "semafor": 2,
+  "arab news": 2, "arabnews": 2,
+  "alarabiya": 2, "العربية": 2, "al arabiya": 2,
+  "bloomberg arabic": 2, "اقتصاد الشرق مع بلومبرغ": 2, "asharq bloomberg": 2,
+  "capital economics": 2, "capitaleconomics": 2,
+  "chatham house": 2, "brookings": 2, "cfr": 2, "mei": 2,
+  "mubasher": 2, "مباشر": 2,
+};
+
+export function getSourceTierByName(publisherName: string): SourceTier {
+  const key = publisherName.trim().toLowerCase();
+  return PUBLISHER_NAME_TIERS[key] ?? 3;
+}
+
 export function getPublisherName(url: string): string {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");

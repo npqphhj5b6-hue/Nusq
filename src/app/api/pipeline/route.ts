@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSourceTier, getPublisherName } from "@/lib/source-credibility";
+import { getSourceTier, getSourceTierByName, getPublisherName } from "@/lib/source-credibility";
 import type { SourceRef, ValidationResult, BriefingIntelligence } from "@/lib/types";
 
 export const maxDuration = 300;
@@ -144,14 +144,23 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
           if (!title || seen.has(title)) continue;
           seen.add(title);
 
-          // Extract publisher from "Headline - Publisher Name" format in title
-          const titleParts = title.split(" - ");
-          const publisher = titleParts.length > 1
-            ? titleParts[titleParts.length - 1].trim()
-            : (item.creator ?? "");
-          const cleanTitle = titleParts.length > 1
-            ? titleParts.slice(0, -1).join(" - ").trim()
+          // Extract publisher: Google News RSS uses "Headline - Publisher" (English)
+          // or "Headline  Publisher" double-space (Arabic). Try both.
+          const titleDashParts = title.split(" - ");
+          let publisher = titleDashParts.length > 1
+            ? titleDashParts[titleDashParts.length - 1].trim()
+            : "";
+          const cleanTitle = titleDashParts.length > 1
+            ? titleDashParts.slice(0, -1).join(" - ").trim()
             : title;
+          // Fallback: extract publisher from contentSnippet "headline  Publisher" (Google News uses NBSP pairs)
+          if (!publisher) {
+            const snip = (item.contentSnippet ?? "").trim();
+            const sep = "  ";
+            const dblIdx = snip.lastIndexOf(sep);
+            if (dblIdx > 0) publisher = snip.substring(dblIdx + sep.length).trim();
+          }
+          if (!publisher) publisher = item.creator ?? "";
 
           const itemUrl = (item.link ?? item.guid ?? "").trim();
           const snippet = (item.contentSnippet ?? item.content ?? title).substring(0, 250).trim();
@@ -314,8 +323,13 @@ function buildSourceRefs(
     .map((i) => {
       const s = rawSources[i - 1];
       const resolvedUrl = s.url || "";
-      const tier = getSourceTier(resolvedUrl);
-      const publisher = getPublisherName(resolvedUrl) || s.publisher;
+      const isGoogleNews = resolvedUrl.includes("news.google.com");
+      const tier = isGoogleNews
+        ? getSourceTierByName(s.publisher)
+        : getSourceTier(resolvedUrl);
+      const publisher = isGoogleNews
+        ? s.publisher
+        : (getPublisherName(resolvedUrl) || s.publisher);
       return {
         index: i,
         title: s.title,
