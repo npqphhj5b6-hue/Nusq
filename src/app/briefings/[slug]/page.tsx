@@ -160,9 +160,21 @@ export default async function BriefingPage({
   const intel: BriefingIntelligence | null = briefing.intelligence ?? null;
   const sources: SourceRef[] = briefing.sources ?? [];
   const hasSources = sources.length > 0;
-  const checkedDate = briefing.validation?.checkedAt
-    ? new Date(briefing.validation.checkedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+
+  const checkedAt = briefing.validation?.checkedAt ?? null;
+  const checkedDate = checkedAt
+    ? new Date(checkedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
     : null;
+  const timeAgo = (() => {
+    if (!checkedAt) return null;
+    const diff = Date.now() - new Date(checkedAt).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    return `${mins}m ago`;
+  })();
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -206,50 +218,77 @@ export default async function BriefingPage({
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
 
-      {/* ── Evidence bar ── */}
+      {/* ── Intelligence box ── */}
       {(hasSources || intel) && (
-        <div className="mb-10 p-4 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)]">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-[1px] bg-[var(--c-amber)]" />
-            <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-[var(--c-amber)]">Evidence</span>
+        <div className="mb-10 flex rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] overflow-hidden">
+          <div className="w-[3px] shrink-0 bg-[var(--c-amber)]" />
+          <div className="flex-1 p-4 min-w-0">
+            <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-[var(--c-amber)] mb-3">Intelligence</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+              {/* Left: primary signals */}
+              <div className="space-y-2.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                {hasSources && (
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Sources reviewed</span>
+                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">{sources.length}</span>
+                  </div>
+                )}
+                {checkedDate && (
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Verified</span>
+                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">
+                      {checkedDate}{timeAgo ? ` · ${timeAgo}` : ""}
+                    </span>
+                  </div>
+                )}
+                {intel?.marketImpact && (
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Market impact</span>
+                      <span className={`text-[11px] font-medium capitalize ${IMPACT_COLOURS[intel.marketImpact] ?? ""}`}>{intel.marketImpact}</span>
+                    </div>
+                    {intel.marketImpactDetail && (
+                      <p className="text-[10px] text-[var(--c-text-3)] mt-1 leading-relaxed">{intel.marketImpactDetail}</p>
+                    )}
+                  </div>
+                )}
+                {intel?.investorRelevance && (
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Relevance to allocators</span>
+                      <span className="text-[11px] text-[var(--c-text-1)] font-medium capitalize">{intel.investorRelevance}</span>
+                    </div>
+                    {intel.relevanceReason && (
+                      <p className="text-[10px] text-[var(--c-text-3)] mt-1 leading-relaxed">{intel.relevanceReason}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Right: tag groups */}
+              <div className="mt-4 sm:mt-0 space-y-3">
+                {intel?.affectedGeographies && intel.affectedGeographies.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] mb-1.5" style={{ fontFamily: "var(--font-geist-mono)" }}>Geographies</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {intel.affectedGeographies.map((g) => (
+                        <span key={g} className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--c-border-2)] text-[var(--c-text-2)]">{g}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {intel?.affectedSectors && intel.affectedSectors.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] mb-1.5" style={{ fontFamily: "var(--font-geist-mono)" }}>Sectors</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {intel.affectedSectors.map((s) => (
+                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--c-border-2)] text-[var(--c-text-2)]">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs" style={{ fontFamily: "var(--font-geist-mono)" }}>
-            {hasSources && (
-              <span className="text-[var(--c-text-3)]">
-                Sources: <span className="text-[var(--c-text-1)] font-medium">{sources.length}</span>
-              </span>
-            )}
-            {checkedDate && (
-              <span className="text-[var(--c-text-3)]">
-                Checked: <span className="text-[var(--c-text-1)] font-medium">{checkedDate}</span>
-              </span>
-            )}
-            {intel?.marketImpact && (
-              <span className="text-[var(--c-text-3)]">
-                Market impact: <span className={`font-medium capitalize ${IMPACT_COLOURS[intel.marketImpact] ?? ""}`}>{intel.marketImpact}</span>
-              </span>
-            )}
-            {intel?.freshnessStatus && (
-              <span className="text-[var(--c-text-3)]">
-                Freshness: <span className={`font-medium capitalize ${FRESHNESS_COLOURS[intel.freshnessStatus] ?? ""}`}>{intel.freshnessStatus}</span>
-              </span>
-            )}
-            {intel?.investorRelevance && (
-              <span className="text-[var(--c-text-3)]">
-                Investor relevance: <span className="text-[var(--c-text-1)] font-medium capitalize">{intel.investorRelevance}</span>
-              </span>
-            )}
-          </div>
-          {intel?.affectedGeographies && intel.affectedGeographies.length > 0 && (
-            <p className="mt-2 text-[10px] text-[var(--c-text-3)]">
-              Geographies: {intel.affectedGeographies.join(" · ")}
-            </p>
-          )}
-          {intel?.affectedSectors && intel.affectedSectors.length > 0 && (
-            <p className="mt-0.5 text-[10px] text-[var(--c-text-3)]">
-              Sectors: {intel.affectedSectors.join(" · ")}
-            </p>
-          )}
         </div>
       )}
 

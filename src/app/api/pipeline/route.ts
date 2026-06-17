@@ -80,7 +80,9 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
   "sources_used": [1, 3, 5],
   "intelligence": {
     "market_impact": "positive|negative|mixed|neutral|unclear",
+    "market_impact_detail": "One specific sentence describing what the impact means for investors — e.g. 'Bearish for energy equities given oil supply pressure; bullish for non-oil sectors and infrastructure spending.'",
     "investor_relevance": "high|medium|low",
+    "relevance_reason": "A short clause (5–10 words) explaining why allocators should care — e.g. 'sovereign fund positioning and rate-sensitive sectors'",
     "time_horizon": "immediate|3-6 months|long-term|unclear",
     "affected_sectors": ["energy", "banking", "real estate", "logistics", "technology", "sovereign funds", "tourism", "defence", "infrastructure"],
     "affected_geographies": ["Saudi Arabia", "UAE", "Qatar", "Egypt", "Kuwait", "Oman", "Bahrain", "Jordan", "GCC", "MENA"],
@@ -355,7 +357,9 @@ function buildSourceRefs(
 
 interface RawIntelligence {
   market_impact?: string;
+  market_impact_detail?: string;
   investor_relevance?: string;
+  relevance_reason?: string;
   time_horizon?: string;
   affected_sectors?: string[];
   affected_geographies?: string[];
@@ -373,7 +377,9 @@ function buildIntelligence(
 
   return {
     marketImpact: (raw?.market_impact ?? "unclear") as BriefingIntelligence["marketImpact"],
+    marketImpactDetail: raw?.market_impact_detail ?? "",
     investorRelevance: (raw?.investor_relevance ?? "medium") as BriefingIntelligence["investorRelevance"],
+    relevanceReason: raw?.relevance_reason ?? "",
     timeHorizon: (raw?.time_horizon ?? "unclear") as BriefingIntelligence["timeHorizon"],
     affectedSectors: raw?.affected_sectors ?? [],
     affectedGeographies: raw?.affected_geographies ?? [],

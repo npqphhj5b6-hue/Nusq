@@ -34,7 +34,9 @@ export interface ValidationResult {
 
 export interface BriefingIntelligence {
   marketImpact: "positive" | "negative" | "mixed" | "neutral" | "unclear";
+  marketImpactDetail: string;   // e.g. "Bearish for energy equities / bullish for non-oil sectors"
   investorRelevance: "high" | "medium" | "low";
+  relevanceReason: string;      // e.g. "sovereign fund positioning and rate-sensitive sectors"
   timeHorizon: "immediate" | "3-6 months" | "long-term" | "unclear";
   affectedSectors: string[];
   affectedGeographies: string[];
