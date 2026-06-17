@@ -3,8 +3,24 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { approveBriefing, deleteBriefing } from "../../actions";
 import { formatDate } from "@/lib/db";
+import type { SourceRef, ValidationResult, BriefingIntelligence } from "@/lib/types";
+import { TIER_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
+
+const TIER_BADGE_COLOURS: Record<number, string> = {
+  1: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/25",
+  2: "bg-amber-500/10 text-amber-600 border border-amber-500/25",
+  3: "bg-zinc-100 text-zinc-500 border border-zinc-200",
+};
+
+const IMPACT_COLOURS: Record<string, string> = {
+  positive: "text-emerald-600",
+  negative: "text-red-500",
+  mixed:    "text-amber-600",
+  neutral:  "text-zinc-500",
+  unclear:  "text-zinc-400",
+};
 
 export default async function DraftReviewPage({
   params,
@@ -25,6 +41,10 @@ export default async function DraftReviewPage({
     .split("\n\n")
     .filter((p: string) => p.trim().length > 0);
 
+  const sources: SourceRef[] = (draft.sources as SourceRef[] | null) ?? [];
+  const validation: ValidationResult | null = (draft.validation as ValidationResult | null) ?? null;
+  const intelligence: BriefingIntelligence | null = (draft.intelligence as BriefingIntelligence | null) ?? null;
+
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
       {/* Admin controls */}
@@ -35,47 +55,94 @@ export default async function DraftReviewPage({
         </div>
         <div className="flex items-center gap-2">
           <form action={deleteBriefing.bind(null, id)}>
-            <button
-              type="submit"
-              className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
+            <button type="submit" className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
               Delete
             </button>
           </form>
           <form action={approveBriefing.bind(null, id)}>
-            <button
-              type="submit"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-[#1B4F72] rounded-lg hover:bg-[#154060] transition-colors"
-            >
-              Approve & publish
+            <button type="submit" className="px-3 py-1.5 text-xs font-medium text-white bg-[#1B4F72] rounded-lg hover:bg-[#154060] transition-colors">
+              Approve &amp; publish
             </button>
           </form>
         </div>
       </div>
 
-      <Link
-        href="/admin"
-        className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#1C1C1C] transition-colors mb-8"
-      >
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#1C1C1C] transition-colors mb-8">
         <span>←</span>
         <span>Back to drafts</span>
       </Link>
 
-      {/* Preview — same layout as public page */}
+      {/* ── Validation panel ── */}
+      {validation && (
+        <div className={`mb-8 p-4 rounded-xl border text-sm ${validation.passed && !validation.needsReview ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-300"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`text-xs font-bold uppercase tracking-wide ${validation.passed && !validation.needsReview ? "text-emerald-700" : "text-amber-700"}`}>
+              {validation.passed && !validation.needsReview ? "✓ Validation passed" : "⚠ Needs review"}
+            </span>
+            {validation.checkedAt && (
+              <span className="text-[10px] text-zinc-400 font-mono ml-auto">
+                {new Date(validation.checkedAt).toLocaleString("en-GB")}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-600 mb-2">
+            <span>Sources: <strong>{validation.sourceCount}</strong></span>
+            <span>Has URLs: <strong>{validation.hasUrls ? "yes" : "no"}</strong></span>
+            <span>Freshness OK: <strong>{validation.freshnessOk ? "yes" : "no"}</strong></span>
+          </div>
+          {validation.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {validation.warnings.map((w, i) => (
+                <li key={i} className="text-[11px] text-amber-700 flex items-start gap-1.5">
+                  <span className="shrink-0 mt-0.5">›</span>
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {validation.staleSentinelWords.length > 0 && (
+            <p className="mt-2 text-[11px] text-red-600">
+              Stale language detected: {validation.staleSentinelWords.join(", ")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Intelligence panel ── */}
+      {intelligence && (
+        <div className="mb-8 p-4 rounded-xl border border-zinc-200 bg-zinc-50 text-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-3">Intelligence</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px]">
+            <span className="text-zinc-500">Market impact: <span className={`font-medium capitalize ${IMPACT_COLOURS[intelligence.marketImpact] ?? ""}`}>{intelligence.marketImpact}</span></span>
+            <span className="text-zinc-500">Investor relevance: <strong className="text-zinc-700 capitalize">{intelligence.investorRelevance}</strong></span>
+            <span className="text-zinc-500">Time horizon: <strong className="text-zinc-700 capitalize">{intelligence.timeHorizon}</strong></span>
+            <span className="text-zinc-500">Freshness: <strong className="text-zinc-700 capitalize">{intelligence.freshnessStatus}</strong></span>
+            {intelligence.conflictingSourcesDetected && (
+              <span className="col-span-2 text-amber-600 font-medium">⚠ Conflicting sources detected</span>
+            )}
+          </div>
+          {intelligence.affectedSectors.length > 0 && (
+            <p className="mt-2 text-[11px] text-zinc-500">Sectors: {intelligence.affectedSectors.join(", ")}</p>
+          )}
+          {intelligence.affectedGeographies.length > 0 && (
+            <p className="mt-1 text-[11px] text-zinc-500">Geographies: {intelligence.affectedGeographies.join(", ")}</p>
+          )}
+          {intelligence.confidenceNote && (
+            <p className="mt-2 text-[11px] text-zinc-400 italic">{intelligence.confidenceNote}</p>
+          )}
+        </div>
+      )}
+
+      {/* Article preview */}
       <div className="flex flex-wrap gap-2 mb-5">
         {draft.tags?.map((tag: string) => (
-          <span
-            key={tag}
-            className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#EBF4FB] text-[#1B4F72]"
-          >
+          <span key={tag} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#EBF4FB] text-[#1B4F72]">
             {tag}
           </span>
         ))}
       </div>
 
-      <h1 className="text-2xl font-bold text-[#1C1C1C] leading-snug mb-4">
-        {draft.title}
-      </h1>
+      <h1 className="text-2xl font-bold text-[#1C1C1C] leading-snug mb-4">{draft.title}</h1>
 
       <p className="text-[#737373] leading-relaxed mb-6 text-base border-l-2 border-[#1B4F72]/30 pl-4">
         {draft.summary}
@@ -85,6 +152,12 @@ export default async function DraftReviewPage({
         <span>{formatDate(draft.date)}</span>
         <span>·</span>
         <span>{draft.reading_time} min read</span>
+        {sources.length > 0 && (
+          <>
+            <span>·</span>
+            <span>{sources.length} sources</span>
+          </>
+        )}
       </div>
 
       <div className="prose-nusq">
@@ -96,6 +169,56 @@ export default async function DraftReviewPage({
           return <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
         })}
       </div>
+
+      {/* ── Sources panel ── */}
+      {sources.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-[#E5E2DC]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4">Sources ({sources.length})</p>
+          <div className="space-y-3">
+            {sources.map((s) => {
+              const pubDate = s.publishedAt
+                ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                : null;
+              return (
+                <div key={s.index} className="flex items-start gap-3 pb-3 border-b border-zinc-100 last:border-b-0">
+                  <span className="text-[10px] font-mono text-zinc-400 shrink-0 w-6 text-right pt-0.5">[{s.index}]</span>
+                  <div className="flex-1 min-w-0">
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[#1B4F72] hover:underline font-medium leading-snug block"
+                    >
+                      {s.title}
+                    </a>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-[10px] text-zinc-500">{s.publisher}</span>
+                      {pubDate && (
+                        <>
+                          <span className="text-zinc-300 text-[10px]">·</span>
+                          <span className="text-[10px] font-mono text-zinc-400">{pubDate}</span>
+                        </>
+                      )}
+                      {s.language === "ar" && (
+                        <>
+                          <span className="text-zinc-300 text-[10px]">·</span>
+                          <span className="text-[10px] text-zinc-400">Arabic</span>
+                        </>
+                      )}
+                      <span className={`text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded ${TIER_BADGE_COLOURS[s.tier]}`}>
+                        {TIER_LABELS[s.tier]}
+                      </span>
+                    </div>
+                    {s.snippet && (
+                      <p className="mt-1 text-[10px] text-zinc-400 line-clamp-2">{s.snippet}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

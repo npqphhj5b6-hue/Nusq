@@ -72,6 +72,23 @@ body {
   font-weight: 600;
   color: var(--c-text-1);
 }
+.citation-link {
+  color: var(--c-amber);
+  text-decoration: none;
+  font-size: 0.7em;
+  vertical-align: super;
+  font-weight: 600;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.citation-link:hover {
+  opacity: 1;
+}
+.citation-ref {
+  color: var(--c-text-3);
+  font-size: 0.7em;
+  vertical-align: super;
+}
 
 /* ── Page entrance ── */
 @keyframes nusq-fade-up {
