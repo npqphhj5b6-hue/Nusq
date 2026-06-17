@@ -48,3 +48,21 @@ export async function deleteBriefing(id: string) {
   if (error) throw new Error(error.message);
   redirect("/admin");
 }
+
+export async function updateBriefing(id: string, _prev: unknown, formData: FormData) {
+  const title = formData.get("title") as string;
+  const summary = formData.get("summary") as string;
+  const body = formData.get("body") as string;
+  const tagsRaw = formData.get("tags") as string;
+  const tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+  const wordCount = body.trim().split(/\s+/).length;
+  const readingTime = Math.max(1, Math.round(wordCount / 200));
+
+  const { error } = await supabaseAdmin
+    .from("briefings")
+    .update({ title, summary, body, tags, reading_time: readingTime })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  redirect(`/admin/drafts/${id}`);
+}

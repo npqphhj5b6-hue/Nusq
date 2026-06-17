@@ -55,6 +55,12 @@ export default async function DraftReviewPage({
           <span className="text-xs text-amber-600">— review before publishing</span>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/briefings/${id}/edit`}
+            className="px-3 py-1.5 text-xs font-medium text-[#737373] bg-white border border-[#E5E2DC] rounded-lg hover:border-[#1B4F72]/40 transition-colors"
+          >
+            Edit
+          </Link>
           <form action={deleteBriefing.bind(null, id)}>
             <button type="submit" className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
               Delete
