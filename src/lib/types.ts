@@ -1,4 +1,6 @@
-import type { SourceTier } from "./source-credibility";
+import type { SourceTier, SourceType } from "./source-credibility";
+
+export type { SourceType };
 
 export interface ChartData {
   type: string;
@@ -10,15 +12,34 @@ export interface ChartData {
 }
 
 export interface SourceRef {
-  index: number;       // 1-based, matches [N] in body
+  index: number;
   title: string;
   url: string;
   publisher: string;
-  domain: string;      // actual publisher domain for favicon lookup
-  publishedAt: string | null;  // ISO date string
+  domain: string;
+  publishedAt: string | null;
   language: "en" | "ar";
   tier: SourceTier;
   snippet: string;
+  // Extended source intelligence fields (optional for backwards compatibility)
+  originalUrl?: string | null;
+  googleNewsUrl?: string | null;
+  accessedAt?: string;
+  sourceType?: SourceType;
+  claimsSupported?: string[];
+  eventDate?: string | null;
+  isPrimarySource?: boolean;
+  isBackgroundContext?: boolean;
+  summaryOfRelevance?: string;
+  confidence?: "high" | "medium" | "low" | "unknown";
+  notes?: string;
+}
+
+export interface BriefingClaim {
+  claim: string;
+  sourceIndices: number[];
+  confidence: "high" | "medium" | "low";
+  requiresAttribution: boolean;
 }
 
 export interface ValidationResult {
@@ -34,9 +55,9 @@ export interface ValidationResult {
 
 export interface BriefingIntelligence {
   marketImpact: "positive" | "negative" | "mixed" | "neutral" | "unclear";
-  marketImpactDetail: string;   // e.g. "Bearish for energy equities / bullish for non-oil sectors"
+  marketImpactDetail: string;
   investorRelevance: "high" | "medium" | "low";
-  relevanceReason: string;      // e.g. "sovereign fund positioning and rate-sensitive sectors"
+  relevanceReason: string;
   timeHorizon: "immediate" | "3-6 months" | "long-term" | "unclear";
   affectedSectors: string[];
   affectedGeographies: string[];
@@ -63,6 +84,7 @@ export interface Briefing {
   sources?: SourceRef[];
   validation?: ValidationResult | null;
   intelligence?: BriefingIntelligence | null;
+  claims?: BriefingClaim[];
 }
 
 export interface Essay {

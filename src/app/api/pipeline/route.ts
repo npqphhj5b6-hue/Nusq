@@ -3,8 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSourceTier, getSourceTierByName, getPublisherName, getPublisherDomain } from "@/lib/source-credibility";
-import type { SourceRef, ValidationResult, BriefingIntelligence } from "@/lib/types";
+import { getSourceTier, getSourceTierByName, getSourceType, getSourceTypeByName, getPublisherName, getPublisherDomain, isPrimarySource } from "@/lib/source-credibility";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -58,6 +58,21 @@ Your writing voice:
 - Do not use: "today", "this morning", "just announced", "closed this week", "new deal" — unless a source published in the last 7 days explicitly says so.
 - For background context more than 30 days old, phrase as: "...which was first announced in [month/year]..." or "...part of a broader initiative launched in..."
 
+═══ SOURCE ATTRIBUTION REQUIREMENTS ═══
+
+For every source index in sources_used, provide a corresponding entry in source_annotations (keyed by the source number as a string):
+- "is_primary": true if the source is an official body directly releasing information (central bank, exchange, gov ministry, IMF, company IR). False for wire services and media reports about those institutions.
+- "is_background": true if the source provides historical or contextual information rather than breaking/current news.
+- "claims_supported": array of the specific, verifiable claims from the briefing body that this source directly supports. Copy the exact key fact/figure from the body text — e.g. "Saudi inflation reached 1.8% in May 2026", not vague summaries.
+- "summary": one sentence explaining why this source was cited and what it contributes.
+- "event_date": ISO date (YYYY-MM-DD) of the event described, if precisely known from the source. Null if ongoing, approximate, or unclear.
+
+Also output a "claims" array with the 5–10 most important verifiable claims in the briefing:
+- "claim": the exact claim text — a specific fact, figure, date, or entity statement
+- "sources": array of source indices from sources_used that directly support this claim
+- "confidence": "high" (multiple T1/T2 sources agree), "medium" (single T2 source), or "low" (uncertain or single source)
+- "requires_attribution": true if this is a single-source claim needing "according to [N]" framing in the body
+
 ═══ OUTPUT FORMAT ═══
 
 Output ONLY a valid JSON object — no prose before or after, no markdown code fences.
@@ -78,6 +93,30 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "country": "2-letter ISO code required only for gdp_growth or inflation: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null."
   },
   "sources_used": [1, 3, 5],
+  "source_annotations": {
+    "1": {
+      "is_primary": false,
+      "is_background": false,
+      "claims_supported": ["Saudi GDP grew 4.6% in Q1 2026"],
+      "summary": "Provides official GDP data cited as the headline figure",
+      "event_date": "2026-03-31"
+    },
+    "3": {
+      "is_primary": true,
+      "is_background": false,
+      "claims_supported": ["SAMA held rates at 5.5% in June 2026"],
+      "summary": "SAMA's official monetary policy statement",
+      "event_date": "2026-06-17"
+    }
+  },
+  "claims": [
+    {
+      "claim": "Saudi GDP grew 4.6% in Q1 2026",
+      "sources": [1, 3],
+      "confidence": "high",
+      "requires_attribution": false
+    }
+  ],
   "intelligence": {
     "market_impact": "positive|negative|mixed|neutral|unclear",
     "market_impact_detail": "One specific sentence describing what the impact means for investors — e.g. 'Bearish for energy equities given oil supply pressure; bullish for non-oil sectors and infrastructure spending.'",
@@ -91,6 +130,23 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "conflicting_sources": false
   }
 }`;
+
+// ── Source annotation from model ─────────────────────────────────────────────
+
+interface RawSourceAnnotation {
+  is_primary?: boolean;
+  is_background?: boolean;
+  claims_supported?: string[];
+  summary?: string;
+  event_date?: string | null;
+}
+
+interface RawClaim {
+  claim?: string;
+  sources?: number[];
+  confidence?: string;
+  requires_attribution?: boolean;
+}
 
 // ── RSS ingestion with source capture ────────────────────────────────────────
 
@@ -322,8 +378,10 @@ function validateBriefing(
 
 function buildSourceRefs(
   rawSources: RawSourceItem[],
-  sourcesUsed: number[]
+  sourcesUsed: number[],
+  annotations: Record<string, RawSourceAnnotation>
 ): SourceRef[] {
+  const accessedAt = new Date().toISOString();
   return sourcesUsed
     .filter((i) => i >= 1 && i <= rawSources.length)
     .map((i) => {
@@ -339,6 +397,12 @@ function buildSourceRefs(
       const domain = isGoogleNews
         ? getPublisherDomain(publisher)
         : ((() => { try { return new URL(resolvedUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })());
+      const sourceType = isGoogleNews
+        ? getSourceTypeByName(publisher)
+        : getSourceType(resolvedUrl);
+      const annotation = annotations[String(i)] ?? {};
+      const primary = annotation.is_primary ?? isPrimarySource(tier, sourceType);
+      const confidence = tier === 1 ? "high" : tier === 2 ? "medium" : "low";
       return {
         index: i,
         title: s.title,
@@ -349,6 +413,17 @@ function buildSourceRefs(
         language: s.lang,
         tier,
         snippet: s.snippet,
+        originalUrl: isGoogleNews ? null : resolvedUrl,
+        googleNewsUrl: isGoogleNews ? resolvedUrl : null,
+        accessedAt,
+        sourceType,
+        claimsSupported: annotation.claims_supported ?? [],
+        eventDate: annotation.event_date ?? null,
+        isPrimarySource: primary,
+        isBackgroundContext: annotation.is_background ?? false,
+        summaryOfRelevance: annotation.summary ?? "",
+        confidence,
+        notes: "",
       };
     });
 }
@@ -572,6 +647,8 @@ export async function GET(request: NextRequest) {
     tickers: string[];
     chart?: { type: string | null; country?: string | null } | null;
     sources_used?: number[];
+    source_annotations?: Record<string, RawSourceAnnotation>;
+    claims?: RawClaim[];
     intelligence?: RawIntelligence | null;
   };
 
@@ -580,7 +657,18 @@ export async function GET(request: NextRequest) {
 
   // Build structured sources
   const sourcesUsed = generated.sources_used ?? [];
-  const sourceRefs = buildSourceRefs(rawSources, sourcesUsed);
+  const sourceAnnotations = generated.source_annotations ?? {};
+  const sourceRefs = buildSourceRefs(rawSources, sourcesUsed, sourceAnnotations);
+
+  // Map raw claims to BriefingClaim[]
+  const briefingClaims: BriefingClaim[] = (generated.claims ?? [])
+    .filter((c): c is Required<RawClaim> => !!c.claim && Array.isArray(c.sources))
+    .map((c) => ({
+      claim: c.claim,
+      sourceIndices: c.sources,
+      confidence: (c.confidence ?? "medium") as BriefingClaim["confidence"],
+      requiresAttribution: c.requires_attribution ?? false,
+    }));
 
   // Build intelligence metadata
   const intelligence = buildIntelligence(generated.intelligence ?? null, sourceRefs);
@@ -623,6 +711,7 @@ export async function GET(request: NextRequest) {
       sources: sourceRefs.length > 0 ? sourceRefs : null,
       validation,
       intelligence,
+      claims: briefingClaims.length > 0 ? briefingClaims : null,
     })
     .select("id")
     .single();

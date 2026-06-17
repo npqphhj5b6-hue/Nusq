@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Briefing, BriefingIntelligence, ChartData, Essay, SourceRef, ValidationResult } from "./types";
+import { Briefing, BriefingClaim, BriefingIntelligence, ChartData, Essay, SourceRef, ValidationResult } from "./types";
 
 export async function getAllBriefings(): Promise<Briefing[]> {
   const { data, error } = await supabase
@@ -64,6 +64,7 @@ function rowToBriefing(row: any): Briefing {
     sources: (row.sources as SourceRef[] | null) ?? [],
     validation: (row.validation as ValidationResult | null) ?? null,
     intelligence: (row.intelligence as BriefingIntelligence | null) ?? null,
+    claims: (row.claims as BriefingClaim[] | null) ?? [],
   };
 }
 

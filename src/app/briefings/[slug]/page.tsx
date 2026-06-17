@@ -8,7 +8,7 @@ import DataChart from "@/components/DataChart";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
 import type { SourceRef, BriefingIntelligence } from "@/lib/types";
-import { getPublisherDomain } from "@/lib/source-credibility";
+import { getPublisherDomain, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
 
@@ -230,7 +230,20 @@ export default async function BriefingPage({
                 {hasSources && (
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Sources reviewed</span>
-                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">{sources.length}</span>
+                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">
+                      {sources.length}
+                      {(() => {
+                        const t1 = sources.filter(s => s.tier === 1).length;
+                        const primary = sources.filter(s => s.isPrimarySource).length;
+                        if (t1 > 0 || primary > 0) {
+                          const parts: string[] = [];
+                          if (primary > 0) parts.push(`${primary} primary`);
+                          else if (t1 > 0) parts.push(`${t1} official`);
+                          return <span className="text-[var(--c-text-3)] ml-1">({parts.join(", ")})</span>;
+                        }
+                        return null;
+                      })()}
+                    </span>
                   </div>
                 )}
                 {checkedDate && (
@@ -390,43 +403,52 @@ export default async function BriefingPage({
                 const faviconUrl = domain
                   ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
                   : null;
+                const typeLabel = s.sourceType && s.sourceType !== "news_report" && s.sourceType !== "unknown"
+                  ? SOURCE_TYPE_LABELS[s.sourceType]
+                  : null;
                 return (
                   <a
                     key={s.index}
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2.5 py-2.5 border-b border-[var(--c-border)] last:border-b-0 hover:bg-[var(--c-surface)] -mx-3 px-3 rounded-lg transition-colors group"
+                    className="flex items-start gap-2.5 py-2.5 border-b border-[var(--c-border)] last:border-b-0 hover:bg-[var(--c-surface)] -mx-3 px-3 rounded-lg transition-colors group"
                   >
-                    {faviconUrl ? (
-                      <img
-                        src={faviconUrl}
-                        width={16}
-                        height={16}
-                        alt=""
-                        className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity"
-                      />
-                    ) : (
-                      <div className="w-4 h-4 rounded-sm bg-[var(--c-border)] shrink-0" />
-                    )}
-                    <span className="text-[11px] font-semibold text-[var(--c-text-2)] shrink-0 group-hover:text-[var(--c-amber)] transition-colors">
-                      {s.publisher}
-                    </span>
-                    <span className="text-[var(--c-border-2)] text-[10px] shrink-0">·</span>
-                    <span
-                      className="text-[11px] text-[var(--c-text-3)] truncate flex-1 min-w-0"
-                      dir="auto"
-                    >
-                      {s.title}
-                    </span>
-                    {pubDate && (
-                      <>
-                        <span className="text-[var(--c-border-2)] text-[10px] shrink-0">·</span>
-                        <span className="text-[10px] text-[var(--c-text-3)] shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
-                          {pubDate}
+                    <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
+                      {faviconUrl ? (
+                        <img
+                          src={faviconUrl}
+                          width={16}
+                          height={16}
+                          alt=""
+                          className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity"
+                        />
+                      ) : (
+                        <div className="w-4 h-4 rounded-sm bg-[var(--c-border)] shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-amber)] transition-colors">
+                          {s.publisher}
                         </span>
-                      </>
-                    )}
+                        {s.isPrimarySource && (
+                          <span className="text-[9px] font-bold tracking-[0.08em] uppercase text-[var(--c-amber)] opacity-80">Primary</span>
+                        )}
+                        {typeLabel && !s.isPrimarySource && (
+                          <span className="text-[9px] font-semibold tracking-[0.06em] uppercase text-[var(--c-text-3)]">{typeLabel}</span>
+                        )}
+                        {pubDate && (
+                          <span className="text-[10px] text-[var(--c-text-3)] ml-auto shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                            {pubDate}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[var(--c-text-3)] truncate mt-0.5" dir="auto">{s.title}</p>
+                      {s.summaryOfRelevance && (
+                        <p className="text-[10px] text-[var(--c-text-3)] opacity-70 mt-0.5 leading-relaxed line-clamp-1">{s.summaryOfRelevance}</p>
+                      )}
+                    </div>
                   </a>
                 );
               })}

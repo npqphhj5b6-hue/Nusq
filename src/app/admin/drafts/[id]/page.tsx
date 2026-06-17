@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { approveBriefing, deleteBriefing } from "../../actions";
 import { formatDate } from "@/lib/db";
-import type { SourceRef, ValidationResult, BriefingIntelligence } from "@/lib/types";
-import { TIER_LABELS } from "@/lib/source-credibility";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence } from "@/lib/types";
+import { TIER_LABELS, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +44,7 @@ export default async function DraftReviewPage({
   const sources: SourceRef[] = (draft.sources as SourceRef[] | null) ?? [];
   const validation: ValidationResult | null = (draft.validation as ValidationResult | null) ?? null;
   const intelligence: BriefingIntelligence | null = (draft.intelligence as BriefingIntelligence | null) ?? null;
+  const claims: BriefingClaim[] = (draft.claims as BriefingClaim[] | null) ?? [];
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -179,6 +180,9 @@ export default async function DraftReviewPage({
               const pubDate = s.publishedAt
                 ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                 : null;
+              const eventDate = s.eventDate
+                ? new Date(s.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                : null;
               return (
                 <div key={s.index} className="flex items-start gap-3 pb-3 border-b border-zinc-100 last:border-b-0">
                   <span className="text-[10px] font-mono text-zinc-400 shrink-0 w-6 text-right pt-0.5">[{s.index}]</span>
@@ -208,7 +212,36 @@ export default async function DraftReviewPage({
                       <span className={`text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded ${TIER_BADGE_COLOURS[s.tier]}`}>
                         {TIER_LABELS[s.tier]}
                       </span>
+                      {s.isPrimarySource && (
+                        <span className="text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          Primary
+                        </span>
+                      )}
+                      {s.sourceType && s.sourceType !== "unknown" && (
+                        <span className="text-[9px] text-zinc-400 tracking-wide uppercase">
+                          {SOURCE_TYPE_LABELS[s.sourceType]}
+                        </span>
+                      )}
+                      {s.isBackgroundContext && (
+                        <span className="text-[9px] text-zinc-400 italic">background</span>
+                      )}
                     </div>
+                    {s.summaryOfRelevance && (
+                      <p className="mt-1 text-[10px] text-zinc-500 italic">{s.summaryOfRelevance}</p>
+                    )}
+                    {s.claimsSupported && s.claimsSupported.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {s.claimsSupported.map((c, ci) => (
+                          <li key={ci} className="text-[10px] text-zinc-500 flex gap-1">
+                            <span className="text-zinc-300 shrink-0">›</span>
+                            <span>{c}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {eventDate && (
+                      <p className="mt-1 text-[10px] font-mono text-zinc-400">Event: {eventDate}</p>
+                    )}
                     {s.snippet && (
                       <p className="mt-1 text-[10px] text-zinc-400 line-clamp-2">{s.snippet}</p>
                     )}
@@ -216,6 +249,35 @@ export default async function DraftReviewPage({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Claims panel ── */}
+      {claims.length > 0 && (
+        <div className="mt-8 pt-8 border-t border-[#E5E2DC]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4">Structured Claims ({claims.length})</p>
+          <div className="space-y-2.5">
+            {claims.map((c, i) => (
+              <div key={i} className="p-3 rounded-lg border border-zinc-100 bg-zinc-50">
+                <p className="text-[11px] text-zinc-700 font-medium leading-snug">{c.claim}</p>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Sources: {c.sourceIndices.map(n => `[${n}]`).join(", ")}
+                  </span>
+                  <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                    c.confidence === "high" ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : c.confidence === "medium" ? "bg-amber-50 text-amber-700 border border-amber-200"
+                    : "bg-red-50 text-red-600 border border-red-200"
+                  }`}>
+                    {c.confidence}
+                  </span>
+                  {c.requiresAttribution && (
+                    <span className="text-[9px] text-zinc-400 italic">requires attribution</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

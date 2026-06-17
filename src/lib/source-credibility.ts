@@ -1,5 +1,17 @@
 export type SourceTier = 1 | 2 | 3;
 
+export type SourceType =
+  | "official_statement"   // gov/CB press releases, policy announcements
+  | "government_data"      // statistics, economic data from official bodies
+  | "market_data"          // exchange data, price data
+  | "data_release"         // economic indicator releases (IMF WEO, etc.)
+  | "research_report"      // multilateral/think tank research
+  | "financial_filing"     // company filings, earnings, IR documents
+  | "company_announcement" // company press releases
+  | "news_report"          // journalism and wire services
+  | "analysis"             // rating actions, editorial commentary
+  | "unknown";
+
 // Tier 1: official government, regulatory, exchange, multilateral, SWF sources
 const TIER_1_DOMAINS = new Set([
   // GCC central banks
@@ -40,6 +52,96 @@ const TIER_2_DOMAINS = new Set([
   "refinitiv.com", "ihs.com", "capitaliq.com", "semafor.com",
 ]);
 
+// Source type by domain — what kind of content does this source publish?
+const SOURCE_TYPE_MAP: Record<string, SourceType> = {
+  // GCC central banks → official statements
+  "sama.gov.sa": "official_statement",
+  "cbuae.gov.ae": "official_statement",
+  "qcb.gov.qa": "official_statement",
+  "cbk.gov.kw": "official_statement",
+  "cbo.gov.om": "official_statement",
+  "cbb.gov.bh": "official_statement",
+  "cbe.org.eg": "official_statement",
+  // Stock exchanges → market data
+  "tadawul.com.sa": "market_data",
+  "adx.ae": "market_data",
+  "dfm.ae": "market_data",
+  "kse.com.kw": "market_data",
+  "bme.com.bh": "market_data",
+  // SWFs → official statements
+  "pif.gov.sa": "official_statement",
+  "adia.ae": "official_statement",
+  "qia.qa": "official_statement",
+  "mubadala.ae": "official_statement",
+  "adq.ae": "official_statement",
+  "mumtalakat.bh": "official_statement",
+  // Government ministries
+  "vision2030.gov.sa": "official_statement",
+  "mof.gov.sa": "government_data",
+  "mci.gov.sa": "official_statement",
+  "mcit.gov.sa": "official_statement",
+  "economy.gov.ae": "official_statement",
+  "mof.gov.ae": "government_data",
+  // Multilaterals
+  "imf.org": "data_release",
+  "worldbank.org": "research_report",
+  "opec.org": "official_statement",
+  "iea.org": "official_statement",
+  "un.org": "research_report",
+  "oecd.org": "research_report",
+  "bis.org": "research_report",
+  "fatf-gafi.org": "research_report",
+  "wto.org": "official_statement",
+  "amf.org.ae": "research_report",
+  "isdb.org": "research_report",
+  // Rating agencies
+  "moodys.com": "analysis",
+  "spglobal.com": "analysis",
+  "fitchratings.com": "analysis",
+  // International news
+  "reuters.com": "news_report",
+  "bloomberg.com": "news_report",
+  "ft.com": "news_report",
+  "wsj.com": "news_report",
+  "economist.com": "analysis",
+  "cnbc.com": "news_report",
+  "bbc.com": "news_report",
+  "apnews.com": "news_report",
+  "ap.org": "news_report",
+  // MENA media
+  "zawya.com": "news_report",
+  "arabianbusiness.com": "news_report",
+  "meed.com": "news_report",
+  "thenationalnews.com": "news_report",
+  "gulfnews.com": "news_report",
+  "khaleejtimes.com": "news_report",
+  "agbi.com": "news_report",
+  "asharq.com": "news_report",
+  "asharqbusiness.com": "news_report",
+  "argaam.com": "news_report",
+  "mubasher.info": "news_report",
+  "aljazeera.com": "news_report",
+  "middleeasteye.net": "news_report",
+  "al-monitor.com": "news_report",
+  "aawsat.com": "news_report",
+  "alriyadh.com": "news_report",
+  "aleqt.com": "news_report",
+  "alwatan.com.sa": "news_report",
+  "alarabiya.net": "news_report",
+  // Think tanks
+  "mei.edu": "analysis",
+  "chathamhouse.org": "analysis",
+  "carnegieendowment.org": "analysis",
+  "brookings.edu": "analysis",
+  "cfr.org": "analysis",
+  "wilsoncenter.org": "analysis",
+  // Research/data
+  "refinitiv.com": "analysis",
+  "ihs.com": "analysis",
+  "capitaliq.com": "analysis",
+  "semafor.com": "news_report",
+};
+
 export function getSourceTier(url: string): SourceTier {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");
@@ -49,6 +151,49 @@ export function getSourceTier(url: string): SourceTier {
   } catch {
     return 3;
   }
+}
+
+export function getSourceType(url: string): SourceType {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    return SOURCE_TYPE_MAP[hostname] ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+export function getSourceTypeByName(publisherName: string): SourceType {
+  const domain = getPublisherDomain(publisherName);
+  if (domain) return SOURCE_TYPE_MAP[domain] ?? "unknown";
+  // name-based fallback for unmapped publishers
+  const key = publisherName.trim().toLowerCase();
+  const NAME_FALLBACK: Record<string, SourceType> = {
+    "reuters": "news_report", "bloomberg": "news_report",
+    "financial times": "news_report", "ft": "news_report",
+    "wall street journal": "news_report", "wsj": "news_report",
+    "the economist": "analysis", "cnbc": "news_report",
+    "bbc": "news_report", "ap news": "news_report",
+    "imf": "data_release", "international monetary fund": "data_release",
+    "world bank": "research_report", "opec": "official_statement",
+    "iea": "official_statement", "sama": "official_statement",
+    "pif": "official_statement", "moody's": "analysis",
+    "moodys": "analysis", "s&p global": "analysis",
+    "fitch ratings": "analysis", "fitch": "analysis",
+    "saudi exchange": "market_data", "tadawul": "market_data",
+    "adx": "market_data", "dfm": "market_data",
+  };
+  return NAME_FALLBACK[key] ?? "unknown";
+}
+
+export function isPrimarySource(tier: SourceTier, sourceType: SourceType): boolean {
+  if (tier !== 1) return false;
+  return (
+    sourceType === "official_statement" ||
+    sourceType === "government_data" ||
+    sourceType === "market_data" ||
+    sourceType === "data_release" ||
+    sourceType === "financial_filing"
+  );
 }
 
 const PUBLISHER_MAP: Record<string, string> = {
@@ -184,4 +329,17 @@ export const TIER_DESCRIPTIONS: Record<SourceTier, string> = {
   1: "Official government, regulatory, or multilateral source",
   2: "Established financial or regional media",
   3: "Other publication",
+};
+
+export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  official_statement: "Official",
+  government_data: "Gov. Data",
+  market_data: "Market Data",
+  data_release: "Data Release",
+  research_report: "Research",
+  financial_filing: "Filing",
+  company_announcement: "Company",
+  news_report: "News",
+  analysis: "Analysis",
+  unknown: "Unknown",
 };
