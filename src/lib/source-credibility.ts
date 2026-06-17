@@ -309,7 +309,6 @@ const PUBLISHER_NAME_TO_DOMAIN: Record<string, string> = {
   "al bayan": "albayan.ae",
   "sabq": "sabq.org",
   "mal": "mal.com.sa",
-  "asharq bloomberg": "asharqbusiness.com",
   "energynow.com": "energynow.com",
   "enterpriseam": "enterpriseam.com",
   "al youm": "alyaum.com",
