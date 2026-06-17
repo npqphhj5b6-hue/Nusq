@@ -16,7 +16,6 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
 
 const VALID_TICKERS = new Set([
   "TVC:UKOIL", "TVC:NGAS", "TVC:GOLD", "TVC:SILVER",
-  "FX:USDSAR", "FX:USDAED", "FX:USDKWD", "FX:USDQAR",
   "FOREXCOM:SPXUSD", "TVC:DXY",
 ]);
 
@@ -122,10 +121,6 @@ export default async function BriefingPage({
     "TVC:NGAS":        /\b(natural gas|lng|gas price)/i,
     "TVC:GOLD":        /\b(gold|precious metal|safe.haven|bullion)/i,
     "TVC:SILVER":      /\bsilver\b/i,
-    "FX:USDSAR":       /\b(saudi.+riyal|riyal.+saudi|sar\b|saudi.+currency|saudi.+monetary)/i,
-    "FX:USDAED":       /\b(dirham|aed\b|uae.+currency|uae.+monetary)/i,
-    "FX:USDKWD":       /\b(dinar|kwd\b|kuwaiti)/i,
-    "FX:USDQAR":       /\b(qatari|qar\b|qatar.+currency)/i,
     "FOREXCOM:SPXUSD": /\b(s&p|sp 500|us stocks|wall street|american market)/i,
     "TVC:DXY":         /\b(dollar index|dxy\b|usd strength|dollar strength)/i,
   };

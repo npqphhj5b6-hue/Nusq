@@ -10,7 +10,6 @@ export const maxDuration = 300;
 
 const ALLOWED_TICKERS = new Set([
   "TVC:UKOIL", "TVC:NGAS", "TVC:GOLD", "TVC:SILVER",
-  "FX:USDSAR", "FX:USDAED", "FX:USDKWD", "FX:USDQAR",
   "FOREXCOM:SPXUSD", "TVC:DXY",
 ]);
 
@@ -87,7 +86,7 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
     "topic": "A 4–7 word Unsplash query tied to today's specific economic topic.",
     "cinematic": "A 4–7 word Unsplash query for a dramatic or atmospheric image."
   },
-  "tickers": ["Array of up to 3 TradingView symbols from this exact list only: TVC:UKOIL, TVC:NGAS, TVC:GOLD, TVC:SILVER, FX:USDSAR, FX:USDAED, FX:USDKWD, FX:USDQAR, FOREXCOM:SPXUSD, TVC:DXY. Empty array if nothing fits well."],
+  "tickers": ["Array of up to 3 TradingView symbols from this exact list only: TVC:UKOIL, TVC:NGAS, TVC:GOLD, TVC:SILVER, FOREXCOM:SPXUSD, TVC:DXY. Empty array if nothing fits well."],
   "chart": {
     "type": "ONE of: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — or null",
     "country": "2-letter ISO code required only for gdp_growth or inflation: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null."
