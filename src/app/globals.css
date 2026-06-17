@@ -75,19 +75,22 @@ body {
 .citation-link {
   color: var(--c-amber);
   text-decoration: none;
-  font-size: 0.7em;
-  vertical-align: super;
-  font-weight: 600;
-  opacity: 0.85;
+  font-size: 0.6em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.7;
   transition: opacity 0.15s;
+  position: relative;
+  top: -0.5em;
 }
 .citation-link:hover {
   opacity: 1;
 }
 .citation-ref {
   color: var(--c-text-3);
-  font-size: 0.7em;
-  vertical-align: super;
+  font-size: 0.6em;
+  position: relative;
+  top: -0.5em;
 }
 
 /* ── Page entrance ── */

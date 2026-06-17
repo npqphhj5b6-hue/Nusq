@@ -34,9 +34,9 @@ function renderParagraph(para: string, sourceMap: Map<number, SourceRef>): strin
   html = html.replace(/\[(\d+)\]/g, (_, n) => {
     const source = sourceMap.get(parseInt(n));
     if (source?.url) {
-      return `<sup><a href="${source.url}" target="_blank" rel="noopener noreferrer" class="citation-link">[${n}]</a></sup>`;
+      return `<sup><a href="${source.url}" target="_blank" rel="noopener noreferrer" class="citation-link">${n}</a></sup>`;
     }
-    return `<sup class="citation-ref">[${n}]</sup>`;
+    return `<sup class="citation-ref">${n}</sup>`;
   });
   return html;
 }
