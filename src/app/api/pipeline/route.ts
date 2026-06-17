@@ -313,11 +313,14 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
     return 0;
   });
 
-  // Resolve Google News redirect URLs to actual publisher domains for accurate tier scoring
+  // Resolve Google News redirect URLs to actual publisher domains for accurate tier scoring.
+  // Only update URL/publisher when the redirect actually leaves news.google.com — if it stays
+  // on Google's domain (a different Google News path), getPublisherName returns "news.google.com"
+  // which is truthy and would silently overwrite the publisher name extracted from the RSS title.
   await Promise.allSettled(
     sorted.map(async (s) => {
       const resolved = await resolveRedirect(s.url);
-      if (resolved !== s.url) {
+      if (resolved !== s.url && !resolved.includes("news.google.com")) {
         s.url = resolved;
         s.publisher = getPublisherName(resolved) || s.publisher;
       }

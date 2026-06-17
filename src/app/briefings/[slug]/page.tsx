@@ -380,7 +380,7 @@ export default async function BriefingPage({
                   </div>
 
                   {/* Story image */}
-                  {story.imageUrl && (
+                  {story.imageUrl ? (
                     <div className="relative w-full mb-7 overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
                       <img
                         src={unsplashUrlFull(story.imageUrl, 1200)}
@@ -398,6 +398,12 @@ export default async function BriefingPage({
                           {story.imageCredit}
                         </a>
                       )}
+                    </div>
+                  ) : (
+                    <div className="relative w-full mb-7 overflow-hidden rounded-xl flex items-center justify-center" style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.02) 100%)", border: "1px solid rgba(245,158,11,0.10)" }}>
+                      <span className="text-[var(--c-amber)]/20 font-black select-none" style={{ fontSize: "clamp(5rem, 15vw, 9rem)", fontFamily: "var(--font-barlow)", lineHeight: 1 }} aria-hidden="true">
+                        {story.number}
+                      </span>
                     </div>
                   )}
 

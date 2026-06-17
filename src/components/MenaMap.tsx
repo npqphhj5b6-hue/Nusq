@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 export interface MapStory {
   number: number;
   headline: string;
@@ -61,14 +59,12 @@ const GEO_LOOKUP: Record<string, [number, number]> = {
 function resolveCoords(location: string, city?: string): [number, number] | null {
   if (city && GEO_LOOKUP[city]) return GEO_LOOKUP[city];
   if (GEO_LOOKUP[location]) return GEO_LOOKUP[location];
-  // Fuzzy: check if any key is contained in the location string
   for (const [key, coords] of Object.entries(GEO_LOOKUP)) {
     if (location.toLowerCase().includes(key.toLowerCase())) return coords;
   }
   return null;
 }
 
-// Mercator projection helpers (simple equirectangular for this region)
 const MAP_BOUNDS = { minLng: -10, maxLng: 65, minLat: 10, maxLat: 45 };
 
 function project(lat: number, lng: number, w: number, h: number): [number, number] {
@@ -78,8 +74,6 @@ function project(lat: number, lng: number, w: number, h: number): [number, numbe
 }
 
 export default function MenaMap({ stories }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const pins = stories
     .map((s) => ({ story: s, coords: resolveCoords(s.location, s.city) }))
     .filter((p): p is { story: MapStory; coords: [number, number] } => p.coords !== null);
@@ -89,42 +83,46 @@ export default function MenaMap({ stories }: Props) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // Viewport size for the SVG
   const W = 700;
-  const H = 300;
+  const H = 320;
 
   return (
-    <div ref={containerRef} className="relative w-full rounded-xl overflow-hidden border border-[var(--c-border)] bg-[var(--c-surface)]">
+    <div className="relative w-full rounded-xl overflow-hidden border border-[var(--c-border)]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-[var(--c-border)]">
+      <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-[var(--c-border)] bg-[var(--c-surface)]">
         <div className="w-5 h-[1px] bg-[var(--c-amber)]" />
         <span className="eyebrow text-[10px]">Stories in this briefing</span>
       </div>
 
       {/* Map SVG */}
-      <div className="relative px-4 py-4">
+      <div className="relative" style={{ background: "#04101E" }}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           width="100%"
           className="block"
-          style={{ maxHeight: "260px" }}
+          style={{ maxHeight: "300px" }}
         >
-          {/* Background */}
-          <rect width={W} height={H} fill="transparent" />
+          {/* Ocean background */}
+          <rect width={W} height={H} fill="#04101E" />
 
-          {/* Very subtle grid */}
+          {/* Grid lines — barely visible */}
           {[15, 20, 25, 30, 35, 40].map((lat) => {
             const [, y] = project(lat, 0, W, H);
-            return <line key={`lat-${lat}`} x1={0} y1={y} x2={W} y2={y} stroke="var(--c-border)" strokeWidth="0.5" strokeOpacity="0.5" />;
+            return <line key={`lat-${lat}`} x1={0} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />;
           })}
           {[0, 15, 30, 45, 60].map((lng) => {
             const [x] = project(0, lng, W, H);
-            return <line key={`lng-${lng}`} x1={x} y1={0} x2={x} y2={H} stroke="var(--c-border)" strokeWidth="0.5" strokeOpacity="0.5" />;
+            return <line key={`lng-${lng}`} x1={x} y1={0} x2={x} y2={H} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />;
           })}
 
-          {/* Country outlines — simplified Gulf/MENA polygons */}
+          {/* Country fills + borders */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d} fill="var(--c-surface)" stroke="var(--c-border)" strokeWidth="0.8" strokeOpacity="0.7" />
+            <path key={name} d={d}
+              fill="#0C1F38"
+              stroke="rgba(255,255,255,0.22)"
+              strokeWidth="0.9"
+              strokeLinejoin="round"
+            />
           ))}
 
           {/* Pins */}
@@ -138,21 +136,23 @@ export default function MenaMap({ stories }: Props) {
                 style={{ cursor: "pointer" }}
                 className="group"
               >
-                {/* Pulse ring */}
-                <circle cx={x} cy={y} r="12" fill="#F59E0B" fillOpacity="0.12" />
+                {/* Outer glow ring */}
+                <circle cx={x} cy={y} r="14" fill="#F59E0B" fillOpacity="0.1" />
+                {/* Mid ring */}
+                <circle cx={x} cy={y} r="8" fill="#F59E0B" fillOpacity="0.18" />
                 {/* Dot */}
-                <circle cx={x} cy={y} r="6" fill="#F59E0B" stroke="var(--c-bg)" strokeWidth="1.5" />
+                <circle cx={x} cy={y} r="6" fill="#F59E0B" stroke="#04101E" strokeWidth="1.5" />
                 {/* Number */}
                 <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"
-                  style={{ fontSize: "7px", fontWeight: 700, fill: "#040C1A", fontFamily: "var(--font-geist-mono)", pointerEvents: "none" }}>
+                  style={{ fontSize: "7px", fontWeight: 700, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}>
                   {story.number}
                 </text>
-                {/* Tooltip label — appears above pin */}
-                <g transform={`translate(${x}, ${y - 16})`} className="opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s" }}>
-                  <rect x={-50} y={-18} width="100" height="16" rx="3" fill="var(--c-bg)" stroke="var(--c-border)" strokeWidth="0.8" />
+                {/* Tooltip label — appears above pin on hover */}
+                <g transform={`translate(${x}, ${y - 18})`} className="opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s" }}>
+                  <rect x={-55} y={-18} width="110" height="16" rx="3" fill="#04101E" stroke="rgba(245,158,11,0.3)" strokeWidth="0.8" />
                   <text x={0} y={-7} textAnchor="middle"
-                    style={{ fontSize: "8px", fill: "var(--c-text-2)", fontFamily: "var(--font-geist-mono)", pointerEvents: "none" }}>
-                    {story.headline.length > 22 ? story.headline.slice(0, 22) + "…" : story.headline}
+                    style={{ fontSize: "8px", fill: "rgba(255,255,255,0.7)", fontFamily: "monospace", pointerEvents: "none" }}>
+                    {story.headline.length > 26 ? story.headline.slice(0, 26) + "…" : story.headline}
                   </text>
                 </g>
               </g>
@@ -161,8 +161,8 @@ export default function MenaMap({ stories }: Props) {
         </svg>
       </div>
 
-      {/* Story index below map */}
-      <div className="px-5 pb-4 flex flex-wrap gap-2">
+      {/* Story index row */}
+      <div className="px-5 py-3 flex flex-wrap gap-2 bg-[var(--c-surface)] border-t border-[var(--c-border)]">
         {stories.map((s) => (
           <button
             key={s.number}
@@ -181,8 +181,6 @@ export default function MenaMap({ stories }: Props) {
   );
 }
 
-// Simplified country shapes as SVG path data, projected into our coordinate space
-// These are rough approximations — good enough for a decorative map
 function buildPath(points: [number, number][], w: number, h: number): string {
   return points.map((p, i) => {
     const [x, y] = project(p[0], p[1], w, h);
@@ -190,29 +188,91 @@ function buildPath(points: [number, number][], w: number, h: number): string {
   }).join(" ") + " Z";
 }
 
-const W = 700, H = 300;
+const W = 700, H = 320;
 
 const COUNTRY_SHAPES: { name: string; d: string }[] = [
+  // ── North Africa ─────────────────────────────────────────────────────────────
+  {
+    name: "Morocco",
+    d: buildPath([
+      [35.9, -5.4], [35.5, -2.0], [34.8, -1.7], [33.5, -1.2], [29.0, -8.7],
+      [27.6, -13.1], [27.9, -13.2], [30.0, -10.5], [33.5, -7.0], [35.8, -5.8],
+    ], W, H),
+  },
+  {
+    name: "Algeria",
+    d: buildPath([
+      [37.0, -1.5], [37.0, 8.0], [33.5, 8.5], [30.0, 8.0], [22.0, 8.5],
+      [19.0, 5.5], [19.5, -2.0], [21.5, -5.5], [27.5, -8.5], [29.0, -8.5],
+      [33.5, -1.2],
+    ], W, H),
+  },
+  {
+    name: "Tunisia",
+    d: buildPath([
+      [37.3, 8.2], [37.5, 10.5], [37.0, 11.5], [33.5, 11.5], [30.5, 9.5],
+      [30.5, 8.0], [33.5, 8.5],
+    ], W, H),
+  },
+  {
+    name: "Libya",
+    d: buildPath([
+      [33.0, 11.5], [33.0, 25.0], [25.0, 25.0], [22.0, 25.0], [20.0, 20.5],
+      [20.5, 14.0], [23.0, 11.5], [26.5, 10.0], [30.0, 9.5], [33.5, 11.5],
+    ], W, H),
+  },
+  {
+    name: "Egypt",
+    d: buildPath([
+      [22.0, 25.0], [31.5, 25.0], [31.5, 34.0], [30.0, 34.9],
+      [29.9, 32.5], [28.0, 30.0], [25.0, 28.0], [22.0, 28.0],
+    ], W, H),
+  },
+  {
+    name: "Sudan",
+    d: buildPath([
+      [22.0, 25.0], [22.0, 37.0], [19.5, 37.0], [17.0, 38.5], [14.5, 36.5],
+      [12.5, 36.0], [12.0, 33.0], [12.5, 30.0], [15.0, 27.5], [19.0, 27.0],
+      [22.0, 28.0],
+    ], W, H),
+  },
+  // ── Levant & Near East ────────────────────────────────────────────────────────
+  {
+    name: "Turkey",
+    d: buildPath([
+      [42.0, 26.5], [41.5, 36.5], [42.0, 40.5], [40.5, 43.5], [39.5, 44.5],
+      [37.0, 44.5], [36.5, 42.0], [36.8, 36.5], [36.0, 36.0],
+      [36.2, 29.5], [38.5, 26.5],
+    ], W, H),
+  },
+  {
+    name: "Syria",
+    d: buildPath([
+      [37.0, 36.5], [37.0, 42.0], [33.5, 42.0], [32.5, 38.5],
+      [33.5, 36.5], [35.5, 36.0],
+    ], W, H),
+  },
+  {
+    name: "Lebanon",
+    d: buildPath([
+      [34.5, 35.1], [34.7, 36.6], [33.1, 35.6], [33.0, 35.1],
+    ], W, H),
+  },
+  {
+    name: "Jordan",
+    d: buildPath([
+      [32.5, 35.0], [33.5, 36.5], [33.5, 38.9], [29.5, 39.0],
+      [29.2, 35.0], [29.9, 34.9], [31.0, 35.0],
+    ], W, H),
+  },
+  // ── Arabian Peninsula ─────────────────────────────────────────────────────────
   {
     name: "Saudi Arabia",
     d: buildPath([
-      [29.6, 34.9], [29.2, 36.0], [29.5, 37.3], [28.5, 38.5], [27.5, 41.5],
-      [25.0, 44.5], [22.5, 46.0], [21.0, 47.5], [19.0, 51.0], [18.0, 50.5],
-      [17.5, 47.0], [18.5, 45.5], [19.5, 42.0], [22.0, 38.5], [24.5, 37.0],
-      [26.0, 37.5], [27.5, 36.5], [29.0, 36.5],
-    ], W, H),
-  },
-  {
-    name: "UAE",
-    d: buildPath([
-      [24.1, 51.6], [24.5, 52.6], [25.1, 54.0], [25.6, 55.9], [25.8, 56.3],
-      [24.2, 56.3], [23.6, 58.0], [22.8, 55.5], [23.0, 54.0], [24.0, 53.0],
-    ], W, H),
-  },
-  {
-    name: "Qatar",
-    d: buildPath([
-      [24.5, 50.8], [25.0, 51.0], [26.2, 51.2], [26.1, 50.8], [25.5, 50.7],
+      [29.5, 35.0], [29.5, 39.2], [27.5, 41.5], [25.0, 44.5], [22.5, 46.0],
+      [21.0, 47.5], [19.0, 51.0], [18.0, 50.5], [17.5, 47.0], [18.5, 45.5],
+      [19.5, 42.0], [22.0, 38.5], [24.5, 37.0], [26.0, 37.5], [27.5, 36.5],
+      [29.0, 36.5],
     ], W, H),
   },
   {
@@ -223,37 +283,56 @@ const COUNTRY_SHAPES: { name: string; d: string }[] = [
     ], W, H),
   },
   {
-    name: "Oman",
+    name: "Qatar",
     d: buildPath([
-      [22.0, 55.6], [23.0, 56.8], [22.5, 59.5], [21.0, 59.8], [19.5, 57.5],
-      [18.0, 53.5], [19.0, 52.5], [21.5, 55.0],
+      [24.5, 50.8], [25.0, 51.0], [26.2, 51.2], [26.1, 50.8], [25.5, 50.7],
     ], W, H),
   },
   {
     name: "Bahrain",
     d: buildPath([
-      [25.8, 50.3], [26.3, 50.4], [26.3, 50.7], [25.8, 50.7],
+      [25.9, 50.3], [26.3, 50.4], [26.3, 50.7], [25.9, 50.7],
     ], W, H),
   },
   {
-    name: "Jordan",
+    name: "UAE",
     d: buildPath([
-      [29.2, 35.0], [29.5, 36.0], [33.0, 37.0], [33.4, 36.0], [32.3, 35.2],
-      [31.2, 35.0], [29.8, 34.9],
+      [24.1, 51.6], [24.5, 52.6], [25.1, 54.0], [25.6, 55.9], [25.8, 56.4],
+      [24.2, 56.3], [23.6, 58.1], [22.9, 55.5], [23.0, 54.0], [24.0, 53.0],
     ], W, H),
   },
   {
-    name: "Egypt",
+    name: "Oman",
     d: buildPath([
-      [22.0, 25.0], [22.0, 37.0], [30.0, 34.9], [31.6, 34.2], [31.0, 30.0],
-      [30.0, 28.0], [29.0, 25.0],
+      [22.0, 55.6], [23.0, 56.8], [22.6, 59.5], [21.0, 59.8],
+      [19.5, 57.5], [18.0, 53.5], [19.0, 52.5], [21.5, 55.0],
     ], W, H),
   },
+  {
+    name: "Yemen",
+    d: buildPath([
+      [18.5, 42.5], [17.5, 44.0], [16.0, 47.5], [14.5, 50.5],
+      [12.5, 44.0], [13.5, 45.5], [14.5, 49.5], [16.0, 52.5], [18.0, 54.0],
+      [19.5, 52.0], [22.5, 55.0],
+    ], W, H),
+  },
+  // ── Iraq & Iran ───────────────────────────────────────────────────────────────
   {
     name: "Iraq",
     d: buildPath([
-      [29.5, 38.8], [29.5, 40.5], [30.0, 42.0], [32.5, 43.5], [34.5, 44.5],
-      [37.5, 42.5], [37.4, 41.0], [35.5, 41.5], [33.0, 39.5], [31.0, 38.0],
+      [37.0, 38.8], [37.0, 42.0], [34.5, 44.5], [33.5, 46.5],
+      [30.0, 47.5], [29.5, 48.5], [29.5, 46.5], [30.5, 46.0],
+      [31.0, 44.5], [31.0, 41.5], [29.5, 39.0],
+    ], W, H),
+  },
+  {
+    name: "Iran",
+    d: buildPath([
+      [39.5, 44.5], [38.0, 47.0], [37.5, 50.0], [37.5, 54.0],
+      [36.5, 57.5], [35.0, 61.0], [31.0, 61.5], [26.5, 61.5],
+      [25.0, 59.0], [23.5, 57.5], [25.0, 56.5], [26.5, 54.5],
+      [27.5, 51.5], [29.0, 50.5], [29.5, 48.5], [30.0, 47.5],
+      [33.5, 46.5], [34.5, 44.5], [37.0, 44.5],
     ], W, H),
   },
 ];
