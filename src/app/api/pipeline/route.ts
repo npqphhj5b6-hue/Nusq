@@ -883,7 +883,7 @@ export async function GET(request: NextRequest) {
       </div>
     `,
   });
-  if (emailError) throw new Error(`Resend error: ${emailError.message}`);
+  if (emailError) console.warn(`Resend error (non-fatal): ${emailError.message}`);
 
   return NextResponse.json({
     ok: true,
