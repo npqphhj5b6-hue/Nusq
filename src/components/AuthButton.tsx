@@ -31,7 +31,7 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth"
-        className="text-xs font-semibold tracking-[0.08em] uppercase text-[#4E6880] hover:text-[#F0ECE5] transition-colors duration-200 px-3 py-1.5 border border-[#132030] rounded-md hover:border-[#1E3A52]"
+        className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[#F59E0B] hover:bg-[#D97706] transition-colors duration-200 px-3 py-1.5 rounded-md"
       >
         Sign in
       </Link>
