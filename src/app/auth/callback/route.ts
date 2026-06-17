@@ -23,9 +23,26 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && user) {
+      // If a specific next destination was requested (e.g. update-password), honour it
+      if (next !== "/briefings") {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+
+      // Detect new users: no preferences row yet → send to onboarding
+      const { data: prefs } = await supabase
+        .from("user_preferences")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!prefs) {
+        return NextResponse.redirect(`${origin}/onboarding`);
+      }
+
+      return NextResponse.redirect(`${origin}/briefings`);
     }
   }
 

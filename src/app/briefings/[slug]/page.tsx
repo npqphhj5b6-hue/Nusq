@@ -7,6 +7,9 @@ import TradingViewChart from "@/components/TradingViewChart";
 import DataChart from "@/components/DataChart";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
+import BookmarkButton from "@/components/BookmarkButton";
+import ReadTracker from "@/components/ReadTracker";
+import { createClient } from "@/lib/supabase-server";
 import type { SourceRef, BriefingIntelligence } from "@/lib/types";
 import { getPublisherDomain, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
@@ -97,6 +100,20 @@ export default async function BriefingPage({
   if (!briefing) notFound();
 
   const pageUrl = `${SITE_URL}/briefings/${slug}`;
+
+  // User context for bookmark + read tracking
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let initialSaved = false;
+  if (user && briefing.id) {
+    const { data } = await supabase
+      .from("saved_briefings")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("briefing_id", briefing.id)
+      .maybeSingle();
+    initialSaved = !!data;
+  }
 
   const bodyParagraphs = briefing.body
     .split("\n\n")
@@ -203,6 +220,9 @@ export default async function BriefingPage({
         {briefing.summary}
       </p>
 
+      {/* Read tracker — fires silently on mount */}
+      <ReadTracker briefingId={briefing.id} userId={user?.id ?? null} />
+
       {/* Meta row */}
       <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--c-border)]">
         <div className="flex items-center gap-3 text-xs text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-geist-mono)" }}>
@@ -210,7 +230,10 @@ export default async function BriefingPage({
           <span>·</span>
           <span>{briefing.readingTime} min read</span>
         </div>
-        <ShareButtons title={briefing.title} url={pageUrl} />
+        <div className="flex items-center gap-2">
+          <BookmarkButton briefingId={briefing.id} initialSaved={initialSaved} />
+          <ShareButtons title={briefing.title} url={pageUrl} />
+        </div>
       </div>
 
       {/* ── Intelligence box ── */}

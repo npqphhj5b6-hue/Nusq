@@ -2,6 +2,7 @@ import { Briefing, Essay } from "./types";
 
 export const mockBriefings: Briefing[] = [
   {
+    id: "mock-1",
     slug: "15-june-2026",
     title: "Aramco holds dividend as oil slips; UAE non-oil GDP beats forecast",
     date: "2026-06-15",
@@ -33,6 +34,7 @@ A disbursement of approximately $1.2bn from the IMF's Extended Fund Facility —
 The delay is technical rather than political, according to people familiar with the programme, and the IMF has not revised its overall assessment of the programme. The Egyptian pound remained stable through the announcement.`,
   },
   {
+    id: "mock-2",
     slug: "14-june-2026",
     title: "PIF's $40bn domestic push; Kuwait parliament passes budget",
     date: "2026-06-14",
@@ -58,6 +60,7 @@ Kuwait's fiscal position remains structurally challenging. The General Reserve F
 This is a constraint that distinguishes Kuwait sharply from its GCC peers, all of which have issued sovereign debt in recent years with considerable investor appetite.`,
   },
   {
+    id: "mock-3",
     slug: "13-june-2026",
     title: "Egypt's central bank holds rates; Riyadh Air announces first routes",
     date: "2026-06-13",
@@ -83,6 +86,7 @@ The announcement is notable for what it does not include: no routes to Israel we
 Riyadh Air enters a Gulf aviation market already served by Emirates, Etihad, Qatar Airways, and the incumbent Saudi carrier Saudia — now rebranding as Flyadeal for short-haul and Saudi Arabian Airlines for long-haul. The competitive dynamics are complex: Riyadh Air is not simply trying to grow the market but to shift the geographic centre of hub aviation away from Dubai and Doha toward Riyadh.`,
   },
   {
+    id: "mock-4",
     slug: "12-june-2026",
     title: "Qatar LNG expansion greenlit; Morocco's renewable push attracts EU capital",
     date: "2026-06-12",

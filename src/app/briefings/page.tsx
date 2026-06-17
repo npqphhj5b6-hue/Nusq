@@ -2,11 +2,29 @@ import Link from "next/link";
 import { getAllBriefings, formatDate, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import BriefingCover from "@/components/BriefingCover";
+import { createClient } from "@/lib/supabase-server";
+import { matchesBriefing } from "@/lib/preferences";
+import type { UserPreferences } from "@/lib/preferences";
 
 export const dynamic = "force-dynamic";
 
 export default async function BriefingsPage() {
   const briefings = await getAllBriefings();
+
+  // Personalisation: fetch user prefs if logged in
+  let prefs: UserPreferences | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from("user_preferences")
+        .select("markets, sectors")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) prefs = data;
+    }
+  } catch { /* non-blocking */ }
   const [featured, ...rest] = briefings;
 
   const issueNumbers = new Map(
@@ -43,6 +61,11 @@ export default async function BriefingsPage() {
               <div className="md:col-span-2 md:pt-2">
                 <span className="eyebrow block mb-5">Latest</span>
                 <div className="flex flex-wrap gap-2 mb-4">
+                  {prefs && matchesBriefing(prefs, featured.tags) && (
+                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-amber)] uppercase bg-[#F59E0B]/10 px-2.5 py-1 rounded-full border border-[#F59E0B]/25">
+                      For You
+                    </span>
+                  )}
                   {featured.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
@@ -85,6 +108,11 @@ export default async function BriefingsPage() {
                   <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
                 </div>
                 <div className="flex flex-col flex-1 p-5">
+                  {prefs && matchesBriefing(prefs, b.tags) && (
+                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-amber)] uppercase bg-[#F59E0B]/10 px-2 py-0.5 rounded-full border border-[#F59E0B]/25 mb-3 block w-fit">
+                      For You
+                    </span>
+                  )}
                   {b.tags[0] && (
                     <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase mb-3">
                       {b.tags[0]}

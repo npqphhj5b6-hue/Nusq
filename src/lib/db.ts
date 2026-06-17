@@ -48,6 +48,7 @@ export async function getEssayBySlug(slug: string): Promise<Essay | null> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToBriefing(row: any): Briefing {
   return {
+    id: row.id,
     slug: row.slug,
     title: row.title,
     date: row.date,

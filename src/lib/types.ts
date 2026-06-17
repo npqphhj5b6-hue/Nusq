@@ -68,6 +68,7 @@ export interface BriefingIntelligence {
 }
 
 export interface Briefing {
+  id: string;
   slug: string;
   title: string;
   date: string;
