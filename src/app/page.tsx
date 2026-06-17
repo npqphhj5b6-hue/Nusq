@@ -6,12 +6,17 @@ import BriefingCover from "@/components/BriefingCover";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const today = new Date().toLocaleDateString("en-GB", {
+  const now = new Date();
+  const today = now.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const todayIso = now.toISOString().split("T")[0];
 
   const briefings = await getAllBriefings();
   const essays = await getAllEssays();
@@ -64,11 +69,18 @@ export default async function Home() {
           </h1>
 
           <p
-            className="hero-fade text-[var(--c-text-2)] text-base leading-relaxed max-w-xs mb-10 tracking-wide"
+            className="hero-fade text-[var(--c-text-2)] text-base leading-relaxed max-w-xs mb-3 tracking-wide"
             style={{ animationDelay: "550ms" }}
           >
-            A daily briefing on what moved the Gulf and why — written for
+            A briefing on what moved the Gulf and why — written for
             people who need to know, not just want to know.
+          </p>
+
+          <p
+            className="hero-fade text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-10"
+            style={{ animationDelay: "600ms" }}
+          >
+            Published Monday – Friday
           </p>
 
           {featured && (
@@ -78,7 +90,9 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 bg-[var(--c-amber)] text-[#040C1A] text-xs font-bold tracking-[0.1em] uppercase px-7 py-3.5 rounded-full hover:bg-[var(--c-amber-2)] transition-colors btn-press cursor-pointer"
                 style={{ color: "#040C1A" }}
               >
-                Read today&apos;s briefing →
+                {!isWeekend && featured.date === todayIso
+                  ? "Read today’s briefing →"
+                  : "Read latest briefing →"}
               </Link>
               <Link
                 href="/briefings"
@@ -87,6 +101,15 @@ export default async function Home() {
                 All briefings
               </Link>
             </div>
+          )}
+
+          {isWeekend && (
+            <p
+              className="hero-fade text-[10px] tracking-[0.1em] uppercase text-[var(--c-text-3)] mt-5"
+              style={{ animationDelay: "800ms" }}
+            >
+              Next briefing: Monday
+            </p>
           )}
         </div>
 
