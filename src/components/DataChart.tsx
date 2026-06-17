@@ -148,7 +148,6 @@ function LineChart({ data }: { data: ChartData }) {
           </g>
         ))}
 
-        <polygon points={areaPoints} fill={`url(#${uid}-grad)`} />
         <polyline points={points} fill="none" stroke="#F59E0B" strokeWidth="1.5"
           strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={px(values.length - 1)} cy={py(values[values.length - 1])} r="3" fill="#F59E0B" />
