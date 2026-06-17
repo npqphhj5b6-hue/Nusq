@@ -54,13 +54,13 @@ export default function AccountPage() {
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-5 h-[1px] bg-[#F59E0B]" />
-          <span className="text-[10px] font-bold tracking-[0.15em] text-[#F59E0B] uppercase">
+          <div className="w-5 h-[1px] bg-[var(--c-amber)]" />
+          <span className="text-[10px] font-bold tracking-[0.15em] text-[var(--c-amber)] uppercase">
             Account
           </span>
         </div>
         <h1
-          className="text-[2.5rem] leading-[1.06] text-[#F0ECE5]"
+          className="text-[2.5rem] leading-[1.06] text-[var(--c-text-1)]"
           style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
         >
           My Account
@@ -68,16 +68,17 @@ export default function AccountPage() {
       </div>
 
       {/* Profile card */}
-      <div className="border border-[#132030] rounded-xl p-6 mb-6">
-        <div className="flex items-center gap-5 mb-6 pb-6 border-b border-[#132030]">
-          <div className="w-14 h-14 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] text-xl font-bold flex-shrink-0"
+      <div className="border border-[var(--c-border)] rounded-xl p-6 mb-6">
+        <div className="flex items-center gap-5 mb-6 pb-6 border-b border-[var(--c-border)]">
+          <div
+            className="w-14 h-14 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] text-xl font-bold flex-shrink-0"
             style={{ fontFamily: "var(--font-barlow)" }}
           >
             {initials}
           </div>
           <div>
-            <p className="text-[#F0ECE5] font-medium">{user.email}</p>
-            <p className="text-xs text-[#2A3F55] mt-0.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
+            <p className="text-[var(--c-text-1)] font-medium">{user.email}</p>
+            <p className="text-xs text-[var(--c-text-3)] mt-0.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
               Member since {joined}
             </p>
           </div>
@@ -85,20 +86,20 @@ export default function AccountPage() {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
-            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55]">Email</span>
-            <span className="text-sm text-[#F0ECE5]" style={{ fontFamily: "var(--font-geist-mono)" }}>
+            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)]">Email</span>
+            <span className="text-sm text-[var(--c-text-1)]" style={{ fontFamily: "var(--font-geist-mono)" }}>
               {user.email}
             </span>
           </div>
-          <div className="h-px bg-[#132030]" />
+          <div className="h-px bg-[var(--c-border)]" />
           <div className="flex items-center justify-between py-2">
-            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55]">Sign-in method</span>
-            <span className="text-sm text-[#4E6880]">Magic link</span>
+            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)]">Sign-in method</span>
+            <span className="text-sm text-[var(--c-text-2)]">Magic link</span>
           </div>
-          <div className="h-px bg-[#132030]" />
+          <div className="h-px bg-[var(--c-border)]" />
           <div className="flex items-center justify-between py-2">
-            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55]">Member since</span>
-            <span className="text-sm text-[#4E6880]" style={{ fontFamily: "var(--font-geist-mono)" }}>
+            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)]">Member since</span>
+            <span className="text-sm text-[var(--c-text-2)]" style={{ fontFamily: "var(--font-geist-mono)" }}>
               {joined}
             </span>
           </div>
@@ -108,7 +109,7 @@ export default function AccountPage() {
       {/* Sign out */}
       <button
         onClick={signOut}
-        className="w-full h-11 rounded-lg border border-[#132030] text-xs font-bold tracking-[0.1em] uppercase text-[#4E6880] hover:text-[#F0ECE5] hover:border-[#1E3A52] transition-colors"
+        className="w-full h-11 rounded-lg border border-[var(--c-border)] text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-2)] hover:text-[var(--c-text-1)] hover:border-[var(--c-border-2)] transition-colors"
       >
         Sign out
       </button>

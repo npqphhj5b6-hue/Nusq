@@ -139,7 +139,7 @@ export default async function BriefingPage({
       {/* Back */}
       <Link
         href="/briefings"
-        className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55] hover:text-[#F59E0B] transition-colors mb-10 cursor-pointer"
+        className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] hover:text-[var(--c-amber)] transition-colors mb-10 cursor-pointer"
       >
         ← Briefings
       </Link>
@@ -149,7 +149,7 @@ export default async function BriefingPage({
         {briefing.tags.map((tag) => (
           <span
             key={tag}
-            className="text-[9px] font-bold tracking-[0.14em] text-[#15A06E] uppercase bg-[#0A1F15] px-2.5 py-1 rounded-full"
+            className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase bg-[var(--c-green-bg)] px-2.5 py-1 rounded-full"
           >
             {tag}
           </span>
@@ -158,21 +158,21 @@ export default async function BriefingPage({
 
       {/* Headline */}
       <h1
-        className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[#F0ECE5] mb-5"
+        className="text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[var(--c-text-1)] mb-5"
         style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
       >
         {briefing.title}
       </h1>
 
       {/* Summary deck */}
-      <p className="text-[1.125rem] text-[#4E6880] leading-[1.7] mb-6 font-light">
+      <p className="text-[1.125rem] text-[var(--c-text-2)] leading-[1.7] mb-6 font-light">
         {briefing.summary}
       </p>
 
       {/* Meta row */}
-      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[#132030]">
+      <div className="flex items-center justify-between mb-10 pb-6 border-b border-[var(--c-border)]">
         <div
-          className="flex items-center gap-3 text-xs text-[#2A3F55]"
+          className="flex items-center gap-3 text-xs text-[var(--c-text-3)]"
           style={{ fontFamily: "var(--font-geist-mono)" }}
         >
           <span>{formatDate(briefing.date)}</span>
@@ -255,10 +255,10 @@ export default async function BriefingPage({
       </div>
 
       {/* Bottom share row */}
-      <div className="mt-10 pt-8 border-t border-[#132030] flex items-center justify-between">
+      <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
         <Link
           href="/briefings"
-          className="text-xs font-bold tracking-[0.1em] uppercase text-[#2A3F55] hover:text-[#F59E0B] transition-colors cursor-pointer"
+          className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] hover:text-[var(--c-amber)] transition-colors cursor-pointer"
         >
           ← All briefings
         </Link>
@@ -272,9 +272,9 @@ export default async function BriefingPage({
         if (remaining.length === 0) return null;
         return (
           <ScrollReveal>
-            <div className="mt-10 pt-10 border-t border-[#132030]">
+            <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-5 h-[1px] bg-[#F59E0B] gold-line" />
+                <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
                 <span className="eyebrow">Markets</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

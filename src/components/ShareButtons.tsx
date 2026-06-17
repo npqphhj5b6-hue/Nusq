@@ -19,16 +19,18 @@ export default function ShareButtons({ title, url }: Props) {
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
 
+  const btnClass =
+    "flex items-center justify-center w-8 h-8 rounded-full border border-[var(--c-border)] text-[var(--c-text-3)] hover:border-[var(--c-border-2)] hover:text-[var(--c-text-2)] hover:scale-110 active:scale-95 transition-all duration-150";
+
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-[#A8A8A8] mr-1">Share</span>
+      <span className="text-[11px] text-[var(--c-text-3)] mr-1">Share</span>
 
-      {/* Twitter/X */}
       <a
         href={twitterUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center w-8 h-8 rounded-full border border-[#E8E5E0] text-[#737373] hover:border-[#111111] hover:text-[#111111] hover:scale-110 active:scale-95 transition-all duration-150"
+        className={btnClass}
         aria-label="Share on X"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
@@ -36,12 +38,11 @@ export default function ShareButtons({ title, url }: Props) {
         </svg>
       </a>
 
-      {/* LinkedIn */}
       <a
         href={linkedinUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center w-8 h-8 rounded-full border border-[#E8E5E0] text-[#737373] hover:border-[#0A66C2] hover:text-[#0A66C2] hover:scale-110 active:scale-95 transition-all duration-150"
+        className={btnClass}
         aria-label="Share on LinkedIn"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
@@ -49,10 +50,9 @@ export default function ShareButtons({ title, url }: Props) {
         </svg>
       </a>
 
-      {/* Copy link */}
       <button
         onClick={copyLink}
-        className="flex items-center justify-center w-8 h-8 rounded-full border border-[#E8E5E0] text-[#737373] hover:border-[#1A4731] hover:text-[#1A4731] hover:scale-110 active:scale-95 transition-all duration-150"
+        className={btnClass}
         aria-label="Copy link"
       >
         {copied ? (

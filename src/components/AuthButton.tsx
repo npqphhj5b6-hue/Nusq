@@ -24,7 +24,8 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth"
-        className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[#F59E0B] hover:bg-[#D97706] transition-colors duration-200 px-3 py-1.5 rounded-md"
+        className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[var(--c-amber)] hover:bg-[var(--c-amber-2)] transition-colors duration-200 px-3 py-1.5 rounded-md"
+        style={{ color: "#040C1A" }}
       >
         Sign in
       </Link>
@@ -34,7 +35,8 @@ export default function AuthButton() {
   return (
     <Link
       href="/account"
-      className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[#F59E0B] hover:bg-[#D97706] transition-colors duration-200 px-3 py-1.5 rounded-md"
+      className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[var(--c-amber)] hover:bg-[var(--c-amber-2)] transition-colors duration-200 px-3 py-1.5 rounded-md"
+      style={{ color: "#040C1A" }}
     >
       My Account
     </Link>
