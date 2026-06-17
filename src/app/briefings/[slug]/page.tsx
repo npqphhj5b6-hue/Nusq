@@ -8,7 +8,7 @@ import DataChart from "@/components/DataChart";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
 import type { SourceRef, BriefingIntelligence } from "@/lib/types";
-import { TIER_LABELS } from "@/lib/source-credibility";
+import { getPublisherDomain } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
 
@@ -56,11 +56,6 @@ const FRESHNESS_COLOURS: Record<string, string> = {
   "stale-risk":"text-red-400",
 };
 
-const TIER_BADGE_COLOURS: Record<number, string> = {
-  1: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  2: "bg-[var(--c-amber)]/10 text-[var(--c-amber)] border-[var(--c-amber)]/20",
-  3: "bg-[var(--c-border)] text-[var(--c-text-3)] border-[var(--c-border-2)]",
-};
 
 export async function generateMetadata({
   params,
@@ -343,52 +338,57 @@ export default async function BriefingPage({
       {hasSources && (
         <ScrollReveal>
           <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-4">
               <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
               <span className="eyebrow">Sources</span>
             </div>
-            <div className="space-y-3">
+            <div>
               {sources.map((s) => {
                 const pubDate = s.publishedAt
                   ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                   : null;
-                const tierLabel = TIER_LABELS[s.tier];
+                const domain = s.domain || getPublisherDomain(s.publisher);
+                const faviconUrl = domain
+                  ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+                  : null;
                 return (
-                  <div key={s.index} className="flex items-start gap-3 py-3 border-b border-[var(--c-border)] last:border-b-0">
-                    <span className="text-[10px] font-bold text-[var(--c-text-3)] pt-0.5 shrink-0 w-5 text-right" style={{ fontFamily: "var(--font-geist-mono)" }}>
-                      [{s.index}]
+                  <a
+                    key={s.index}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2.5 py-2.5 border-b border-[var(--c-border)] last:border-b-0 hover:bg-[var(--c-surface)] -mx-3 px-3 rounded-lg transition-colors group"
+                  >
+                    {faviconUrl ? (
+                      <img
+                        src={faviconUrl}
+                        width={16}
+                        height={16}
+                        alt=""
+                        className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity"
+                      />
+                    ) : (
+                      <div className="w-4 h-4 rounded-sm bg-[var(--c-border)] shrink-0" />
+                    )}
+                    <span className="text-[11px] font-semibold text-[var(--c-text-2)] shrink-0 group-hover:text-[var(--c-amber)] transition-colors">
+                      {s.publisher}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium text-[var(--c-text-1)] hover:text-[var(--c-amber)] transition-colors line-clamp-2 leading-snug"
-                        >
-                          {s.title}
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap mt-1">
-                        <span className="text-[10px] text-[var(--c-text-3)]">{s.publisher}</span>
-                        {pubDate && (
-                          <>
-                            <span className="text-[var(--c-border-2)] text-[10px]">·</span>
-                            <span className="text-[10px] text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-geist-mono)" }}>{pubDate}</span>
-                          </>
-                        )}
-                        {s.language === "ar" && (
-                          <>
-                            <span className="text-[var(--c-border-2)] text-[10px]">·</span>
-                            <span className="text-[10px] text-[var(--c-text-3)]">Arabic</span>
-                          </>
-                        )}
-                        <span className={`text-[9px] font-bold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded border ${TIER_BADGE_COLOURS[s.tier]}`}>
-                          {tierLabel}
+                    <span className="text-[var(--c-border-2)] text-[10px] shrink-0">·</span>
+                    <span
+                      className="text-[11px] text-[var(--c-text-3)] truncate flex-1 min-w-0"
+                      dir="auto"
+                    >
+                      {s.title}
+                    </span>
+                    {pubDate && (
+                      <>
+                        <span className="text-[var(--c-border-2)] text-[10px] shrink-0">·</span>
+                        <span className="text-[10px] text-[var(--c-text-3)] shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                          {pubDate}
                         </span>
-                      </div>
-                    </div>
-                  </div>
+                      </>
+                    )}
+                  </a>
                 );
               })}
             </div>

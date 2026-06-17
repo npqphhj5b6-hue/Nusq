@@ -14,6 +14,7 @@ export interface SourceRef {
   title: string;
   url: string;
   publisher: string;
+  domain: string;      // actual publisher domain for favicon lookup
   publishedAt: string | null;  // ISO date string
   language: "en" | "ar";
   tier: SourceTier;

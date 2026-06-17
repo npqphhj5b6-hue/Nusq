@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSourceTier, getSourceTierByName, getPublisherName } from "@/lib/source-credibility";
+import { getSourceTier, getSourceTierByName, getPublisherName, getPublisherDomain } from "@/lib/source-credibility";
 import type { SourceRef, ValidationResult, BriefingIntelligence } from "@/lib/types";
 
 export const maxDuration = 300;
@@ -175,13 +175,17 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
             }
           }
 
+          const resolvedPublisher = publisher || getPublisherName(itemUrl);
+          // Drop unrecognised (Tier 3) sources — only ingest established outlets
+          if (getSourceTierByName(resolvedPublisher) === 3) continue;
+
           collected.push({
             title: cleanTitle,
             url: itemUrl,
             snippet,
             pubDate,
             lang,
-            publisher: publisher || getPublisherName(itemUrl),
+            publisher: resolvedPublisher,
           });
         }
       } catch {
@@ -330,11 +334,15 @@ function buildSourceRefs(
       const publisher = isGoogleNews
         ? s.publisher
         : (getPublisherName(resolvedUrl) || s.publisher);
+      const domain = isGoogleNews
+        ? getPublisherDomain(publisher)
+        : ((() => { try { return new URL(resolvedUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })());
       return {
         index: i,
         title: s.title,
         url: resolvedUrl,
         publisher,
+        domain,
         publishedAt: s.pubDate,
         language: s.lang,
         tier,

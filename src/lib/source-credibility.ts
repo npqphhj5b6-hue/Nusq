@@ -122,6 +122,49 @@ export function getSourceTierByName(publisherName: string): SourceTier {
   return PUBLISHER_NAME_TIERS[key] ?? 3;
 }
 
+// Publisher display name → domain (for favicon lookup when URL is a proxy)
+const PUBLISHER_NAME_TO_DOMAIN: Record<string, string> = {
+  // Tier 1
+  "saudi central bank (sama)": "sama.gov.sa", "sama": "sama.gov.sa",
+  "public investment fund": "pif.gov.sa", "pif": "pif.gov.sa",
+  "imf": "imf.org", "international monetary fund": "imf.org",
+  "world bank": "worldbank.org", "opec": "opec.org", "iea": "iea.org",
+  "saudi exchange": "tadawul.com.sa", "tadawul": "tadawul.com.sa",
+  "abu dhabi securities exchange": "adx.ae", "adx": "adx.ae",
+  "dubai financial market": "dfm.ae", "dfm": "dfm.ae",
+  "moody's": "moodys.com", "moodys": "moodys.com",
+  "s&p global": "spglobal.com", "fitch ratings": "fitchratings.com", "fitch": "fitchratings.com",
+  // Tier 2 – international
+  "reuters": "reuters.com", "bloomberg": "bloomberg.com",
+  "financial times": "ft.com", "ft": "ft.com",
+  "wall street journal": "wsj.com", "wsj": "wsj.com",
+  "the economist": "economist.com", "cnbc": "cnbc.com",
+  "bbc": "bbc.com", "ap news": "apnews.com", "associated press": "apnews.com",
+  "semafor": "semafor.com", "middle east eye": "middleeasteye.net",
+  "al-monitor": "al-monitor.com", "chatham house": "chathamhouse.org",
+  "brookings": "brookings.edu", "capital economics": "capitaleconomics.com",
+  // Tier 2 – MENA
+  "zawya": "zawya.com", "arabian business": "arabianbusiness.com",
+  "meed": "meed.com", "the national": "thenationalnews.com",
+  "gulf news": "gulfnews.com", "khaleej times": "khaleejtimes.com",
+  "صحيفة الخليج": "alkhaleej.ae",
+  "argaam": "argaam.com", "asharq news": "asharq.com",
+  "asharq business": "asharqbusiness.com", "agbi": "agbi.com",
+  "al jazeera": "aljazeera.com", "aljazeera": "aljazeera.com",
+  "الجزيرة": "aljazeera.com",
+  "asharq al-awsat": "aawsat.com", "الشرق الأوسط": "aawsat.com",
+  "al-eqtisadiah": "aleqt.com", "الاقتصادية": "aleqt.com",
+  "arab news": "arabnews.com",
+  "alarabiya": "alarabiya.net", "العربية": "alarabiya.net", "al arabiya": "alarabiya.net",
+  "اقتصاد الشرق مع بلومبرغ": "asharqbusiness.com",
+  "asharq bloomberg": "asharqbusiness.com",
+  "mubasher": "mubasher.info", "مباشر": "mubasher.info",
+};
+
+export function getPublisherDomain(publisherName: string): string {
+  return PUBLISHER_NAME_TO_DOMAIN[publisherName.trim().toLowerCase()] ?? "";
+}
+
 export function getPublisherName(url: string): string {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");
