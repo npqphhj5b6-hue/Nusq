@@ -39,7 +39,7 @@ export default async function BriefingsPage() {
           <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
           <span className="eyebrow">Archive</span>
         </div>
-        <h1 className="font-display mb-3" style={{ fontSize: "clamp(3.5rem, 9vw, 7rem)" }}>
+        <h1 className="font-display mb-3" style={{ fontSize: "clamp(2.5rem, 9vw, 7rem)" }}>
           <span className="text-[var(--c-text-1)]">BRIEFINGS</span>
         </h1>
         <p className="text-sm text-[var(--c-text-2)] tracking-wide">
@@ -99,7 +99,7 @@ export default async function BriefingsPage() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
         {rest.map((b, i) => (
           <ScrollReveal key={b.slug} delay={(i % 3) * 80}>
             <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
@@ -107,30 +107,30 @@ export default async function BriefingsPage() {
                 <div className="shrink-0" style={{ aspectRatio: "3/2" }}>
                   <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
                 </div>
-                <div className="flex flex-col flex-1 p-5">
+                <div className="flex flex-col flex-1 p-3 md:p-5">
                   {prefs && matchesBriefing(prefs, b.tags) && (
-                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-amber)] uppercase bg-[#F59E0B]/10 px-2 py-0.5 rounded-full border border-[#F59E0B]/25 mb-3 block w-fit">
+                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-amber)] uppercase bg-[#F59E0B]/10 px-2 py-0.5 rounded-full border border-[#F59E0B]/25 mb-2 block w-fit">
                       For You
                     </span>
                   )}
                   {b.tags[0] && (
-                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase mb-3">
+                    <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase mb-2 hidden md:block">
                       {b.tags[0]}
                     </span>
                   )}
                   <h3
-                    className="text-[1rem] leading-[1.35] text-[var(--c-text-1)] mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300 flex-1"
+                    className="text-[0.8rem] md:text-[1rem] leading-[1.3] md:leading-[1.35] text-[var(--c-text-1)] mb-2 md:mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300 flex-1"
                     style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                   >
                     {b.title}
                   </h3>
                   <div
-                    className="flex items-center gap-2 text-xs text-[var(--c-text-3)] mt-auto"
+                    className="flex items-center gap-1.5 text-[10px] md:text-xs text-[var(--c-text-3)] mt-auto"
                     style={{ fontFamily: "var(--font-geist-mono)" }}
                   >
                     <span>{formatDateShort(b.date)}</span>
                     <span>·</span>
-                    <span>{b.readingTime} min</span>
+                    <span className="hidden sm:inline">{b.readingTime} min</span>
                   </div>
                 </div>
               </div>

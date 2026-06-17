@@ -51,12 +51,12 @@ export default async function Home() {
           }}
         />
 
-        <div className="relative max-w-5xl mx-auto px-6 pt-20 pb-20 w-full">
-          <p className="hero-fade eyebrow mb-8" style={{ animationDelay: "400ms" }}>
+        <div className="relative max-w-5xl mx-auto px-6 pt-14 pb-16 md:pt-20 md:pb-20 w-full">
+          <p className="hero-fade eyebrow mb-6 md:mb-8" style={{ animationDelay: "400ms" }}>
             {today}
           </p>
 
-          <h1 className="font-display mb-10" style={{ fontSize: "clamp(4.5rem, 11vw, 9.5rem)" }}>
+          <h1 className="font-display mb-8 md:mb-10" style={{ fontSize: "clamp(2.75rem, 11vw, 9.5rem)" }}>
             <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "0ms" }}>
               MENA
             </span>
@@ -186,7 +186,7 @@ export default async function Home() {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
             {recentBriefings.map((b, i) => (
               <ScrollReveal key={b.slug} delay={i * 90}>
                 <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
@@ -194,25 +194,25 @@ export default async function Home() {
                     <div className="shrink-0" style={{ aspectRatio: "3/2" }}>
                       <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
                     </div>
-                    <div className="flex flex-col flex-1 p-5">
+                    <div className="flex flex-col flex-1 p-3 md:p-5">
                       {b.tags[0] && (
-                        <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase mb-3">
+                        <span className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase mb-2 md:mb-3 hidden md:block">
                           {b.tags[0]}
                         </span>
                       )}
                       <h3
-                        className="text-[1rem] leading-[1.35] text-[var(--c-text-1)] mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300 flex-1"
+                        className="text-[0.8rem] md:text-[1rem] leading-[1.3] md:leading-[1.35] text-[var(--c-text-1)] mb-2 md:mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300 flex-1"
                         style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                       >
                         {b.title}
                       </h3>
                       <div
-                        className="flex items-center gap-2 text-xs text-[var(--c-text-3)] mt-auto"
+                        className="flex items-center gap-1.5 text-[10px] md:text-xs text-[var(--c-text-3)] mt-auto"
                         style={{ fontFamily: "var(--font-geist-mono)" }}
                       >
                         <span>{formatDateShort(b.date)}</span>
                         <span>·</span>
-                        <span>{b.readingTime} min</span>
+                        <span className="hidden sm:inline">{b.readingTime} min</span>
                       </div>
                     </div>
                   </div>
