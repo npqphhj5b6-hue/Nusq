@@ -100,7 +100,7 @@ Also output a "claims" array with the 5–10 most important verifiable claims in
 
 Output ONLY a valid JSON object — no prose before or after, no markdown code fences.
 
-The briefing is structured as 3–5 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories.
+The briefing is structured as 3–4 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories. Keep each story tight.
 
 {
   "title": "A compelling headline for today's overall briefing — max 12 words, no full stop",
@@ -119,7 +119,7 @@ The briefing is structured as 3–5 independent numbered stories. Each story cov
       "headline": "Short story headline — max 8 words, no full stop",
       "location": "Saudi Arabia",
       "city": "Riyadh",
-      "body": "The full story. Use **bold** for key figures, company names, and important terms. Add [N] citation markers inline. Write 2–4 substantive paragraphs — no bullet lists. 150–250 words. Start with a specific fact or scene, never a thesis.",
+      "body": "The full story. Use **bold** for key figures, company names, and important terms. Add [N] citation markers inline. Write 2–3 tight paragraphs — no bullet lists. 80–130 words maximum. Start with a specific fact or figure, never a thesis.",
       "image_query": "A 4–7 word Unsplash query specific to this story's subject and location. Moody and cinematic preferred.",
       "chart": {
         "type": "ONE of the predefined types: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — OR use 'bar' to provide inline data — OR null if no chart fits",
@@ -715,7 +715,7 @@ export async function GET(request: NextRequest) {
   const client = new Anthropic();
   const message = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 16000,
+    max_tokens: 10000,
     system: SYSTEM_PROMPT,
     messages: [
       {
