@@ -115,12 +115,12 @@ export default function MenaMap({ stories }: Props) {
 
       {/* Map */}
       <div style={{ background: "#04101E" }}>
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block" style={{ maxHeight: "320px" }}>
+        <svg viewBox="-78 55 748 292" width="100%" className="block">
           <rect width={W} height={H} fill="#04101E" />
 
           {/* Outline-only countries — no fill, minimal border lines */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d} fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="0.8" strokeLinejoin="round" />
+            <path key={name} d={d} fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinejoin="round" />
           ))}
 
           {/* Clusters — draw connector lines first, then pins on top */}
