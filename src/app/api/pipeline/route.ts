@@ -843,17 +843,28 @@ async function generateFalPhoto(query: string, location?: string): Promise<Photo
   if (!key) return null;
   try {
     const prompt = buildImagePrompt(query, location);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
     const res = await fetch("https://fal.run/fal-ai/flux/schnell", {
       method: "POST",
       headers: { "Authorization": `Key ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, image_size: "landscape_16_9", num_inference_steps: 4, num_images: 1, enable_safety_checker: true }),
+      signal: controller.signal,
     });
-    if (!res.ok) return null;
-    const data = await res.json() as { images?: Array<{ url: string }> };
+    clearTimeout(timeout);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "(empty)");
+      console.error(`[fal.ai] ${res.status}: ${errText.slice(0, 200)}`);
+      return null;
+    }
+    const text = await res.text();
+    if (!text) { console.error("[fal.ai] empty response body"); return null; }
+    const data = JSON.parse(text) as { images?: Array<{ url: string }> };
     const url = data.images?.[0]?.url;
     if (!url) return null;
     return { url, credit: "AI-generated image", creditLink: null };
-  } catch {
+  } catch (err) {
+    console.error("[fal.ai] fetch error:", err);
     return null;
   }
 }
