@@ -814,28 +814,37 @@ interface PhotoResult {
   creditLink: string | null;
 }
 
-const LOCATION_VISUALS: Record<string, string> = {
-  "Saudi Arabia": "Riyadh skyline, desert dunes, oil refinery infrastructure",
-  "UAE": "Dubai or Abu Dhabi financial district, glass towers, Arabian Gulf",
-  "Qatar": "Doha West Bay skyline, LNG terminal, Pearl-Qatar island",
-  "Kuwait": "Kuwait City skyline, oil fields, Liberation Tower",
-  "Bahrain": "Manama financial harbour, King Fahd Causeway, Pearl Roundabout",
-  "Oman": "Muscat coastline, Sultan Qaboos Grand Mosque, Hajar Mountains",
-  "Egypt": "Cairo skyline, Nile River, modern business district",
-  "Morocco": "Casablanca Hassan II Mosque, Atlantic coastline, business district",
-  "Jordan": "Amman modern skyline, ancient citadel, desert landscape",
-  "Iraq": "Baghdad Tigris River, modern development, oil infrastructure",
-  "Lebanon": "Beirut Mediterranean coastline, urban skyline",
-  "Libya": "Tripoli Mediterranean port, oil infrastructure",
-  "Tunisia": "Tunis medina and modern skyline, Mediterranean coast",
-  "Algeria": "Algiers Mediterranean bay, modern district",
+const LOCATION_CONTEXT: Record<string, string> = {
+  "Saudi Arabia": "Saudi Arabia",
+  "UAE": "United Arab Emirates",
+  "Qatar": "Qatar, Doha",
+  "Kuwait": "Kuwait City",
+  "Bahrain": "Bahrain, Manama",
+  "Oman": "Oman, Muscat",
+  "Egypt": "Egypt, Cairo",
+  "Morocco": "Morocco, Casablanca",
+  "Jordan": "Jordan, Amman",
+  "Iraq": "Iraq, Baghdad",
+  "Lebanon": "Lebanon, Beirut",
+  "Libya": "Libya, Tripoli",
+  "Tunisia": "Tunisia, Tunis",
+  "Algeria": "Algeria, Algiers",
 };
 
+// Vary lighting per story so images don't all look identical
+const LIGHTING_VARIANTS = [
+  "overcast daylight, dramatic storm clouds, moody atmosphere",
+  "blue hour, city lights, twilight sky",
+  "bright midday sunlight, clear blue sky, sharp shadows",
+  "dusk, deep blue and orange horizon",
+  "morning light, soft haze, golden tones",
+];
+
 function buildImagePrompt(query: string, location?: string): string {
-  const place = location
-    ? (LOCATION_VISUALS[location] ?? `${location} cityscape and modern infrastructure`)
-    : "Gulf financial district, glass towers, Arabian Gulf coastline";
-  return `Dramatic cinematic aerial editorial photography, ${place}, ${query}, golden hour warm amber light rays, deep dark atmospheric sky, long exposure, photorealistic, ultra detailed, 8k, no text, no logos, no people`;
+  const place = location ? (LOCATION_CONTEXT[location] ?? location) : "Gulf region";
+  const lightingIdx = query.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % LIGHTING_VARIANTS.length;
+  const lighting = LIGHTING_VARIANTS[lightingIdx];
+  return `Professional editorial photography: ${query} in ${place}. ${lighting}. Realistic scene, high detail, no text, no logos, no people`;
 }
 
 async function generateFalPhoto(query: string, location?: string): Promise<PhotoResult | null> {
