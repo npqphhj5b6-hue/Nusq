@@ -724,6 +724,46 @@ async function buildStoryChartData(spec: StoryChartSpec | null | undefined): Pro
   return buildChartData({ type: spec.type, country: spec.country ?? null });
 }
 
+// ── Recent briefing deduplication ────────────────────────────────────────────
+
+interface RecentBriefingContext {
+  /** Story headlines from the last N briefings */
+  recentHeadlines: string[];
+  /** Source URLs already used in the last N briefings */
+  usedSourceUrls: Set<string>;
+}
+
+async function fetchRecentBriefingContext(limit = 3): Promise<RecentBriefingContext> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("briefings")
+      .select("stories, sources")
+      .order("date", { ascending: false })
+      .limit(limit);
+
+    if (!data || data.length === 0) return { recentHeadlines: [], usedSourceUrls: new Set() };
+
+    const recentHeadlines: string[] = [];
+    const usedSourceUrls = new Set<string>();
+
+    for (const row of data) {
+      const stories = (row.stories ?? []) as Array<{ headline?: string }>;
+      for (const s of stories) {
+        if (s.headline) recentHeadlines.push(s.headline);
+      }
+      const sources = (row.sources ?? []) as Array<{ url?: string; googleNewsUrl?: string }>;
+      for (const src of sources) {
+        if (src.url) usedSourceUrls.add(src.url);
+        if (src.googleNewsUrl) usedSourceUrls.add(src.googleNewsUrl);
+      }
+    }
+
+    return { recentHeadlines, usedSourceUrls };
+  } catch {
+    return { recentHeadlines: [], usedSourceUrls: new Set() };
+  }
+}
+
 // ── Main route handler ────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -751,8 +791,33 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, message: "Already generated today", slug });
   }
 
-  // Fetch news with full source metadata
-  const { text: sourceText, rawSources } = await fetchNewsWithSources();
+  // Fetch recent briefing context and news in parallel
+  const [{ recentHeadlines, usedSourceUrls }, { rawSources: rawSourcesAll }] =
+    await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
+
+  // Drop sources whose URLs were already used in recent briefings
+  const rawSources = rawSourcesAll.filter(
+    (s) => !usedSourceUrls.has(s.url)
+  );
+
+  // Re-number the filtered source list
+  const numbered = rawSources.map((s, i) => {
+    const dateStr = s.pubDate
+      ? new Date(s.pubDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : "date unknown";
+    const langLabel = s.lang === "ar" ? " [AR]" : "";
+    return `[${i + 1}] "${s.title}" | ${s.publisher}${langLabel} | ${dateStr} | ${s.url}\n    ${s.snippet}`;
+  });
+  const sourceText = `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
+
+  // Build "do not repeat" block from recent briefings
+  const noRepeatBlock = recentHeadlines.length > 0
+    ? `\n\nSTORIES ALREADY COVERED IN RECENT BRIEFINGS — do NOT write about these topics again, even from a different angle:\n${recentHeadlines.map((h) => `• ${h}`).join("\n")}\n\nChoose entirely different stories from today's sources.`
+    : "";
+
+  if (rawSources.length === 0) {
+    return NextResponse.json({ error: "No new sources after deduplication — try again later" }, { status: 503 });
+  }
 
   const client = new Anthropic();
   const message = await client.messages.create({
@@ -762,7 +827,7 @@ export async function GET(request: NextRequest) {
     messages: [
       {
         role: "user",
-        content: `Today's date: ${date}\n\n${sourceText}\n\nWrite today's Nusq briefing. Cite sources by their [N] number. Follow all anti-hallucination rules.`,
+        content: `Today's date: ${date}\n\n${sourceText}${noRepeatBlock}\n\nWrite today's Nusq briefing. Cite sources by their [N] number. Follow all anti-hallucination rules.`,
       },
     ],
   });
