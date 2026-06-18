@@ -437,13 +437,33 @@ async function filterForRelevance(items: RawSourceItem[]): Promise<RawSourceItem
       max_tokens: 1024,
       messages: [{
         role: "user",
-        content: `You are scoring news articles for relevance to investors and allocators focused on the MENA region.
+        content: `You are scoring news articles for a MENA financial briefing read by institutional allocators, HNW private investors, and senior business professionals operating in the region.
 
-Score each article 0–10 using these criteria:
-- 8–10: Direct investor/allocator signal — economic data, GDP/inflation/trade figures, central bank policy, sovereign debt, major deals (M&A, IPO, FDI), energy markets, banking/finance, infrastructure investment, IMF/World Bank programmes, currency moves, capital market news
-- 5–7: Relevant context — government budget, industrial policy, Vision 2030 / national strategies, major infrastructure projects, geopolitical events with clear economic consequence
-- 2–4: Weak signal — general political news, social policy, minor regulatory updates with no immediate financial impact
-- 0–1: Irrelevant — sports, entertainment, celebrity, crime, lifestyle, weather
+Score each article 0–10:
+
+SCORE 8–10 (strong signal — always include):
+- Macro & policy: GDP, inflation, PMI, central bank decisions, interest rates, fiscal budgets, IMF/World Bank programmes, sovereign credit ratings
+- Capital markets: IPOs, equity/bond issuance, exchange news, fund flows, index changes, asset prices
+- Deals & investment: M&A, joint ventures, FDI announcements, privatisations, major contract awards with disclosed values
+- Energy & commodities: oil/gas production, OPEC decisions, LNG contracts, refinery/pipeline news, renewable energy projects
+- Geopolitics: elections, conflicts, diplomatic shifts, sanctions, trade route disruptions — always relevant regardless of direct economic link; political context matters to anyone operating in the region
+
+SCORE 5–7 (useful context — include):
+- National strategy announcements (Vision 2030, Egypt Vision, Morocco New Development Model) even without concrete figures
+- Government spending plans, subsidy changes, labour market reforms
+- Social or religious policy with economic dimension (tourism, gender policy, expat rules)
+- Corporate earnings, leadership changes at major regional companies
+- Regulatory changes affecting a sector
+
+SCORE 2–4 (weak — exclude):
+- Sub-national and city-level stories with no national economic significance (municipal tenders, local infrastructure with no disclosed value, city-level administrative news)
+- Minor ceremonial or protocol events (state visits with no deal announced, ribbon-cuttings)
+- Opinion pieces and editorials without new factual content
+
+SCORE 0–1 (irrelevant — always exclude):
+- Sports, entertainment, celebrity, lifestyle, fashion, food
+- Crime and security incidents with no economic/geopolitical dimension
+- Weather and natural disasters unless causing significant economic disruption
 
 Output ONLY a JSON array of integers in the same order as the input. Example for 4 articles: [8,3,9,1]
 
