@@ -118,9 +118,9 @@ export default function MenaMap({ stories }: Props) {
         <svg viewBox="-67 55 723 292" width="100%" className="block">
           <rect width={W} height={H} fill="#04101E" />
 
-          {/* Outline-only countries — no fill, minimal border lines */}
+          {/* Filled countries — muted slate land on dark ocean */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d} fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinejoin="round" />
+            <path key={name} d={d} fill="#0d2137" stroke="rgba(255,255,255,0.18)" strokeWidth="0.7" strokeLinejoin="round" />
           ))}
 
           {/* Clusters — draw connector lines first, then pins on top */}
