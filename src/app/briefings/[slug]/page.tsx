@@ -19,9 +19,11 @@ export const dynamic = "force-dynamic";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
 
 function unsplashUrl(raw: string, w: number, h: number) {
+  if (!raw.includes("images.unsplash.com")) return raw;
   return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
 }
 function unsplashUrlFull(raw: string, w: number) {
+  if (!raw.includes("images.unsplash.com")) return raw;
   return `${raw}&w=${w}&auto=format&q=80`;
 }
 

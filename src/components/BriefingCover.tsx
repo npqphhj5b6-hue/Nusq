@@ -7,7 +7,9 @@ export default function BriefingCover({ issueNumber, coverImageUrl }: BriefingCo
   const numStr = String(issueNumber).padStart(2, "0");
   const uid = `bc${issueNumber}`;
   const imgSrc = coverImageUrl
-    ? `${coverImageUrl}&w=900&h=600&fit=crop&crop=entropy&auto=format&q=80`
+    ? coverImageUrl.includes("images.unsplash.com")
+      ? `${coverImageUrl}&w=900&h=600&fit=crop&crop=entropy&auto=format&q=80`
+      : coverImageUrl
     : null;
 
   return (

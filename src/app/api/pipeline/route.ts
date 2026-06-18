@@ -806,17 +806,66 @@ function buildIntelligence(
   };
 }
 
-// ── Unsplash ──────────────────────────────────────────────────────────────────
+// ── Photo generation ──────────────────────────────────────────────────────────
+
+interface PhotoResult {
+  url: string;
+  credit: string;
+  creditLink: string | null;
+}
+
+const LOCATION_VISUALS: Record<string, string> = {
+  "Saudi Arabia": "Riyadh skyline, desert dunes, oil refinery infrastructure",
+  "UAE": "Dubai or Abu Dhabi financial district, glass towers, Arabian Gulf",
+  "Qatar": "Doha West Bay skyline, LNG terminal, Pearl-Qatar island",
+  "Kuwait": "Kuwait City skyline, oil fields, Liberation Tower",
+  "Bahrain": "Manama financial harbour, King Fahd Causeway, Pearl Roundabout",
+  "Oman": "Muscat coastline, Sultan Qaboos Grand Mosque, Hajar Mountains",
+  "Egypt": "Cairo skyline, Nile River, modern business district",
+  "Morocco": "Casablanca Hassan II Mosque, Atlantic coastline, business district",
+  "Jordan": "Amman modern skyline, ancient citadel, desert landscape",
+  "Iraq": "Baghdad Tigris River, modern development, oil infrastructure",
+  "Lebanon": "Beirut Mediterranean coastline, urban skyline",
+  "Libya": "Tripoli Mediterranean port, oil infrastructure",
+  "Tunisia": "Tunis medina and modern skyline, Mediterranean coast",
+  "Algeria": "Algiers Mediterranean bay, modern district",
+};
+
+function buildImagePrompt(query: string, location?: string): string {
+  const place = location
+    ? (LOCATION_VISUALS[location] ?? `${location} cityscape and modern infrastructure`)
+    : "Gulf financial district, glass towers, Arabian Gulf coastline";
+  return `Dramatic cinematic aerial editorial photography, ${place}, ${query}, golden hour warm amber light rays, deep dark atmospheric sky, long exposure, photorealistic, ultra detailed, 8k, no text, no logos, no people`;
+}
+
+async function generateFalPhoto(query: string, location?: string): Promise<PhotoResult | null> {
+  const key = process.env.FAL_API_KEY;
+  if (!key) return null;
+  try {
+    const prompt = buildImagePrompt(query, location);
+    const res = await fetch("https://fal.run/fal-ai/flux/schnell", {
+      method: "POST",
+      headers: { "Authorization": `Key ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, image_size: "landscape_16_9", num_inference_steps: 4, num_images: 1, enable_safety_checker: true }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { images?: Array<{ url: string }> };
+    const url = data.images?.[0]?.url;
+    if (!url) return null;
+    return { url, credit: "AI-generated image", creditLink: null };
+  } catch {
+    return null;
+  }
+}
 
 interface UnsplashPhoto {
   id: string;
   urls: { raw: string; small: string };
   user: { name: string; links: { html: string } };
   likes: number;
-  alt_description?: string | null;
 }
 
-async function fetchStoryPhoto(query: string): Promise<UnsplashPhoto | null> {
+async function fetchUnsplashPhoto(query: string): Promise<PhotoResult | null> {
   const key = process.env.UNSPLASH_ACCESS_KEY;
   if (!key) return null;
   try {
@@ -826,11 +875,20 @@ async function fetchStoryPhoto(query: string): Promise<UnsplashPhoto | null> {
     );
     if (!res.ok) return null;
     const data = await res.json() as { results: UnsplashPhoto[] };
-    const sorted = (data.results ?? []).sort((a, b) => b.likes - a.likes);
-    return sorted[0] ?? null;
+    const photo = (data.results ?? []).sort((a, b) => b.likes - a.likes)[0];
+    if (!photo) return null;
+    return {
+      url: photo.urls.raw,
+      credit: `Photo by ${photo.user.name} on Unsplash`,
+      creditLink: `${photo.user.links.html}?utm_source=nusq&utm_medium=referral`,
+    };
   } catch {
     return null;
   }
+}
+
+async function fetchStoryPhoto(query: string, location?: string): Promise<PhotoResult | null> {
+  return (await generateFalPhoto(query, location)) ?? (await fetchUnsplashPhoto(query));
 }
 
 // ── Chart data ────────────────────────────────────────────────────────────────
@@ -1098,7 +1156,7 @@ export async function GET(request: NextRequest) {
 
   // Fetch per-story images, charts, and run counter-evidence detection in parallel
   const [storyPhotos, storyCharts, counterpoints] = await Promise.all([
-    Promise.all(rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title))),
+    Promise.all(rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title, s.location ?? undefined))),
     Promise.all(rawStories.map((s) => buildStoryChartData(s.chart))),
     detectCounterEvidence(briefingClaims, rawSources),
   ]);
@@ -1123,9 +1181,9 @@ export async function GET(request: NextRequest) {
       location: s.location ?? "",
       city: s.city ?? "",
       body: s.body ?? "",
-      imageUrl: photo?.urls.raw ?? null,
-      imageCredit: photo ? `Photo by ${photo.user.name} on Unsplash` : null,
-      imageCreditLink: photo ? `${photo.user.links.html}?utm_source=nusq&utm_medium=referral` : null,
+      imageUrl: photo?.url ?? null,
+      imageCredit: photo?.credit ?? null,
+      imageCreditLink: photo?.creditLink ?? null,
       chartData: storyCharts[i] ?? null,
     };
   });
@@ -1133,11 +1191,7 @@ export async function GET(request: NextRequest) {
   // Cover image: use first story's photo for multi-story; fetch separately for single-article
   const coverPhoto = storyPhotos[0] ?? (rawStories.length === 0 ? await fetchStoryPhoto(generated.title) : null);
   const image = coverPhoto
-    ? {
-        url: coverPhoto.urls.raw,
-        credit: `Photo by ${coverPhoto.user.name} on Unsplash`,
-        creditLink: `${coverPhoto.user.links.html}?utm_source=nusq&utm_medium=referral`,
-      }
+    ? { url: coverPhoto.url, credit: coverPhoto.credit, creditLink: coverPhoto.creditLink }
     : null;
 
   // Legacy single chart (kept for backwards compat)
