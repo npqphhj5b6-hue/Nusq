@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAllBriefings, getAllEssays, formatDate, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import BriefingCover from "@/components/BriefingCover";
+import { BlurFade } from "@/components/ui/blur-fade";
 
 export const dynamic = "force-dynamic";
 
@@ -57,15 +58,13 @@ export default async function Home() {
           </p>
 
           <h1 className="font-display mb-8 md:mb-10" style={{ fontSize: "clamp(2.75rem, 11vw, 9.5rem)" }}>
-            <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "0ms" }}>
-              MENA
-            </span>
-            <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "100ms" }}>
-              MARKETS,
-            </span>
-            <span className="hero-word text-[var(--c-amber)] text-glow block" style={{ animationDelay: "200ms" }}>
-              MADE CLEAR.
-            </span>
+            <BlurFade delay={0.25} duration={0.7} yOffset={20} blur="10px">
+              <span className="text-[var(--c-text-1)] block">MENA</span>
+              <span className="text-[var(--c-text-1)] block">MARKETS,</span>
+            </BlurFade>
+            <BlurFade delay={0.5} duration={0.7} yOffset={20} blur="10px">
+              <span className="text-[var(--c-amber)] text-glow block">MADE CLEAR.</span>
+            </BlurFade>
           </h1>
 
           <p
