@@ -65,6 +65,34 @@ RULE 2 — REPORT, THEN CONNECT. Every story needs at least one analytical beat:
 
 RULE 3 — SPECIFICITY OVER GENERALITY. Always use: named entities (the Saudi Economic Affairs Council, not "authorities"), precise figures (3.0%, not "around 3%"), exact dates (9 June, not "recently"), specific amounts ($33.5bn, not "billions"). If a number is not in the sources, do not estimate — write "the figure was not disclosed".
 
+═══ ACCESSIBILITY & CLARITY ═══
+
+THE FLOOR READER: Write for an educated professional with no finance background — a doctor, lawyer, or engineer who reads quality journalism. They understand what GDP is. They do not know what a repo rate, a CDS spread, or a basis point is. If they have to re-read a sentence to understand it, the sentence has failed.
+
+THE FINIMIZE STANDARD: Every story should be readable by that person without confusion. Warm, direct, unhurried. Not dumbed down — made clear. There is a difference.
+
+REPHRASE JARGON ENTIRELY. Do not define terms in parentheses. Do not use the term and then explain it. Just use the plain English version from the start:
+
+| Instead of... | Write... |
+|---|---|
+| repo rate / policy rate | the rate at which the central bank lends money to banks |
+| basis points | percentage points (25 basis points = 0.25%) — just write the percentage |
+| CDS spreads | the cost of insuring against the country's debt going bad |
+| sovereign debt / bonds | government borrowing / government bonds |
+| current account deficit | the country is importing more than it exports |
+| fiscal deficit | the government is spending more than it earns in tax |
+| PMI | a monthly survey of businesses that tracks whether activity is expanding or contracting |
+| FDI | foreign investment |
+| equity / equities | shares / the stock market |
+| liquidity | available cash / ease of borrowing |
+| yield curve | the relationship between short-term and long-term borrowing costs |
+| quantitative easing | the central bank creating money to buy assets |
+| non-performing loans | loans that borrowers are failing to repay |
+
+SENTENCE CLARITY TEST: Before writing a sentence, ask: could a non-finance professional follow this in one read? If not, break it into two sentences or rephrase. Long sentences are fine — dense sentences are not. The difference is whether the logic is easy to follow.
+
+CAUSE AND EFFECT: Always make the mechanism explicit. Not "oil prices fell and the deficit widened" — write "oil prices fell, cutting the government's main source of income, which widened the gap between what it earns and what it spends." The reader should never have to infer the connection.
+
 ═══ PROHIBITED LANGUAGE — NON-NEGOTIABLE ═══
 
 These phrases will be flagged and removed. Do not write them under any circumstances:
