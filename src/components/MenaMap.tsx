@@ -73,12 +73,23 @@ function project(lat: number, lng: number): [number, number] {
   return [x, y];
 }
 
+// Spread offsets for clustered pins — radiates outward from the base coordinate.
+// Index 0 = first story, index 1 = second, etc.
+const CLUSTER_OFFSETS: [number, number][] = [
+  [-13, -8],
+  [13,   8],
+  [-13,  8],
+  [ 13, -8],
+];
+
+const PIN_R = 14; // Large, Semafor-scale
+
 export default function MenaMap({ stories }: Props) {
   const resolved = stories
     .map((s) => ({ story: s, coords: resolveCoords(s.location, s.city) }))
     .filter((p): p is { story: MapStory; coords: [number, number] } => p.coords !== null);
 
-  // Group stories that share the same projected pixel position into one pin
+  // Group stories that share the same projected pixel position into one cluster
   const pinGroups = new Map<string, { stories: MapStory[]; coords: [number, number] }>();
   for (const { story, coords } of resolved) {
     const key = `${coords[0].toFixed(1)},${coords[1].toFixed(1)}`;
@@ -104,83 +115,74 @@ export default function MenaMap({ stories }: Props) {
 
       {/* Map */}
       <div style={{ background: "#04101E" }}>
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block" style={{ maxHeight: "300px" }}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block" style={{ maxHeight: "320px" }}>
           <rect width={W} height={H} fill="#04101E" />
 
+          {/* Outline-only countries — no fill, minimal border lines */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d} fill="#0D2240" stroke="#1E4060" strokeWidth="0.8" strokeLinejoin="round" />
+            <path key={name} d={d} fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="0.8" strokeLinejoin="round" />
           ))}
 
+          {/* Clusters — draw connector lines first, then pins on top */}
           {Array.from(pinGroups.values()).map(({ stories: group, coords }) => {
             const [lat, lng] = coords;
-            const [x, y] = project(lat, lng);
-            const isMulti = group.length > 1;
-            const label = group.map((s) => s.number).join("·");
-            // Pill dimensions scale with number of stories
-            const pillW = isMulti ? 10 + group.length * 10 : 0;
-            const pinR = 9;
+            const [cx, cy] = project(lat, lng);
+            const isCluster = group.length > 1;
+
+            // Compute each pin's offset position
+            const pinPositions = group.map((s, i) => {
+              const [dx, dy] = isCluster ? (CLUSTER_OFFSETS[i] ?? [0, 0]) : [0, 0];
+              return { story: s, px: cx + dx, py: cy + dy };
+            });
 
             return (
-              <g
-                key={group.map((s) => s.number).join("-")}
-                onClick={() => scrollToStory(group[0].number)}
-                style={{ cursor: "pointer" }}
-                className="group"
-              >
-                {isMulti ? (
-                  <>
-                    {/* Pill for multi-story pin */}
-                    <rect
-                      x={x - pillW / 2} y={y - 7}
-                      width={pillW} height={14}
-                      rx={7}
-                      fill="#F59E0B"
-                      stroke="#04101E" strokeWidth="1.5"
+              <g key={group.map((s) => s.number).join("-")}>
+                {/* Connector dots between clustered pins */}
+                {isCluster && pinPositions.map(({ px, py }, i) => (
+                  i > 0 && (
+                    <line
+                      key={i}
+                      x1={pinPositions[0].px} y1={pinPositions[0].py}
+                      x2={px} y2={py}
+                      stroke="rgba(245,158,11,0.35)" strokeWidth="1" strokeDasharray="2,2"
                     />
-                    <text
-                      x={x} y={y + 0.5}
-                      textAnchor="middle" dominantBaseline="middle"
-                      style={{ fontSize: "7px", fontWeight: 700, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none", letterSpacing: "0.5px" }}
-                    >
-                      {label}
-                    </text>
-                  </>
-                ) : (
-                  <>
-                    {/* Subtle outer glow ring */}
-                    <circle cx={x} cy={y} r={pinR + 4} fill="#F59E0B" fillOpacity="0.12" />
-                    {/* Solid amber circle */}
-                    <circle cx={x} cy={y} r={pinR} fill="#F59E0B" stroke="#04101E" strokeWidth="1.5" />
-                    <text
-                      x={x} y={y + 0.5}
-                      textAnchor="middle" dominantBaseline="middle"
-                      style={{ fontSize: "8px", fontWeight: 700, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}
-                    >
-                      {group[0].number}
-                    </text>
-                  </>
-                )}
+                  )
+                ))}
 
-                {/* Hover tooltip — shows all story headlines for this pin */}
-                <g
-                  transform={`translate(${x}, ${y - (isMulti ? 14 : pinR + 4)})`}
-                  className="opacity-0 group-hover:opacity-100"
-                  style={{ transition: "opacity 0.15s" }}
-                >
-                  {group.map((s, i) => {
-                    const truncated = s.headline.length > 28 ? s.headline.slice(0, 28) + "…" : s.headline;
-                    const offsetY = -12 - i * 14;
-                    return (
-                      <g key={s.number}>
-                        <rect x={-62} y={offsetY - 9} width="124" height="13" rx="3" fill="#04101E" stroke="rgba(245,158,11,0.3)" strokeWidth="0.8" />
-                        <text x={0} y={offsetY} textAnchor="middle"
-                          style={{ fontSize: "7px", fill: "rgba(255,255,255,0.75)", fontFamily: "monospace", pointerEvents: "none" }}>
-                          {s.number}. {truncated}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </g>
+                {/* Individual pins */}
+                {pinPositions.map(({ story, px, py }) => (
+                  <g
+                    key={story.number}
+                    onClick={() => scrollToStory(story.number)}
+                    style={{ cursor: "pointer" }}
+                    className="group/pin"
+                  >
+                    {/* Outer glow */}
+                    <circle cx={px} cy={py} r={PIN_R + 5} fill="#F59E0B" fillOpacity="0.10" />
+                    {/* Solid amber pin */}
+                    <circle cx={px} cy={py} r={PIN_R} fill="#F59E0B" stroke="#04101E" strokeWidth="2" />
+                    <text
+                      x={px} y={py + 0.5}
+                      textAnchor="middle" dominantBaseline="middle"
+                      style={{ fontSize: "10px", fontWeight: 800, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}
+                    >
+                      {story.number}
+                    </text>
+
+                    {/* Hover tooltip */}
+                    <g
+                      transform={`translate(${px}, ${py - PIN_R - 8})`}
+                      className="opacity-0 group-hover/pin:opacity-100"
+                      style={{ transition: "opacity 0.15s" }}
+                    >
+                      <rect x={-66} y={-18} width="132" height="14" rx="3" fill="#040C1A" stroke="rgba(245,158,11,0.3)" strokeWidth="0.8" />
+                      <text x={0} y={-8} textAnchor="middle"
+                        style={{ fontSize: "7.5px", fill: "rgba(255,255,255,0.8)", fontFamily: "monospace", pointerEvents: "none" }}>
+                        {story.headline.length > 30 ? story.headline.slice(0, 30) + "…" : story.headline}
+                      </text>
+                    </g>
+                  </g>
+                ))}
               </g>
             );
           })}
