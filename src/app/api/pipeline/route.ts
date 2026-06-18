@@ -121,6 +121,13 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
 
 The briefing is structured as 3–4 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories. Keep each story tight.
 
+GEOGRAPHIC DIVERSITY — MANDATORY:
+- Every story must cover a DIFFERENT country. No two stories may share the same country.
+- At least one story per briefing must come from North Africa: Egypt, Morocco, Tunisia, Algeria, or Libya. Use whichever has the strongest material in today's sources.
+- Saudi Arabia and UAE may each appear at most once per briefing combined — do not let them crowd out the rest of the region.
+- If sources from a country are thin, write a shorter story rather than skipping the country entirely.
+- Assign each story's "location" field to the specific country it covers (not "MENA" or "GCC").
+
 {
   "title": "A compelling headline for today's overall briefing — max 12 words, no full stop",
   "summary": "2–3 sentences. A hook that sets up the main theme and makes the reader want more.",
@@ -281,11 +288,23 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   const parser = new Parser({ timeout: 10000 });
 
   const queries = [
-    { url: "https://news.google.com/rss/search?q=GCC+economy+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=UAE+economy+finance+investment&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=MENA+economy+markets&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Aramco+SABIC+Saudi+stocks&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // Gulf
+    { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=UAE+economy+investment+trade&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Qatar+economy+LNG+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Kuwait+Oman+Bahrain+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // North Africa
+    { url: "https://news.google.com/rss/search?q=Egypt+economy+IMF+pound+investment&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Morocco+economy+trade+industry&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Tunisia+Algeria+Libya+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // Levant & Iraq
+    { url: "https://news.google.com/rss/search?q=Jordan+Iraq+Lebanon+economy+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // Broad MENA
+    { url: "https://news.google.com/rss/search?q=MENA+economy+markets+investment+2026&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // Arabic — North Africa
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D9%85%D8%B5%D8%B1&hl=ar&gl=EG&ceid=EG:ar", lang: "ar" as const },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8&hl=ar&gl=MA&ceid=MA:ar", lang: "ar" as const },
+    // Arabic — Gulf
     { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9&hl=ar&gl=SA&ceid=SA:ar", lang: "ar" as const },
     { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%A5%D9%85%D8%A7%D8%B1%D8%A7%D8%AA&hl=ar&gl=AE&ceid=AE:ar", lang: "ar" as const },
   ];
