@@ -121,12 +121,25 @@ Output ONLY a valid JSON object — no prose before or after, no markdown code f
 
 The briefing is structured as 3–4 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories. Keep each story tight.
 
-GEOGRAPHIC DIVERSITY — MANDATORY:
-- Every story must cover a DIFFERENT country. No two stories may share the same country.
-- At least one story per briefing must come from North Africa: Egypt, Morocco, Tunisia, Algeria, or Libya. Use whichever has the strongest material in today's sources.
-- Saudi Arabia and UAE may each appear at most once per briefing combined — do not let them crowd out the rest of the region.
-- If sources from a country are thin, write a shorter story rather than skipping the country entirely.
-- Assign each story's "location" field to the specific country it covers (not "MENA" or "GCC").
+GEOGRAPHIC STRUCTURE — FOLLOW THIS HIERARCHY:
+
+DEFAULT STRUCTURE (4 stories):
+1. Gulf story — strongest Gulf story available; no country preference within the Gulf (Saudi Arabia, UAE, Qatar, Kuwait, Oman, Bahrain all compete equally on newsworthiness)
+2. Gulf story — second-best Gulf story, different country from story 1
+3. North Africa story — Egypt or Morocco preferred; Jordan, Lebanon, or Iraq if North Africa material is thin; Tunisia, Algeria, or Libya if that is the strongest available
+4. Wildcard — best remaining story from anywhere in MENA (Levant, Iraq, North Africa, or a Gulf country not yet covered)
+
+THIN DAY RULE: If there is no North Africa or Levant story worth writing, run 3 Gulf stories instead. Do NOT manufacture a weak story to hit geographic targets. Quality beats geography on thin days.
+
+WITHIN THE GULF — no country has automatic priority. Saudi Arabia, UAE, Qatar, Kuwait, Oman, and Bahrain all compete on the strength of the story. Pick the two most newsworthy.
+
+NON-GULF PRIORITY ORDER (when multiple non-Gulf stories are available):
+Egypt first (largest Arab economy, IMF programme, major reform story), then Morocco, then Jordan or Lebanon, then Iraq, then Tunisia/Algeria/Libya.
+
+RULES THAT APPLY REGARDLESS:
+- No two stories may cover the same country.
+- Assign each story's "location" field to the specific country, not "MENA" or "GCC".
+- No country appears more than once per briefing.
 
 {
   "title": "A compelling headline for today's overall briefing — max 12 words, no full stop",
