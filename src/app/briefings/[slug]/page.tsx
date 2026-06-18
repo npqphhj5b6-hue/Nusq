@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBriefingBySlug, formatDate } from "@/lib/db";
-import TradingViewChart from "@/components/TradingViewChart";
 import DataChart from "@/components/DataChart";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
@@ -141,15 +140,6 @@ export default async function BriefingPage({
     gdp_growth:  /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
     inflation:   /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
   };
-  const TICKER_KEYWORDS: Record<string, RegExp> = {
-    "TVC:UKOIL":       /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
-    "TVC:NGAS":        /\b(natural gas|lng|gas price)/i,
-    "TVC:GOLD":        /\b(gold|precious metal|safe.haven|bullion)/i,
-    "TVC:SILVER":      /\bsilver\b/i,
-    "FOREXCOM:SPXUSD": /\b(s&p|sp 500|us stocks|wall street|american market)/i,
-    "TVC:DXY":         /\b(dollar index|dxy\b|usd strength|dollar strength)/i,
-  };
-
   const bodyParagraphs = briefing.body.split("\n\n").filter((p) => p.trim().length > 0);
   const usedIndices = new Set<number>();
   const findInsertIndex = (pattern: RegExp): number => {
@@ -166,13 +156,6 @@ export default async function BriefingPage({
     if (idx !== -1) usedIndices.add(idx);
     return idx;
   })();
-  const tickerInsertMap = new Map<number, string>();
-  for (const ticker of (briefing.tickers ?? []).filter(isValidTicker)) {
-    const pattern = TICKER_KEYWORDS[ticker];
-    if (!pattern) continue;
-    const idx = findInsertIndex(pattern);
-    if (idx !== -1) { tickerInsertMap.set(idx, ticker); usedIndices.add(idx); }
-  }
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -467,11 +450,6 @@ export default async function BriefingPage({
                   {i === chartInsertAfter && briefing.chartData && (
                     <ScrollReveal><DataChart data={briefing.chartData} /></ScrollReveal>
                   )}
-                  {tickerInsertMap.has(i) && (
-                    <ScrollReveal>
-                      <div className="my-6"><TradingViewChart ticker={tickerInsertMap.get(i)!} /></div>
-                    </ScrollReveal>
-                  )}
                 </React.Fragment>
               );
             })}
@@ -486,26 +464,6 @@ export default async function BriefingPage({
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
-
-      {/* Markets */}
-      {(() => {
-        const inlinedTickers = new Set(tickerInsertMap.values());
-        const remaining = (briefing.tickers ?? []).filter(isValidTicker).filter(t => !inlinedTickers.has(t));
-        if (remaining.length === 0) return null;
-        return (
-          <ScrollReveal>
-            <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
-                <span className="eyebrow">Markets</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {remaining.map((ticker) => (<TradingViewChart key={ticker} ticker={ticker} />))}
-              </div>
-            </div>
-          </ScrollReveal>
-        );
-      })()}
 
       {/* Sources */}
       {hasSources && (
