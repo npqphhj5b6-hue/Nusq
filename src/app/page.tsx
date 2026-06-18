@@ -62,7 +62,7 @@ export default async function Home() {
               <span className="text-[var(--c-text-1)] block">MENA</span>
               <span className="text-[var(--c-text-1)] block">MARKETS,</span>
             </BlurFade>
-            <BlurFade delay={1.5} duration={0.7} yOffset={20} blur="10px">
+            <BlurFade delay={1.0} duration={0.7} yOffset={20} blur="10px">
               <span className="text-[var(--c-amber)] text-glow block">MADE CLEAR.</span>
             </BlurFade>
           </h1>
