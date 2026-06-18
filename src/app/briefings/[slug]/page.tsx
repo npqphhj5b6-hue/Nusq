@@ -18,12 +18,6 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
 
-const VALID_TICKERS = new Set([
-  "TVC:UKOIL", "TVC:NGAS", "TVC:GOLD", "TVC:SILVER",
-  "FOREXCOM:SPXUSD", "TVC:DXY",
-]);
-
-function isValidTicker(t: string) { return VALID_TICKERS.has(t); }
 function unsplashUrl(raw: string, w: number, h: number) {
   return `${raw}&w=${w}&h=${h}&fit=crop&crop=entropy&auto=format&q=80`;
 }

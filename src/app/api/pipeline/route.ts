@@ -688,7 +688,11 @@ ${sourcesList}`,
         const counterTiers = (r.counter_source_indices ?? []).map((i) => {
           const s = rawSources[i - 1];
           if (!s) return 3 as const;
-          return getSourceTier(s.url);
+          // Mirror buildSourceRefs: unresolved Google News URLs always score
+          // tier 3 by URL, so fall back to publisher-name tier in that case.
+          return s.url.includes("news.google.com")
+            ? getSourceTierByName(s.publisher)
+            : getSourceTier(s.url);
         });
         const hasHighTierCounter = counterTiers.some((t) => t <= 2);
         const blocksPublish =
@@ -810,54 +814,6 @@ interface UnsplashPhoto {
   user: { name: string; links: { html: string } };
   likes: number;
   alt_description?: string | null;
-}
-
-async function fetchUnsplashCandidates(queries: string[]): Promise<UnsplashPhoto[]> {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key) return [];
-  const seen = new Set<string>();
-  const all: UnsplashPhoto[] = [];
-  await Promise.allSettled(
-    queries.map(async (query) => {
-      try {
-        const res = await fetch(
-          `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape`,
-          { headers: { Authorization: `Client-ID ${key}` } }
-        );
-        if (!res.ok) return;
-        const data = await res.json() as { results: UnsplashPhoto[] };
-        for (const photo of data.results ?? []) {
-          if (!seen.has(photo.id)) { seen.add(photo.id); all.push(photo); }
-        }
-      } catch { /* skip */ }
-    })
-  );
-  return all.sort((a, b) => b.likes - a.likes).slice(0, 8);
-}
-
-async function selectBestPhoto(candidates: UnsplashPhoto[], title: string, summary: string): Promise<UnsplashPhoto | null> {
-  if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0];
-  const client = new Anthropic();
-  const imageBlocks: Anthropic.ImageBlockParam[] = candidates.map((p) => ({
-    type: "image" as const,
-    source: { type: "url" as const, url: p.urls.small },
-  }));
-  const list = candidates.map((p, i) => `${i + 1}. ${p.alt_description ?? "no description"} (${p.likes} likes)`).join("\n");
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 16,
-    messages: [{
-      role: "user",
-      content: [
-        ...imageBlocks,
-        { type: "text", text: `Select the best cover image for a MENA financial briefing titled "${title}". The ${candidates.length} images are:\n${list}\n\nReply with ONLY the number (1–${candidates.length}).` },
-      ],
-    }],
-  });
-  const text = response.content.find((b) => b.type === "text")?.text?.trim() ?? "1";
-  const index = parseInt(text, 10) - 1;
-  return (isNaN(index) || index < 0 || index >= candidates.length) ? candidates[0] : candidates[index];
 }
 
 async function fetchStoryPhoto(query: string): Promise<UnsplashPhoto | null> {
