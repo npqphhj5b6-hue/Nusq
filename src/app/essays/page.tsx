@@ -16,8 +16,8 @@ export default async function EssaysPage() {
           </span>
         </div>
         <h1
-          className="text-[2.5rem] md:text-[3rem] leading-[1.06] text-[var(--c-text-1)] mb-4"
-          style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
+          className="font-display text-[var(--c-text-1)] mb-4"
+          style={{ fontSize: "clamp(2.5rem, 9vw, 7rem)" }}
         >
           Research
         </h1>
