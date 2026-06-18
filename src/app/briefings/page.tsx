@@ -56,7 +56,7 @@ export default async function BriefingsPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-start">
               <div className="md:col-span-3 rounded-xl overflow-hidden" style={{ aspectRatio: "16/10" }}>
-                <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} />
+                <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} coverImageUrl={featured.coverImageUrl} />
               </div>
               <div className="md:col-span-2 md:pt-2">
                 <span className="eyebrow block mb-5">Latest</span>
@@ -105,7 +105,7 @@ export default async function BriefingsPage() {
             <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
               <div className="flex flex-col h-full card-lift rounded-xl overflow-hidden bg-[var(--c-surface)] border border-[var(--c-border)]">
                 <div className="shrink-0" style={{ aspectRatio: "3/2" }}>
-                  <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
+                  <BriefingCover issueNumber={issueNumbers.get(b.slug)!} coverImageUrl={b.coverImageUrl} />
                 </div>
                 <div className="flex flex-col flex-1 p-3 md:p-5">
                   {prefs && matchesBriefing(prefs, b.tags) && (

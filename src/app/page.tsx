@@ -127,7 +127,7 @@ export default async function Home() {
             <Link href={`/briefings/${featured.slug}`} className="group block cursor-pointer">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-10 items-start">
                 <div className="md:col-span-3 rounded-xl overflow-hidden" style={{ aspectRatio: "16/10" }}>
-                  <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} />
+                  <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} coverImageUrl={featured.coverImageUrl} />
                 </div>
                 <div className="md:col-span-2 md:pt-3">
                   <div className="flex items-center gap-3 mb-5">
@@ -145,12 +145,12 @@ export default async function Home() {
                     ))}
                   </div>
                   <h2
-                    className="text-[1.75rem] md:text-[2rem] leading-[1.1] text-[var(--c-text-1)] mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300"
+                    className="text-[1.75rem] md:text-[2.25rem] leading-[1.08] text-[var(--c-text-1)] mb-4 group-hover:text-[var(--c-amber)] transition-colors duration-300"
                     style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
                   >
                     {featured.title}
                   </h2>
-                  <p className="text-[var(--c-text-2)] leading-relaxed mb-5 line-clamp-3 text-sm">
+                  <p className="text-[var(--c-text-2)] leading-relaxed mb-6 line-clamp-3 text-[0.9375rem]">
                     {featured.summary}
                   </p>
                   <div
@@ -192,7 +192,7 @@ export default async function Home() {
                 <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
                   <div className="flex flex-col h-full card-lift rounded-xl overflow-hidden bg-[var(--c-surface)] border border-[var(--c-border)]">
                     <div className="shrink-0" style={{ aspectRatio: "3/2" }}>
-                      <BriefingCover issueNumber={issueNumbers.get(b.slug)!} />
+                      <BriefingCover issueNumber={issueNumbers.get(b.slug)!} coverImageUrl={b.coverImageUrl} />
                     </div>
                     <div className="flex flex-col flex-1 p-3 md:p-5">
                       {b.tags[0] && (

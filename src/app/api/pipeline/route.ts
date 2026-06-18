@@ -1130,8 +1130,8 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  // Cover image: use first story's photo (or fetch a separate one if no stories)
-  const coverPhoto = storyPhotos[0] ?? null;
+  // Cover image: use first story's photo for multi-story; fetch separately for single-article
+  const coverPhoto = storyPhotos[0] ?? (rawStories.length === 0 ? await fetchStoryPhoto(generated.title) : null);
   const image = coverPhoto
     ? {
         url: coverPhoto.urls.raw,
