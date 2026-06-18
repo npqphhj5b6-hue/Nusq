@@ -10,7 +10,8 @@ import BookmarkButton from "@/components/BookmarkButton";
 import ReadTracker from "@/components/ReadTracker";
 import MenaMap from "@/components/MenaMap";
 import { createClient } from "@/lib/supabase-server";
-import type { SourceRef, BriefingIntelligence } from "@/lib/types";
+import BriefingCheck from "@/components/BriefingCheck";
+import type { SourceRef, BriefingIntelligence, Counterpoint } from "@/lib/types";
 import { getPublisherDomain, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
@@ -42,13 +43,6 @@ function renderParagraph(para: string, sourceMap: Map<number, SourceRef>): strin
   return html;
 }
 
-const IMPACT_COLOURS: Record<string, string> = {
-  positive: "text-emerald-500",
-  negative: "text-red-400",
-  mixed:    "text-amber-400",
-  neutral:  "text-[var(--c-text-3)]",
-  unclear:  "text-[var(--c-text-3)]",
-};
 
 export async function generateMetadata({
   params,
@@ -111,22 +105,10 @@ export default async function BriefingPage({
 
   const intel: BriefingIntelligence | null = briefing.intelligence ?? null;
   const sources: SourceRef[] = briefing.sources ?? [];
+  const counterpoints: Counterpoint[] = (briefing.counterpoints as Counterpoint[] | null) ?? [];
   const hasSources = sources.length > 0;
 
   const checkedAt = briefing.validation?.checkedAt ?? null;
-  const checkedDate = checkedAt
-    ? new Date(checkedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-    : null;
-  const timeAgo = (() => {
-    if (!checkedAt) return null;
-    const diff = Date.now() - new Date(checkedAt).getTime();
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(mins / 60);
-    const days = Math.floor(hours / 24);
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    return `${mins}m ago`;
-  })();
 
   const hasStories = Array.isArray(briefing.stories) && briefing.stories.length > 0;
   const hasTldr = Array.isArray(briefing.tldrBullets) && briefing.tldrBullets.length > 0;
@@ -226,90 +208,14 @@ export default async function BriefingPage({
         </ScrollReveal>
       )}
 
-      {/* ── Intelligence box ── */}
-      {(hasSources || intel) && (
-        <div className="mb-10 flex rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] overflow-hidden">
-          <div className="w-[3px] shrink-0 bg-[var(--c-amber)]" />
-          <div className="flex-1 p-4 min-w-0">
-            <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-[var(--c-amber)] mb-3">Intelligence</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              <div className="space-y-2.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
-                {hasSources && (
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Sources reviewed</span>
-                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">
-                      {sources.length}
-                      {(() => {
-                        const primary = sources.filter(s => s.isPrimarySource).length;
-                        const t1 = sources.filter(s => s.tier === 1).length;
-                        if (primary > 0 || t1 > 0) {
-                          const parts: string[] = [];
-                          if (primary > 0) parts.push(`${primary} primary`);
-                          else if (t1 > 0) parts.push(`${t1} official`);
-                          return <span className="text-[var(--c-text-3)] ml-1">({parts.join(", ")})</span>;
-                        }
-                        return null;
-                      })()}
-                    </span>
-                  </div>
-                )}
-                {checkedDate && (
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Verified</span>
-                    <span className="text-[11px] text-[var(--c-text-1)] font-medium">
-                      {checkedDate}{timeAgo ? ` · ${timeAgo}` : ""}
-                    </span>
-                  </div>
-                )}
-                {intel?.marketImpact && (
-                  <div>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Market impact</span>
-                      <span className={`text-[11px] font-medium capitalize ${IMPACT_COLOURS[intel.marketImpact] ?? ""}`}>{intel.marketImpact}</span>
-                    </div>
-                    {intel.marketImpactDetail && (
-                      <p className="text-[10px] text-[var(--c-text-3)] mt-1 leading-relaxed">{intel.marketImpactDetail}</p>
-                    )}
-                  </div>
-                )}
-                {intel?.investorRelevance && (
-                  <div>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[var(--c-text-3)] uppercase tracking-[0.06em] shrink-0">Relevance to allocators</span>
-                      <span className="text-[11px] text-[var(--c-text-1)] font-medium capitalize">{intel.investorRelevance}</span>
-                    </div>
-                    {intel.relevanceReason && (
-                      <p className="text-[10px] text-[var(--c-text-3)] mt-1 leading-relaxed">{intel.relevanceReason}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 sm:mt-0 space-y-3">
-                {intel?.affectedGeographies && intel.affectedGeographies.length > 0 && (
-                  <div>
-                    <p className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] mb-1.5" style={{ fontFamily: "var(--font-geist-mono)" }}>Geographies</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {intel.affectedGeographies.map((g) => (
-                        <span key={g} className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--c-border-2)] text-[var(--c-text-2)]">{g}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {intel?.affectedSectors && intel.affectedSectors.length > 0 && (
-                  <div>
-                    <p className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] mb-1.5" style={{ fontFamily: "var(--font-geist-mono)" }}>Sectors</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {intel.affectedSectors.map((s) => (
-                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--c-border-2)] text-[var(--c-text-2)]">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Briefing check card ── */}
+      <BriefingCheck
+        intel={intel}
+        sources={sources}
+        validation={briefing.validation ?? null}
+        counterpoints={counterpoints}
+        checkedAt={checkedAt}
+      />
 
       {/* ── MENA Map (multi-story only) ── */}
       {hasStories && (
