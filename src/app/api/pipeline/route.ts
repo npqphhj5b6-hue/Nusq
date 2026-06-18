@@ -397,8 +397,11 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
     })
   );
 
+  // Score articles for investor/allocator relevance and drop weak ones
+  const relevant = await filterForRelevance(sorted);
+
   // Build the numbered source list for the prompt
-  const numbered = sorted.map((s, i) => {
+  const numbered = relevant.map((s, i) => {
     const dateStr = s.pubDate
       ? new Date(s.pubDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
       : "date unknown";
@@ -408,7 +411,63 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
 
   const text = `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
 
-  return { text, rawSources: sorted };
+  return { text, rawSources: relevant };
+}
+
+// ── Relevance filter ──────────────────────────────────────────────────────────
+
+// Score every collected article for investor/allocator relevance to the MENA
+// region using a single fast Haiku call. Articles scoring below the threshold
+// are dropped before the expensive Opus generation step.
+async function filterForRelevance(items: RawSourceItem[]): Promise<RawSourceItem[]> {
+  if (items.length === 0) return items;
+
+  const client = new Anthropic();
+
+  // Build a compact list: index + title + snippet (no URLs needed for scoring)
+  const list = items
+    .map((s, i) => `${i}: ${s.title} — ${s.snippet.slice(0, 120)}`)
+    .join("\n");
+
+  let scores: number[] = [];
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
+      messages: [{
+        role: "user",
+        content: `You are scoring news articles for relevance to investors and allocators focused on the MENA region.
+
+Score each article 0–10 using these criteria:
+- 8–10: Direct investor/allocator signal — economic data, GDP/inflation/trade figures, central bank policy, sovereign debt, major deals (M&A, IPO, FDI), energy markets, banking/finance, infrastructure investment, IMF/World Bank programmes, currency moves, capital market news
+- 5–7: Relevant context — government budget, industrial policy, Vision 2030 / national strategies, major infrastructure projects, geopolitical events with clear economic consequence
+- 2–4: Weak signal — general political news, social policy, minor regulatory updates with no immediate financial impact
+- 0–1: Irrelevant — sports, entertainment, celebrity, crime, lifestyle, weather
+
+Output ONLY a JSON array of integers in the same order as the input. Example for 4 articles: [8,3,9,1]
+
+Articles:
+${list}`,
+      }],
+    });
+
+    const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "[]";
+    const match = text.match(/\[[\d,\s]+\]/);
+    if (match) scores = JSON.parse(match[0]) as number[];
+  } catch {
+    // If scoring fails, pass all items through rather than blocking the pipeline
+    return items;
+  }
+
+  // Keep articles scoring 5 or above; fall back to all items if scores are mismatched
+  if (scores.length !== items.length) return items;
+
+  const THRESHOLD = 5;
+  const filtered = items.filter((_, i) => (scores[i] ?? 0) >= THRESHOLD);
+
+  // Safety: always return at least 10 items so Claude has enough to pick from
+  return filtered.length >= 10 ? filtered : items.slice(0, Math.max(filtered.length, 10));
 }
 
 // ── Validation layer ──────────────────────────────────────────────────────────
