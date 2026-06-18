@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { approveBriefing, deleteBriefing } from "../../actions";
 import { formatDate } from "@/lib/db";
-import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence } from "@/lib/types";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint } from "@/lib/types";
 import { TIER_LABELS, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,22 @@ const TIER_BADGE_COLOURS: Record<number, string> = {
   1: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/25",
   2: "bg-amber-500/10 text-amber-600 border border-amber-500/25",
   3: "bg-zinc-100 text-zinc-500 border border-zinc-200",
+};
+
+const COUNTERPOINT_TYPE_LABELS: Record<Counterpoint["type"], string> = {
+  direct_contradiction: "Direct contradiction",
+  time_horizon_difference: "Time horizon",
+  scope_difference: "Scope difference",
+  official_vs_media_difference: "Official vs media",
+  risk_factor: "Risk factor",
+};
+
+const COUNTERPOINT_TYPE_COLOURS: Record<Counterpoint["type"], string> = {
+  direct_contradiction: "bg-red-50 text-red-700 border border-red-200",
+  time_horizon_difference: "bg-blue-50 text-blue-700 border border-blue-200",
+  scope_difference: "bg-purple-50 text-purple-700 border border-purple-200",
+  official_vs_media_difference: "bg-orange-50 text-orange-700 border border-orange-200",
+  risk_factor: "bg-amber-50 text-amber-700 border border-amber-200",
 };
 
 const IMPACT_COLOURS: Record<string, string> = {
@@ -45,6 +61,7 @@ export default async function DraftReviewPage({
   const validation: ValidationResult | null = (draft.validation as ValidationResult | null) ?? null;
   const intelligence: BriefingIntelligence | null = (draft.intelligence as BriefingIntelligence | null) ?? null;
   const claims: BriefingClaim[] = (draft.claims as BriefingClaim[] | null) ?? [];
+  const counterpoints: Counterpoint[] = (draft.counterpoints as Counterpoint[] | null) ?? [];
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -280,6 +297,58 @@ export default async function DraftReviewPage({
                   </span>
                   {c.requiresAttribution && (
                     <span className="text-[9px] text-zinc-400 italic">requires attribution</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Counterpoints panel ── */}
+      {counterpoints.length > 0 && (
+        <div className="mt-8 pt-8 border-t border-[#E5E2DC]">
+          <div className="flex items-center gap-2 mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Counter-evidence ({counterpoints.length})</p>
+            {counterpoints.some((cp) => cp.blocksPublish) && (
+              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+                ⚠ Blocks publish
+              </span>
+            )}
+          </div>
+          <div className="space-y-3">
+            {counterpoints.map((cp, i) => (
+              <div
+                key={i}
+                className={`p-3 rounded-lg border ${cp.blocksPublish ? "border-red-200 bg-red-50/50" : "border-zinc-100 bg-zinc-50"}`}
+              >
+                <p className="text-[11px] text-zinc-600 leading-snug mb-1.5">
+                  <span className="font-medium text-zinc-800">Claim:</span> {cp.claim}
+                </p>
+                <p className="text-[11px] text-zinc-700 leading-snug">
+                  <span className="font-medium">Counter:</span> {cp.counterEvidence}
+                </p>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Claim sources: {cp.claimSourceIndices.map((n) => `[${n}]`).join(", ")}
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Counter sources: {cp.counterSourceIndices.map((n) => `[${n}]`).join(", ")}
+                  </span>
+                  <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${COUNTERPOINT_TYPE_COLOURS[cp.type]}`}>
+                    {COUNTERPOINT_TYPE_LABELS[cp.type]}
+                  </span>
+                  <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                    cp.severity === "high" ? "bg-red-50 text-red-700 border border-red-200"
+                    : cp.severity === "medium" ? "bg-amber-50 text-amber-700 border border-amber-200"
+                    : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                  }`}>
+                    {cp.severity}
+                  </span>
+                  {cp.blocksPublish && (
+                    <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-100 text-red-800 border border-red-300">
+                      Blocks publish
+                    </span>
                   )}
                 </div>
               </div>

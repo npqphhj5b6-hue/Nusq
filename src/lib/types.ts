@@ -49,6 +49,16 @@ export interface BriefingClaim {
   requiresAttribution: boolean;
 }
 
+export interface Counterpoint {
+  claim: string;
+  claimSourceIndices: number[];
+  counterEvidence: string;
+  counterSourceIndices: number[];
+  type: "direct_contradiction" | "time_horizon_difference" | "scope_difference" | "official_vs_media_difference" | "risk_factor";
+  severity: "high" | "medium" | "low";
+  blocksPublish: boolean;
+}
+
 export interface ValidationResult {
   passed: boolean;
   sourceCount: number;
@@ -105,6 +115,7 @@ export interface Briefing {
   validation?: ValidationResult | null;
   intelligence?: BriefingIntelligence | null;
   claims?: BriefingClaim[];
+  counterpoints?: Counterpoint[] | null;
   // Multi-story format
   stories?: BriefingStory[] | null;
   tldrBullets?: string[] | null;

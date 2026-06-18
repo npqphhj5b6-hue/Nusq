@@ -4,7 +4,7 @@ import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSourceTier, getSourceTierByName, getSourceType, getSourceTypeByName, getPublisherName, getPublisherDomain, isPrimarySource, normalizePublisherName } from "@/lib/source-credibility";
-import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence } from "@/lib/types";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -120,6 +120,7 @@ STYLISTIC TICS: em dashes (—), staccato fragments, and neat symmetrical conclu
 7. Do not describe an event as current if the most recent source is more than 30 days old — label it as background or historical context.
 8. Do not use impressive-sounding claims that go beyond what the sources say. Prefer "significant" over an invented magnitude.
 9. Never fabricate sources or URLs.
+10. BEFORE WRITING EACH STORY: scan the full source list for evidence that contradicts or materially qualifies your main claim. If a credible source presents a different picture — a risk, a contradiction, a failure mode, a conflicting figure — the pivot structure is mandatory. Do not present a one-sided story when the source list contains material counter-evidence on the same topic.
 
 ═══ DATE DISCIPLINE ═══
 
@@ -616,6 +617,100 @@ function validateBriefing(
   };
 }
 
+// ── Counter-evidence detection ───────────────────────────────────────────────
+
+interface RawCounterpoint {
+  claim_index: number;
+  counter_evidence: string;
+  counter_source_indices: number[];
+  type: Counterpoint["type"];
+  severity: Counterpoint["severity"];
+}
+
+async function detectCounterEvidence(
+  claims: BriefingClaim[],
+  rawSources: RawSourceItem[]
+): Promise<Counterpoint[]> {
+  if (claims.length === 0 || rawSources.length === 0) return [];
+
+  const claimsList = claims
+    .map((c, i) => `${i}: [Sources: ${c.sourceIndices.map((n) => `[${n}]`).join(",")}] ${c.claim}`)
+    .join("\n");
+
+  const sourcesList = rawSources
+    .map((s, i) => `[${i + 1}] ${s.title} (${s.publisher}): ${s.snippet.slice(0, 150)}`)
+    .join("\n");
+
+  const client = new Anthropic();
+  try {
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
+      messages: [{
+        role: "user",
+        content: `Scan these briefing claims against the full source list for material counter-evidence.
+
+Counter-evidence types:
+- direct_contradiction: a source says the opposite of the claim
+- risk_factor: a credible source highlights a risk or failure mode that significantly qualifies a positive claim
+- official_vs_media_difference: official data or statements differ materially from media reports
+- time_horizon_difference: a source shows different data for a different but directly relevant time period
+- scope_difference: a source shows a meaningfully different picture for a closely related geography or sector
+
+Only flag counter-evidence that would materially change how an investor reads the claim. Ignore minor qualifications, distant analogies, or tangentially related topics. Output [] if nothing material is found.
+
+For each claim with material counter-evidence, output one JSON object with these exact keys:
+{"claim_index": 0, "counter_evidence": "one sentence summarising the counter-evidence", "counter_source_indices": [1, 4], "type": "risk_factor", "severity": "high"}
+
+Severity: "high" = strongly undermines the claim, "medium" = adds important nuance, "low" = minor qualification.
+
+Output ONLY a JSON array — no prose.
+
+Claims:
+${claimsList}
+
+Sources:
+${sourcesList}`,
+      }],
+    });
+
+    const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "[]";
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    const raw = JSON.parse(match[0]) as RawCounterpoint[];
+
+    return raw
+      .filter((r) => typeof r.claim_index === "number" && r.claim_index >= 0 && r.claim_index < claims.length)
+      .map((r) => {
+        const originalClaim = claims[r.claim_index];
+        // Blocks publish when a tier-1 or tier-2 source directly contradicts or
+        // provides official data contradicting the claim at high severity
+        const counterTiers = (r.counter_source_indices ?? []).map((i) => {
+          const s = rawSources[i - 1];
+          if (!s) return 3 as const;
+          return getSourceTier(s.url);
+        });
+        const hasHighTierCounter = counterTiers.some((t) => t <= 2);
+        const blocksPublish =
+          r.severity === "high" &&
+          hasHighTierCounter &&
+          (r.type === "direct_contradiction" || r.type === "official_vs_media_difference");
+
+        return {
+          claim: originalClaim.claim,
+          claimSourceIndices: originalClaim.sourceIndices,
+          counterEvidence: r.counter_evidence ?? "",
+          counterSourceIndices: r.counter_source_indices ?? [],
+          type: r.type,
+          severity: r.severity,
+          blocksPublish,
+        } satisfies Counterpoint;
+      });
+  } catch {
+    return [];
+  }
+}
+
 // ── Build structured SourceRef array ─────────────────────────────────────────
 
 function buildSourceRefs(
@@ -1045,15 +1140,23 @@ export async function GET(request: NextRequest) {
   // Run validation against combined body
   const validation = validateBriefing(combinedBody, sourcesUsed, rawSources, date);
 
-  // Fetch per-story images in parallel
-  const storyPhotos = await Promise.all(
-    rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title))
-  );
+  // Fetch per-story images, charts, and run counter-evidence detection in parallel
+  const [storyPhotos, storyCharts, counterpoints] = await Promise.all([
+    Promise.all(rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title))),
+    Promise.all(rawStories.map((s) => buildStoryChartData(s.chart))),
+    detectCounterEvidence(briefingClaims, rawSources),
+  ]);
 
-  // Fetch per-story chart data in parallel
-  const storyCharts = await Promise.all(
-    rawStories.map((s) => buildStoryChartData(s.chart))
-  );
+  // Promote blocking counter-evidence into validation warnings
+  for (const cp of counterpoints) {
+    if (cp.blocksPublish) {
+      validation.warnings.push(
+        `Counter-evidence [${cp.type}]: "${cp.claim.slice(0, 80)}${cp.claim.length > 80 ? "…" : ""}" — ${cp.counterEvidence} (sources ${cp.counterSourceIndices.map((n) => `[${n}]`).join(", ")})`
+      );
+      validation.needsReview = true;
+      validation.passed = false;
+    }
+  }
 
   // Assemble stories with images and charts
   const stories = rawStories.map((s, i) => {
@@ -1105,6 +1208,7 @@ export async function GET(request: NextRequest) {
       validation,
       intelligence,
       claims: briefingClaims.length > 0 ? briefingClaims : null,
+      counterpoints: counterpoints.length > 0 ? counterpoints : null,
       stories: stories.length > 0 ? stories : null,
       tldr_bullets: (generated.tldr_bullets ?? []).filter(Boolean).slice(0, 5),
     })
