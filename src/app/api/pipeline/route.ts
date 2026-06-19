@@ -1318,14 +1318,24 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Stage 1: triage ──
+  console.log("[pipeline] stage 1 — triage start", { candidates: rawSources.length });
   const topCandidates = await triageStories(rawSources);
+  console.log("[pipeline] stage 1 — triage done", { top: topCandidates });
 
   // ── Stage 2: selection ──
+  console.log("[pipeline] stage 2 — selection start");
   const selection = await selectStories(rawSources, topCandidates);
   const selectedSeeds = selection.selected.map((i) => rawSources[i]);
+  console.log("[pipeline] stage 2 — selection done", {
+    selected: selection.selected,
+    anchor: selectedSeeds[0]?.title?.slice(0, 60),
+    supporting: selectedSeeds[1]?.title?.slice(0, 60),
+  });
 
   // ── Stage 3: research enrichment (parallel web search) ──
+  console.log("[pipeline] stage 3 — enrichment start");
   const enrichments = await Promise.all(selectedSeeds.map((s) => enrichStory(s)));
+  console.log("[pipeline] stage 3 — enrichment done", enrichments.map((e) => ({ notesLen: e.notes.length, newSources: e.newSources.length })));
 
   // Fold any newly discovered sources into the numbered list (dedup by URL)
   const existingUrls = new Set(rawSources.map((s) => s.url));
