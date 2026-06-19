@@ -32,13 +32,9 @@ const GEO_LOOKUP: Record<string, [number, number]> = {
   "Algeria": [28.0, 2.0],
   "Morocco": [32.0, -5.0],
   "Sudan": [16.0, 30.0],
-  "Iran": [32.0, 53.0],
-  "Turkey": [39.0, 35.0],
   "GCC": [24.0, 50.0],
   "MENA": [27.0, 40.0],
   "Gulf": [26.0, 51.0],
-  "Strait of Hormuz": [26.6, 56.3],
-  "Hormuz": [26.6, 56.3],
   "Riyadh": [24.69, 46.72],
   "Jeddah": [21.49, 39.19],
   "Dubai": [25.2, 55.27],
@@ -57,9 +53,6 @@ const GEO_LOOKUP: Record<string, [number, number]> = {
   "Algiers": [36.74, 3.06],
   "Tripoli": [32.90, 13.18],
   "Khartoum": [15.55, 32.53],
-  "Tehran": [35.7, 51.4],
-  "Istanbul": [41.0, 28.96],
-  "Ankara": [39.93, 32.86],
 };
 
 function resolveCoords(location: string, city?: string): [number, number] | null {

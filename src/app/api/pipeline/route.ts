@@ -29,9 +29,16 @@ function todayISO(): string {
 
 // ── Stage 4 system prompt (draft generation) ────────────────────────────────
 
-const SYSTEM_PROMPT = `You are the editorial voice of Nusq — a daily financial intelligence briefing read by institutional allocators, HNW private investors, and senior business professionals operating in the MENA region. The reader is financially literate and time-poor. They are paying for judgement, not a news recap.
+// Geographic scope — Arabic-speaking MENA only. Used in all stage prompts.
+const MENA_SCOPE = `GEOGRAPHIC SCOPE — ARABIC-SPEAKING MENA ONLY:
+In-scope countries: Saudi Arabia, UAE, Qatar, Kuwait, Bahrain, Oman, Jordan, Egypt, Morocco, Algeria, Tunisia, Libya, Sudan, Lebanon, Syria, Iraq, Yemen, Palestine.
+Out of scope (do NOT cover as a primary story): Iran, Turkey, Israel, Ethiopia, Pakistan, or any non-Arabic-speaking country. A story about global oil markets or IMF forecasts is in scope only if the primary impact is on an Arabic-speaking MENA country.`;
 
-You write two stories per briefing: an ANCHOR (the single most significant MENA financial development today) and a SUPPORTING THREAD (a second movement worth tracking, ideally connected to the anchor thematically or geographically). Both have already been selected for you. Below them you also write a short "Also Watching" list.
+const SYSTEM_PROMPT = `You are the editorial voice of Nusq — a daily financial intelligence briefing read by institutional allocators, HNW private investors, and senior business professionals operating in the Arabic-speaking MENA region. The reader is financially literate and time-poor. They are paying for judgement, not a news recap.
+
+${MENA_SCOPE}
+
+You write two stories per briefing: an ANCHOR (the single most significant Arabic-speaking MENA financial development today) and a SUPPORTING THREAD (a second movement worth tracking, ideally connected to the anchor thematically or geographically). Both have already been selected for you. Below them you also write a short "Also Watching" list.
 
 ═══ THE VOICE — STUDY THESE TECHNIQUES ═══
 
@@ -445,9 +452,11 @@ async function filterForRelevance(items: RawSourceItem[]): Promise<RawSourceItem
       max_tokens: 1024,
       messages: [{
         role: "user",
-        content: `You are scoring news articles for a MENA financial briefing read by institutional allocators, HNW private investors, and senior business professionals operating in the region.
+        content: `You are scoring news articles for a MENA financial briefing focused on the Arabic-speaking world.
 
-Score each article 0–10:
+${MENA_SCOPE}
+
+Score each article 0–10. Any article primarily about Iran, Turkey, Israel or other out-of-scope countries scores 0–2 regardless of financial significance:
 
 SCORE 8–10 (strong signal — always include):
 - Macro & policy: GDP, inflation, PMI, central bank decisions, interest rates, fiscal budgets, IMF/World Bank programmes, sovereign credit ratings
@@ -511,7 +520,11 @@ async function triageStories(rawSources: RawSourceItem[]): Promise<number[]> {
       max_tokens: 1024,
       messages: [{
         role: "user",
-        content: `You are the triage editor for a MENA financial intelligence briefing read by institutional allocators. Rank the candidate stories below by MATERIALITY, applying this hierarchy strictly, in order:
+        content: `You are the triage editor for a MENA financial intelligence briefing focused on the Arabic-speaking world.
+
+${MENA_SCOPE}
+
+Stories primarily about Iran, Turkey, Israel, or other out-of-scope countries must be excluded — do not include them in the top five regardless of their financial significance. Rank the remaining candidates by MATERIALITY, applying this hierarchy strictly, in order:
 
 1. Market-moving events: central bank decisions, sovereign debt moves, major equity swings, currency pressure, oil-price inflection points
 2. Capital deployment: PIF, ADIA, Mubadala, QIA or other sovereign-wealth-fund activity; major M&A or IPO announcements
@@ -576,7 +589,9 @@ async function selectStories(rawSources: RawSourceItem[], top: number[]): Promis
       max_tokens: 512,
       messages: [{
         role: "user",
-        content: `From these ranked candidates, choose exactly TWO stories for today's briefing:
+        content: `From these ranked candidates, choose exactly TWO stories for today's briefing. Both must be from Arabic-speaking MENA countries (Saudi Arabia, UAE, Qatar, Kuwait, Bahrain, Oman, Jordan, Egypt, Morocco, Algeria, Tunisia, Libya, Sudan, Lebanon, Syria, Iraq, Yemen, Palestine). Do not select stories primarily about Iran, Turkey, or Israel.
+
+
 - An ANCHOR: the single most significant development.
 - A SUPPORTING THREAD: a second movement worth tracking, ideally connected to the anchor thematically or geographically.
 
