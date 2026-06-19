@@ -69,7 +69,7 @@ export default async function Home() {
           </h1>
 
           <p
-            className="hero-fade text-[var(--c-text-2)] text-base leading-relaxed max-w-xs mb-3 tracking-wide"
+            className="hero-fade text-[var(--c-text-2)] text-base leading-relaxed max-w-xs mb-2 tracking-wide"
             style={{ animationDelay: "550ms" }}
           >
             A briefing on what moved the Gulf and why — written for
@@ -77,8 +77,15 @@ export default async function Home() {
           </p>
 
           <p
+            className="hero-fade text-[var(--c-text-3)] text-sm leading-relaxed max-w-xs mb-3 tracking-wide"
+            style={{ animationDelay: "580ms" }}
+          >
+            Integrating Arabic and English sources — the signal most coverage never reaches.
+          </p>
+
+          <p
             className="hero-fade text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-10"
-            style={{ animationDelay: "600ms" }}
+            style={{ animationDelay: "620ms" }}
           >
             Published Monday – Friday
           </p>
