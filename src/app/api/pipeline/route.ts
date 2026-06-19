@@ -950,13 +950,12 @@ async function fetchStoryPhoto(query: string): Promise<PhotoResult | null> {
   if (!key || !query.trim()) return null;
   try {
     const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape&content_filter=high`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape`,
       { headers: { Authorization: `Client-ID ${key}` } }
     );
     if (!res.ok) return null;
     const data = await res.json() as { results: UnsplashPhoto[] };
     const candidates = (data.results ?? []).filter((p) => {
-      if (p.width < 1200) return false;
       const desc = `${p.description ?? ""} ${p.alt_description ?? ""}`;
       if (ILLUSTRATION_RE.test(desc)) return false;
       return true;
