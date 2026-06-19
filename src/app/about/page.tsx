@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -50,9 +51,39 @@ export default function AboutPage() {
             <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
             <span className="eyebrow">The author</span>
           </div>
-          <p className="text-[var(--c-text-3)] text-sm leading-relaxed">
-            More on the person behind Nusq coming soon.
-          </p>
+          <div className="prose-nusq space-y-5">
+            <p>
+              Yousef Quaba is a fourth-year student of Arabic and History at the University of Edinburgh.
+              He spent his third year on exchange at the American University in Cairo, studying Modern
+              Standard Arabic and Egyptian Colloquial alongside economics and history — and developing a
+              close familiarity with how the region&apos;s media, business press, and official communications
+              actually work.
+            </p>
+            <p>
+              Nusq came from a simple observation: the Gulf and broader MENA region are reshaping global
+              capital flows, but the most important signals — announcements, filings, market commentary,
+              policy statements — often appear first in Arabic, in sources most Western analysts never
+              reach. The gap between what&apos;s happening and what&apos;s reported in English is wider than it looks.
+            </p>
+            <p>
+              Each briefing draws on Arabic and English sources, written for readers who need to
+              understand the region, not just follow it.
+            </p>
+            <p>
+              Yousef has worked in equity research and is building towards a career in asset management
+              and emerging-market analysis, with a focus on the Gulf and MENA.
+            </p>
+          </div>
+          <div className="mt-8">
+            <Link
+              href="https://www.linkedin.com/in/yousefquaba"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-2)] hover:text-[var(--c-amber)] transition-colors duration-200"
+            >
+              Connect on LinkedIn →
+            </Link>
+          </div>
         </div>
       </ScrollReveal>
     </div>
