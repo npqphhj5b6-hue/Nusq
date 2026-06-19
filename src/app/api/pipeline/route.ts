@@ -375,9 +375,22 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
     return 0;
   });
 
+  // Keep only articles from the last 72 hours. Fall back to 7 days if too few remain.
+  // Items with no pubDate pass through so we never lose undated sources entirely.
+  const nowMs = Date.now();
+  const within72h = sorted.filter(
+    (s) => !s.pubDate || nowMs - new Date(s.pubDate).getTime() <= 72 * 60 * 60 * 1000
+  );
+  const dateFiltered =
+    within72h.length >= 10
+      ? within72h
+      : sorted.filter(
+          (s) => !s.pubDate || nowMs - new Date(s.pubDate).getTime() <= 7 * 24 * 60 * 60 * 1000
+        );
+
   // Resolve Google News redirect URLs to actual publisher domains for accurate tier scoring.
   await Promise.allSettled(
-    sorted.map(async (s) => {
+    dateFiltered.map(async (s) => {
       const resolved = await resolveRedirect(s.url);
       if (resolved !== s.url && !resolved.includes("news.google.com")) {
         s.url = resolved;
@@ -387,7 +400,7 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   );
 
   // Score articles for investor/allocator relevance and drop weak ones
-  const relevant = await filterForRelevance(sorted);
+  const relevant = await filterForRelevance(dateFiltered);
 
   const text = numberSources(relevant);
   return { text, rawSources: relevant };
@@ -508,8 +521,10 @@ async function triageStories(rawSources: RawSourceItem[]): Promise<number[]> {
 
 Significance is NOT drama. A quiet rate hold from SAMA outranks a splashy megaproject headline. Prefer higher-tier sources (T1 official > T2 established).
 
+DIVERSITY REQUIREMENT: The returned five must cover at least two different countries or regions. If the top candidates are all about the same country or the same crisis (e.g. five Iran/Hormuz angles), include the highest-materiality story from a different country even if it ranks lower overall.
+
 Return the FIVE most material as a JSON array of objects, most material first:
-[{"index": 12, "materiality": "one-line rationale"}, ...]
+[{"index": 12, "country": "Saudi Arabia", "materiality": "one-line rationale"}, ...]
 Output ONLY the JSON array.
 
 Candidates:
@@ -534,6 +549,8 @@ ${list}`,
 
 interface Selection {
   selected: number[];      // indices into rawSources — [anchor, supporting]
+  anchorCountry: string;
+  supportingCountry: string;
   rationale: string;
   connection: string;
 }
@@ -541,6 +558,8 @@ interface Selection {
 async function selectStories(rawSources: RawSourceItem[], top: number[]): Promise<Selection> {
   const fallback: Selection = {
     selected: top.slice(0, 2),
+    anchorCountry: "",
+    supportingCountry: "",
     rationale: "Selected the two highest-materiality candidates.",
     connection: "",
   };
@@ -561,10 +580,10 @@ async function selectStories(rawSources: RawSourceItem[], top: number[]): Promis
 - An ANCHOR: the single most significant development.
 - A SUPPORTING THREAD: a second movement worth tracking, ideally connected to the anchor thematically or geographically.
 
-Constraints: the two stories must NOT cover the same country. Pick the combination that gives a MENA allocator the most accurate picture of where capital is moving today.
+HARD CONSTRAINT: The two stories MUST cover different countries. If both top candidates are about the same country or are two angles on the same event (e.g. two Hormuz/Iran stories, two Saudi stories), you MUST pick one of them plus the best candidate from a different country, even if that candidate ranks lower on materiality. Country diversity is non-negotiable.
 
 Return ONLY JSON:
-{"selected": [<anchor index>, <supporting index>], "rationale": "why these two", "connection": "how they connect (or 'independent' if not)"}
+{"selected": [<anchor index>, <supporting index>], "anchor_country": "country name", "supporting_country": "country name", "rationale": "why these two", "connection": "how they connect (or 'independent' if not)"}
 
 Candidates:
 ${list}`,
@@ -574,10 +593,16 @@ ${list}`,
     const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "{}";
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("no JSON");
-    const parsed = JSON.parse(match[0]) as Selection;
+    const parsed = JSON.parse(match[0]) as { selected?: number[]; anchor_country?: string; supporting_country?: string; rationale?: string; connection?: string };
     const sel = (parsed.selected ?? []).filter((i) => Number.isInteger(i) && i >= 0 && i < rawSources.length);
     if (sel.length < 2) return fallback;
-    return { selected: sel.slice(0, 2), rationale: parsed.rationale ?? "", connection: parsed.connection ?? "" };
+    return {
+      selected: sel.slice(0, 2),
+      anchorCountry: parsed.anchor_country ?? "",
+      supportingCountry: parsed.supporting_country ?? "",
+      rationale: parsed.rationale ?? "",
+      connection: parsed.connection ?? "",
+    };
   } catch {
     return fallback;
   }
