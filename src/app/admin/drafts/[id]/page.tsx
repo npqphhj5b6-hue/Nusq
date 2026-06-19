@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { approveBriefing, deleteBriefing } from "../../actions";
 import { formatDate } from "@/lib/db";
-import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint } from "@/lib/types";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint, BriefingStory } from "@/lib/types";
 import { TIER_LABELS, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +62,9 @@ export default async function DraftReviewPage({
   const intelligence: BriefingIntelligence | null = (draft.intelligence as BriefingIntelligence | null) ?? null;
   const claims: BriefingClaim[] = (draft.claims as BriefingClaim[] | null) ?? [];
   const counterpoints: Counterpoint[] = (draft.counterpoints as Counterpoint[] | null) ?? [];
+  const stories: BriefingStory[] = (draft.stories as BriefingStory[] | null) ?? [];
+  const alsoWatching: string[] = (draft.also_watching as string[] | null) ?? [];
+  const editsApplied: string[] = validation?.editsApplied ?? [];
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -157,6 +160,21 @@ export default async function DraftReviewPage({
         </div>
       )}
 
+      {/* ── Quality pass edits (Stage 5) ── */}
+      {editsApplied.length > 0 && (
+        <div className="mb-8 p-4 rounded-xl border border-blue-200 bg-blue-50 text-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700 mb-2">Quality pass — edits applied ({editsApplied.length})</p>
+          <ul className="space-y-1">
+            {editsApplied.map((e, i) => (
+              <li key={i} className="text-[11px] text-blue-800 flex items-start gap-1.5">
+                <span className="shrink-0 mt-0.5">›</span>
+                <span>{e}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Article preview */}
       <div className="flex flex-wrap gap-2 mb-5">
         {draft.tags?.map((tag: string) => (
@@ -193,6 +211,49 @@ export default async function DraftReviewPage({
           return <p key={i} dangerouslySetInnerHTML={{ __html: withBold }} />;
         })}
       </div>
+
+      {/* ── Per-story evidence ── */}
+      {stories.some((s) => s.evidence) && (
+        <div className="mt-12 pt-8 border-t border-[#E5E2DC]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4">Story evidence</p>
+          <div className="space-y-3">
+            {stories.filter((s) => s.evidence).map((s) => {
+              const e = s.evidence!;
+              return (
+                <div key={s.number} className="p-3 rounded-lg border border-zinc-100 bg-zinc-50">
+                  <p className="text-[11px] font-semibold text-zinc-700 mb-1.5">{s.number}. {s.headline}</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] text-zinc-500">
+                    <span>Sources reviewed: <strong className="text-zinc-700">{e.sourcesReviewed}</strong></span>
+                    <span>Relevance: <strong className="text-zinc-700 capitalize">{e.relevance}</strong></span>
+                  </div>
+                  {e.marketImpact && <p className="mt-1.5 text-[11px] text-zinc-600">Market impact: {e.marketImpact}</p>}
+                  {e.relevanceReason && <p className="mt-1 text-[11px] text-zinc-500 italic">{e.relevanceReason}</p>}
+                  {(e.geographies.length > 0 || e.sectors.length > 0) && (
+                    <p className="mt-1.5 text-[10px] text-zinc-500">
+                      {[...e.geographies, ...e.sectors].join(" · ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Also Watching ── */}
+      {alsoWatching.length > 0 && (
+        <div className="mt-8 pt-8 border-t border-[#E5E2DC]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-3">Also Watching</p>
+          <ul className="space-y-1.5">
+            {alsoWatching.map((item, i) => (
+              <li key={i} className="text-[12px] text-zinc-600 flex items-start gap-2">
+                <span className="text-[#1B4F72] shrink-0 mt-0.5">→</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* ── Sources panel ── */}
       {sources.length > 0 && (

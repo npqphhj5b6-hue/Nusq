@@ -4,7 +4,7 @@ import Parser from "rss-parser";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSourceTier, getSourceTierByName, getSourceType, getSourceTypeByName, getPublisherName, getPublisherDomain, isPrimarySource, normalizePublisherName } from "@/lib/source-credibility";
-import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint } from "@/lib/types";
+import type { SourceRef, BriefingClaim, ValidationResult, BriefingIntelligence, Counterpoint, StoryEvidence } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -27,226 +27,170 @@ function todayISO(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-// ── System prompt ─────────────────────────────────────────────────────────────
+// ── Stage 4 system prompt (draft generation) ────────────────────────────────
 
-const SYSTEM_PROMPT = `You are the editorial voice of Nusq — a daily financial briefing for allocators, analysts, and investors focused on the MENA region.
+const SYSTEM_PROMPT = `You are the editorial voice of Nusq — a daily financial intelligence briefing read by institutional allocators, HNW private investors, and senior business professionals operating in the MENA region. The reader is financially literate and time-poor. They are paying for judgement, not a news recap.
 
-═══ VOICE & STYLE ═══
+You write two stories per briefing: an ANCHOR (the single most significant MENA financial development today) and a SUPPORTING THREAD (a second movement worth tracking, ideally connected to the anchor thematically or geographically). Both have already been selected for you. Below them you also write a short "Also Watching" list.
 
-You write like a sharp, well-read analyst who happens to write well. Not a wire service. Not a press release. Not a summary bot.
+═══ THE VOICE — STUDY THESE TECHNIQUES ═══
 
-Study these reference passages carefully. This is the target register.
+The passages below are from the editor's own writing. Study the TECHNIQUE — the rhythm, the way sources are named, the way paragraphs open and stories close. Ignore the topic and the first-person register: briefings are written in the third person.
 
---- PASSAGE A: OPENING STYLE ---
-"Walking through Wakalat al-Balah, a bustling clothes market in Cairo, I was surprised by the thousands of hangers filled with clothes priced between 50 and 250 EGP ($1 to $5). What caught my interest was that most of these clothes were not manufactured in Egypt. I saw uniforms for British supermarkets, workwear for an Australian construction company, American college T-shirts and hoodies."
+--- PASSAGE A: OPENING ON A FACT, NEVER ON CONTEXT ---
+"Walking through Wakalat al-Balah, a bustling clothes market in Cairo, I was surprised by the thousands of hangers filled with clothes priced between 50 and 250 EGP ($1 to $5)."
+Technique: opens on a specific place and a specific figure. No preamble, no "Today we look at...", no scene-setting throat-clear. The first sentence carries information.
 
-Note: starts with a specific place, a specific observation, a specific price. No preamble. No "Today we explore..."
+--- PASSAGE B: NAMED ATTRIBUTION WITH WEIGHT ---
+"According to WRAP, the UK government-backed waste body, over half of all SHC collected is sent overseas, approximately a third going to Africa."
+Technique: names the source, says in one clause WHAT it is and why it carries authority, then states the precise figure. Not "reports say" — a named, weighted body delivering a specific number.
 
---- PASSAGE B: EVIDENCE + PIVOT STRUCTURE ---
-"One study in The Economic Journal found that SHC imports were behind around 40% of the decline in African textile manufacturing between 1981 and 2000. That said, SHC was not the sole cause; the removal of trade barriers and an influx of cheap, newly made clothing from China did comparable damage. It was, nonetheless, a major factor."
+--- PASSAGE C: EVIDENCE, THEN A ONE-CLAUSE PIVOT ---
+"One study in The Economic Journal found that SHC imports were behind around 40% of the decline in African textile manufacturing between 1981 and 2000. That said, SHC was not the sole cause; the removal of trade barriers and an influx of cheap clothing from China did comparable damage. It was, nonetheless, a major factor."
+Technique: cites a named study with a precise figure, complicates it in a single clause ("That said..."), then returns to the dominant finding. The complication earns its place; it does not become a whole paragraph of hand-wringing.
 
-Note: cites evidence with precision, then immediately pivots to the complication. The pivot ("That said...") does not take a whole paragraph — one clause. Then returns to the main finding. No hand-wringing, no balance for balance's sake.
-
---- PASSAGE C: STRUCTURAL CONCLUSION ---
+--- PASSAGE D: CLOSING ON A POSITION, NOT A HEDGE ---
 "That a modest American export interest was enough for Washington to threaten trade access for African nations should raise real questions."
+Technique: the close is a fact that implies its own significance, delivered as a clear view. Not a question, not "it remains to be seen", not symmetrical balance. A position, let to land.
 
-Note: the conclusion is a fact that implies its own significance. No editorial announcement. No "This shows us that..." Just the fact, let to land.
+═══ THE FOUR-LAYER STORY STRUCTURE ═══
 
---- PASSAGE D: INVESTOR FRAMING (FINIMIZE REGISTER) ---
-"Saudi Arabia's non-oil revenues now cover roughly 38% of government spending, up from 10% a decade ago. For investors watching Vision 2030 commitments, that shift matters more than any quarterly GDP print — it tells you whether the diversification story has actual fiscal legs, or whether it remains contingent on $80-a-barrel oil."
+Every story is ONE piece of continuous prose — no subheadings inside it — built in four layers in this order:
 
-Note: reports a specific figure, then draws a direct investment implication. Not abstract ("this is positive for markets") but specific ("this tells you whether X is true"). One beat of reporting, one beat of so-what. Never more than that.
+1. THE FACT. What happened. One or two sentences. No adjective that was not in the source material.
+2. THE CONTEXT. What makes this significant that a non-specialist would not know — prior MENA context, historical precedent, structural factors. This is the longest layer (three to five sentences) and the part that earns the subscription.
+3. THE IMPLICATION. What this means for capital: which sectors, currencies, sovereign positions, or investor theses it affects. Directional and analytical — never investment advice ("buy", "investors should").
+4. THE WATCH. One sentence. The single forward-looking, falsifiable signal that would confirm or contradict the story's thesis. Specific, not vague. Not "tensions could escalate" but e.g. "the signal to watch is whether TASI holds above 11,500 or whether SAMA issues an unscheduled statement before week's end."
 
-═══ THE THREE RULES OF THIS VOICE ═══
+Target 130–190 words per story. The reader should never have to infer a cause-and-effect link — make the mechanism explicit.
 
-RULE 1 — CITATION NUMBERS ARE SILENT. The [N] citation markers handle sourcing. They are reference numbers, not invitations to name the publisher in prose. Write "Saudi Arabia posted a 3.0% GDP expansion in Q1 [7]" — not "According to Arab News [7], Saudi Arabia posted...". Name a source in prose only when it IS a primary source (a central bank, a government ministry, the IMF, a company's investor relations) AND naming it strengthens the credibility of the claim. News outlets are almost never named in prose. The source list at the bottom of the briefing does that job.
+═══ SENTENCE RHYTHM ═══
 
-RULE 2 — REPORT, THEN CONNECT. Every story needs at least one analytical beat: a sentence that connects the facts to an implication. Use the pivot structure: state the dominant finding, then complicate it in one clause ("That said..." / "The tension is..." / "What this does not resolve is..."), then land on the so-what for an investor or allocator. The so-what must be concrete and specific, not a vague positive or negative.
+Vary sentence length deliberately. After any sentence longer than 25 words, the next must be short — under 12 words. Long sentences are fine; dense, airless sequences of long sentences are not. The rhythm is what makes it read like a person.
 
-RULE 3 — SPECIFICITY OVER GENERALITY. Always use: named entities (the Saudi Economic Affairs Council, not "authorities"), precise figures (3.0%, not "around 3%"), exact dates (9 June, not "recently"), specific amounts ($33.5bn, not "billions"). If a number is not in the sources, do not estimate — write "the figure was not disclosed".
+═══ ATTRIBUTION RULES ═══
 
-═══ ACCESSIBILITY & CLARITY ═══
+- Every fact carries a [N] citation marker corresponding to a numbered source.
+- NAME the source in prose when it is a PRIMARY or authoritative source and naming it adds weight: a central bank (SAMA, the UAE Central Bank), a ministry, an exchange (Tadawul), the IMF (with the document — "the IMF's 2026 Article IV"), the World Bank, OPEC, a sovereign wealth fund's own statement, a named study or rating action. Say what it is and what specifically it said.
+- Do NOT name routine news outlets (Reuters, Bloomberg, Arab News, etc.) in prose. The [N] marker and the source list carry them.
+- If sources conflict, state both with their numbers.
 
-THE FLOOR READER: Write for an educated professional with no finance background — a doctor, lawyer, or engineer who reads quality journalism. They understand what GDP is. They do not know what a repo rate, a CDS spread, or a basis point is. If they have to re-read a sentence to understand it, the sentence has failed.
+═══ PROHIBITED LANGUAGE — HARD BLACKLIST ═══
 
-THE FINIMIZE STANDARD: Every story should be readable by that person without confusion. Warm, direct, unhurried. Not dumbed down — made clear. There is a difference.
+Never write any of these. They will be flagged and removed:
+"it remains to be seen", "against a backdrop of", "in a sign of", "as the region navigates", "amid growing", "stakeholders", "going forward", "underscores", "highlights", "it is worth noting", "in recent months", "a complex landscape".
 
-REPHRASE JARGON ENTIRELY. Do not define terms in parentheses. Do not use the term and then explain it. Just use the plain English version from the start:
+Also banned (empty finance abstraction): "capital deployment", "risk-on sentiment", "macro headwinds", "tailwinds", "growth story", "fiscal pressure", "long-term thesis", "structural shift", "underlying fundamentals", "constructive outlook". Replace with concrete prose: "banks are lending more aggressively", "oil revenues fell as prices dropped", "the government is spending faster than it earns".
 
-| Instead of... | Write... |
-|---|---|
-| repo rate / policy rate | the rate at which the central bank lends money to banks |
-| basis points | percentage points (25 basis points = 0.25%) — just write the percentage |
-| CDS spreads | the cost of insuring against the country's debt going bad |
-| sovereign debt / bonds | government borrowing / government bonds |
-| current account deficit | the country is importing more than it exports |
-| fiscal deficit | the government is spending more than it earns in tax |
-| PMI | a monthly survey of businesses that tracks whether activity is expanding or contracting |
-| FDI | foreign investment |
-| equity / equities | shares / the stock market |
-| liquidity | available cash / ease of borrowing |
-| yield curve | the relationship between short-term and long-term borrowing costs |
-| quantitative easing | the central bank creating money to buy assets |
-| non-performing loans | loans that borrowers are failing to repay |
+Also banned: em dashes (—) — use commas, semicolons, or separate sentences. No "bull case / bear case" or "on one hand / on the other hand" symmetry. No manufactured balance. If the evidence points one way, say so.
 
-SENTENCE CLARITY TEST: Before writing a sentence, ask: could a non-finance professional follow this in one read? If not, break it into two sentences or rephrase. Long sentences are fine — dense sentences are not. The difference is whether the logic is easy to follow.
+Market-sentiment claims ("markets are pricing in", "investor sentiment has shifted") are banned UNLESS your cited sources contain specific index levels, yields, spreads, or fund-flow figures.
 
-CAUSE AND EFFECT: Always make the mechanism explicit. Not "oil prices fell and the deficit widened" — write "oil prices fell, cutting the government's main source of income, which widened the gap between what it earns and what it spends." The reader should never have to infer the connection.
+═══ ANTI-HALLUCINATION — NON-NEGOTIABLE ═══
 
-═══ PROHIBITED LANGUAGE — NON-NEGOTIABLE ═══
+1. Only write facts directly supported by the numbered sources. Never invent figures, dates, names, deal values, or statistics.
+2. Every [N] must correspond to a real numbered source. Never invent citation numbers.
+3. If a value, stake, or date is not in the sources, write "the figure was not disclosed".
+4. Use exact dates from sources ("on 9 June", not "recently"). Do not call an event current if the most recent source is over 30 days old — frame it as background.
+5. Before writing each story, scan the full source list for evidence that contradicts or qualifies your main claim. If credible counter-evidence exists, the one-clause pivot (Passage C) is mandatory.
 
-These phrases will be flagged and removed. Do not write them under any circumstances:
+═══ STORY SELECTION CONSTRAINTS (already applied — honour them) ═══
 
-STRUCTURAL FILLER: "it's important to understand that", "to put this in context", "what makes this significant is", "the bottom line is", "in short", "the honest read", "what this tells us", "the point is", "what's clear is", "this is significant because".
+- Exactly two stories. The two assigned must not cover the same country. Set each story's "location" to the specific country.
+- "Also Watching": exactly three single-line signal flags — no analysis, just what to monitor (e.g. "Aramco Q2 results due 8 August; watch the dividend guidance"). Max 16 words each.
 
-ARTIFICIAL FRAMING: "bull case / bear case", "on one hand / on the other hand", "the X bet versus the Y warning", "the [country] paradox", "two readings of the same data". Do not construct symmetrical debates. State what the evidence shows.
+═══ PER-STORY EVIDENCE ═══
 
-ABSTRACT FINANCE LANGUAGE: "capital deployment", "risk-on sentiment", "macro headwinds", "tailwinds", "growth story", "investment momentum", "fiscal pressure", "long-term thesis", "macro narrative", "structural shift", "underlying fundamentals", "constructive outlook". Replace with concrete prose: "banks are lending more aggressively", "investors moved into equities", "oil revenues fell as prices dropped", "the government is spending faster than it is earning".
+For each story output an "evidence" object:
+- "market_impact": a directional clause, never one word. E.g. "Bearish for downstream petrochemicals, neutral for TASI near-term".
+- "relevance": "high" | "medium" | "low" — to a MENA allocator.
+- "relevance_reason": one clause. E.g. "PIF positioning shifts EM fund weightings".
+- "geographies": array of country/region tags for this story.
+- "sectors": array of sector tags (energy, banking, real estate, logistics, technology, sovereign funds, tourism, defence, infrastructure).
 
-OVER-ATTRIBUTION IN PROSE: "According to Reuters...", "Bloomberg reported...", "Arab News said...", "Al Jazeera noted...", "as reported by [outlet]", "as mentioned by [outlet]" — never name a news outlet in the body. Use [N] instead.
+═══ SOURCE ATTRIBUTION OUTPUT ═══
 
-MARKET SENTIMENT WITHOUT DATA: "markets are pricing in", "markets are betting on", "market confidence is rising", "investor sentiment has shifted", "the market has responded". These are prohibited unless your cited sources include specific index levels, bond yields, CDS spreads, or fund flow figures. If sources are media sentiment only, write "analysts have described the mood as cautious" or "commentary in regional media has emphasised the de-escalation angle" — not a market fact.
+For every source index in sources_used, give a source_annotations entry (keyed by the number as a string): "is_primary" (true only for official bodies releasing information directly), "is_background" (true for historical/context sources), "claims_supported" (array copying the exact key facts from the body this source supports), "summary" (one sentence on what it contributes), "event_date" (ISO date of the event, or null).
 
-STYLISTIC TICS: em dashes (—), staccato fragments, and neat symmetrical conclusions that manufacture balance. Write varied, medium-length sentences. If the evidence points one way, say so.
-
-═══ ANTI-HALLUCINATION RULES — NON-NEGOTIABLE ═══
-
-1. ONLY write facts directly supported by the numbered sources provided. Do not invent figures, dates, company names, people, deal values, or statistics.
-2. Every [N] in the body must correspond to a real source from the numbered list. Do not invent citation numbers.
-3. If a claim comes from only one source, place [N] after it. Do not additionally name the outlet in prose (the number is the citation).
-4. If sources conflict, state both: "Source [N] reports X. Source [M] puts the figure at Y."
-5. If a value, stake, or date is not in the sources, write "undisclosed" or "the figure was not disclosed".
-6. Use specific dates from sources. Write "on 9 June" not "recently" or "this week" unless a source from within the last 7 days explicitly confirms it.
-7. Do not describe an event as current if the most recent source is more than 30 days old — label it as background or historical context.
-8. Do not use impressive-sounding claims that go beyond what the sources say. Prefer "significant" over an invented magnitude.
-9. Never fabricate sources or URLs.
-10. BEFORE WRITING EACH STORY: scan the full source list for evidence that contradicts or materially qualifies your main claim. If a credible source presents a different picture — a risk, a contradiction, a failure mode, a conflicting figure — the pivot structure is mandatory. Do not present a one-sided story when the source list contains material counter-evidence on the same topic.
-
-═══ DATE DISCIPLINE ═══
-
-- Distinguish clearly between: (a) today's new development, (b) a developing story from the past week, (c) background context or historical fact.
-- Use exact dates when sources provide them.
-- Do not use: "today", "this morning", "just announced", "closed this week", "new deal" — unless a source published in the last 7 days explicitly says so.
-- For background context more than 30 days old, phrase as: "...which was first announced in [month/year]..." or "...part of a broader initiative launched in..."
-
-═══ SOURCE ATTRIBUTION REQUIREMENTS ═══
-
-For every source index in sources_used, provide a corresponding entry in source_annotations (keyed by the source number as a string):
-- "is_primary": true if the source is an official body directly releasing information (central bank, exchange, gov ministry, IMF, company IR). False for wire services and media reports about those institutions.
-- "is_background": true if the source provides historical or contextual information rather than breaking/current news.
-- "claims_supported": array of the specific, verifiable claims from the briefing body that this source directly supports. Copy the exact key fact/figure from the body text — e.g. "Saudi inflation reached 1.8% in May 2026", not vague summaries.
-- "summary": one sentence explaining why this source was cited and what it contributes.
-- "event_date": ISO date (YYYY-MM-DD) of the event described, if precisely known from the source. Null if ongoing, approximate, or unclear.
-
-Also output a "claims" array with the 5–10 most important verifiable claims in the briefing:
-- "claim": the exact claim text — a specific fact, figure, date, or entity statement
-- "sources": array of source indices from sources_used that directly support this claim
-- "confidence": "high" (multiple T1/T2 sources agree), "medium" (single T2 source), or "low" (uncertain or single source)
-- "requires_attribution": true if this is a single-source claim needing "according to [N]" framing in the body
+Output a "claims" array of the 5–10 most important verifiable claims: "claim" (exact fact/figure), "sources" (indices), "confidence" ("high"|"medium"|"low"), "requires_attribution" (true if single-source).
 
 ═══ OUTPUT FORMAT ═══
 
-Output ONLY a valid JSON object — no prose before or after, no markdown code fences.
-
-The briefing is structured as 3–4 independent numbered stories. Each story covers a distinct development, deal, or theme from today's sources. Do NOT write one long connected essay — write separate, self-contained stories. Keep each story tight.
-
-GEOGRAPHIC STRUCTURE — FOLLOW THIS HIERARCHY:
-
-DEFAULT STRUCTURE (4 stories):
-1. Gulf story — strongest Gulf story available; no country preference within the Gulf (Saudi Arabia, UAE, Qatar, Kuwait, Oman, Bahrain all compete equally on newsworthiness)
-2. Gulf story — second-best Gulf story, different country from story 1
-3. North Africa story — Egypt or Morocco preferred; Jordan, Lebanon, or Iraq if North Africa material is thin; Tunisia, Algeria, or Libya if that is the strongest available
-4. Wildcard — best remaining story from anywhere in MENA (Levant, Iraq, North Africa, or a Gulf country not yet covered)
-
-THIN DAY RULE: If there is no North Africa or Levant story worth writing, run 3 Gulf stories instead. Do NOT manufacture a weak story to hit geographic targets. Quality beats geography on thin days.
-
-WITHIN THE GULF — no country has automatic priority. Saudi Arabia, UAE, Qatar, Kuwait, Oman, and Bahrain all compete on the strength of the story. Pick the two most newsworthy.
-
-NON-GULF PRIORITY ORDER (when multiple non-Gulf stories are available):
-Egypt first (largest Arab economy, IMF programme, major reform story), then Morocco, then Jordan or Lebanon, then Iraq, then Tunisia/Algeria/Libya.
-
-RULES THAT APPLY REGARDLESS:
-- No two stories may cover the same country.
-- Assign each story's "location" field to the specific country, not "MENA" or "GCC".
-- No country appears more than once per briefing.
+Output ONLY a valid JSON object — no prose before or after, no markdown fences.
 
 {
-  "title": "A compelling headline for today's overall briefing — max 12 words, no full stop",
-  "summary": "2–3 sentences. A hook that sets up the main theme and makes the reader want more.",
+  "title": "Headline for the whole briefing — max 12 words, no full stop",
+  "summary": "2–3 sentences. A hook that sets up the day's main theme.",
   "tldr_bullets": [
-    "First key takeaway — one short sharp sentence, max 15 words, citing the specific figure or development",
+    "First key takeaway — one sharp sentence, max 15 words, with the specific figure",
     "Second key takeaway",
-    "Third key takeaway",
-    "Fourth key takeaway (optional)",
-    "Fifth key takeaway (optional)"
+    "Third key takeaway"
   ],
-  "tags": ["3 to 5 relevant tags for the whole briefing"],
+  "tags": ["3 to 5 tags for the whole briefing"],
   "stories": [
     {
       "number": 1,
-      "headline": "Short story headline — max 8 words, no full stop",
+      "headline": "Anchor story headline — max 8 words, no full stop",
       "location": "Saudi Arabia",
       "city": "Riyadh",
-      "body": "The full story. Add [N] citation markers inline after facts. Do NOT bold anything — no **bold**, no emphasis markers. Write 2–3 tight paragraphs, no bullet lists, 100–150 words. Structure: (1) open with a specific figure, date, or named event — never a thesis or preamble; (2) develop with connected facts and one analytical pivot ('That said...' / 'The tension is...'); (3) close with a concrete investor implication or the structural stakes — specific, not abstract. Do not name news outlets in the body.",
-      "image_query": "A 4–7 word Unsplash query specific to this story's subject and location. Moody and cinematic preferred.",
+      "body": "One continuous piece of prose in the four-layer structure (fact, context, implication, watch). Inline [N] markers after facts. No subheadings, no bullet lists, no **bold**. 130–190 words.",
+      "image_framing": "[primary subject] + [geographical or industrial specificity] + one of [dramatic lighting | aerial | documentary]. E.g. 'Riyadh financial district skyline night dramatic'. 4–7 words.",
+      "evidence": {
+        "market_impact": "Directional clause, never one word",
+        "relevance": "high",
+        "relevance_reason": "One clause",
+        "geographies": ["Saudi Arabia"],
+        "sectors": ["sovereign funds", "energy"]
+      },
       "chart": {
-        "type": "ONE of the predefined types: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — OR use 'bar' to provide inline data — OR null if no chart fits",
-        "country": "2-letter ISO required only for gdp_growth or inflation: SA, AE, EG, QA, KW, OM, BH, JO. Otherwise null.",
-        "title": "Required only for type='bar': descriptive chart title",
-        "labels": ["Required only for type='bar': x-axis labels, e.g. quarters or countries"],
+        "type": "ONE of: brent_price, gold, fx_egp, fx_sar, gdp_growth, inflation — OR 'bar' for inline data — OR null",
+        "country": "2-letter ISO only for gdp_growth/inflation: SA, AE, EG, QA, KW, OM, BH, JO. Else null.",
+        "title": "Only for type='bar'",
+        "labels": ["Only for type='bar'"],
         "values": [0, 0, 0],
-        "unit": "Required only for type='bar': e.g. 'AED billion' or '%' or 'USD/barrel'",
-        "source": "Required only for type='bar': the specific source this data comes from, matching a cited [N] source"
+        "unit": "Only for type='bar'",
+        "source": "Only for type='bar': must match a cited [N] source"
       }
     },
     {
       "number": 2,
-      "headline": "Second story headline",
+      "headline": "Supporting thread headline",
       "location": "UAE",
-      "city": "Dubai",
+      "city": "Abu Dhabi",
       "body": "...",
-      "image_query": "...",
+      "image_framing": "...",
+      "evidence": { "market_impact": "...", "relevance": "medium", "relevance_reason": "...", "geographies": ["UAE"], "sectors": ["banking"] },
       "chart": null
     }
   ],
-  "tickers": ["Array of up to 3 TradingView symbols from this exact list only: TVC:UKOIL, TVC:NGAS, TVC:GOLD, TVC:SILVER, FOREXCOM:SPXUSD, TVC:DXY. Empty array if nothing fits well."],
+  "also_watching": [
+    "Single-line signal flag, max 16 words",
+    "Second signal flag",
+    "Third signal flag"
+  ],
+  "tickers": ["Up to 3 from this list only: TVC:UKOIL, TVC:NGAS, TVC:GOLD, TVC:SILVER, FOREXCOM:SPXUSD, TVC:DXY. Empty array if nothing fits."],
   "sources_used": [1, 3, 5],
   "source_annotations": {
-    "1": {
-      "is_primary": false,
-      "is_background": false,
-      "claims_supported": ["Saudi GDP grew 4.6% in Q1 2026"],
-      "summary": "Provides official GDP data cited as the headline figure",
-      "event_date": "2026-03-31"
-    }
+    "1": { "is_primary": false, "is_background": false, "claims_supported": ["..."], "summary": "...", "event_date": "2026-06-15" }
   },
   "claims": [
-    {
-      "claim": "Saudi GDP grew 4.6% in Q1 2026",
-      "sources": [1, 3],
-      "confidence": "high",
-      "requires_attribution": false
-    }
+    { "claim": "Saudi GDP grew 4.6% in Q1 2026", "sources": [1, 3], "confidence": "high", "requires_attribution": false }
   ],
   "intelligence": {
     "market_impact": "positive|negative|mixed|neutral|unclear",
-    "market_impact_detail": "One specific sentence describing what the impact means for investors.",
+    "market_impact_detail": "One specific sentence on what the impact means for investors.",
     "investor_relevance": "high|medium|low",
-    "relevance_reason": "A short clause (5–10 words) explaining why allocators should care.",
+    "relevance_reason": "5–10 words on why allocators should care.",
     "time_horizon": "immediate|3-6 months|long-term|unclear",
-    "affected_sectors": ["energy", "banking", "real estate", "logistics", "technology", "sovereign funds", "tourism", "defence", "infrastructure"],
-    "affected_geographies": ["Saudi Arabia", "UAE", "Qatar", "Egypt", "Kuwait", "Oman", "Bahrain", "Jordan", "GCC", "MENA"],
-    "confidence_note": "One sentence on what you are most and least certain about in this briefing.",
+    "affected_sectors": ["energy", "banking"],
+    "affected_geographies": ["Saudi Arabia", "UAE"],
+    "confidence_note": "One sentence on what you are most and least certain about.",
     "freshness_status": "fresh|developing|background|stale-risk",
     "conflicting_sources": false
   }
 }
 
-CHART RULES FOR 'bar' TYPE:
-- Only use numbers that are explicitly stated in the cited sources. Do not invent or estimate values.
-- Include the source name as the "source" field (e.g. "UAE Federal Competitiveness Authority", "Saudi Vision 2030 report").
-- Use 4–8 labels maximum. Keep labels short (e.g. "Q1 2025", "Saudi Arabia", "Jan 2026").
-- Good candidates: trade volumes by quarter, country comparison of a single metric, year-over-year figures, sector breakdown percentages.`;
+CHART RULES FOR 'bar': only numbers explicitly stated in cited sources; include the source name; 4–8 short labels.`;
 
 // ── Source annotation from model ─────────────────────────────────────────────
 
@@ -330,11 +274,17 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   const parser = new Parser({ timeout: 10000 });
 
   const queries = [
-    // Gulf
+    // Gulf — general
     { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
     { url: "https://news.google.com/rss/search?q=UAE+economy+investment+trade&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
     { url: "https://news.google.com/rss/search?q=Qatar+economy+LNG+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
     { url: "https://news.google.com/rss/search?q=Kuwait+Oman+Bahrain+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    // Tier-1-targeted — central banks, exchanges, sovereign funds, multilaterals
+    { url: "https://news.google.com/rss/search?q=SAMA+OR+%22Saudi+Central+Bank%22+interest+rate+OR+reserves&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Tadawul+OR+%22Saudi+Exchange%22+OR+ADX+OR+DFM+listing+OR+IPO&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=PIF+OR+Mubadala+OR+ADIA+OR+QIA+investment+stake+acquisition&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=IMF+OR+%22World+Bank%22+OR+OPEC+Gulf+OR+MENA+forecast+OR+report&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=%22UAE+Central+Bank%22+OR+%22Qatar+Central+Bank%22+rate+OR+policy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
     // North Africa
     { url: "https://news.google.com/rss/search?q=Egypt+economy+IMF+pound+investment&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
     { url: "https://news.google.com/rss/search?q=Morocco+economy+trade+industry&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
@@ -372,10 +322,10 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
           const cleanTitle = titleDashParts.length > 1
             ? titleDashParts.slice(0, -1).join(" - ").trim()
             : title;
-          // Fallback: extract publisher from contentSnippet "headline  Publisher" (Google News uses NBSP pairs)
+          // Fallback: extract publisher from contentSnippet "headline  Publisher" (Google News uses NBSP pairs)
           if (!publisher) {
             const snip = (item.contentSnippet ?? "").trim();
-            const sep = "  ";
+            const sep = "  ";
             const dblIdx = snip.lastIndexOf(sep);
             if (dblIdx > 0) publisher = snip.substring(dblIdx + sep.length).trim();
           }
@@ -426,9 +376,6 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   });
 
   // Resolve Google News redirect URLs to actual publisher domains for accurate tier scoring.
-  // Only update URL/publisher when the redirect actually leaves news.google.com — if it stays
-  // on Google's domain (a different Google News path), getPublisherName returns "news.google.com"
-  // which is truthy and would silently overwrite the publisher name extracted from the RSS title.
   await Promise.allSettled(
     sorted.map(async (s) => {
       const resolved = await resolveRedirect(s.url);
@@ -442,31 +389,37 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   // Score articles for investor/allocator relevance and drop weak ones
   const relevant = await filterForRelevance(sorted);
 
-  // Build the numbered source list for the prompt
-  const numbered = relevant.map((s, i) => {
+  const text = numberSources(relevant);
+  return { text, rawSources: relevant };
+}
+
+// Build the numbered source list block for prompts.
+function numberSources(items: RawSourceItem[]): string {
+  const numbered = items.map((s, i) => {
     const dateStr = s.pubDate
       ? new Date(s.pubDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
       : "date unknown";
     const langLabel = s.lang === "ar" ? " [AR]" : "";
     return `[${i + 1}] "${s.title}" | ${s.publisher}${langLabel} | ${dateStr} | ${s.url}\n    ${s.snippet}`;
   });
+  return `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
+}
 
-  const text = `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
-
-  return { text, rawSources: relevant };
+// Mirror buildSourceRefs tier logic: unresolved Google News URLs score by publisher name.
+function tierOf(s: RawSourceItem): 1 | 2 | 3 {
+  return s.url.includes("news.google.com") ? getSourceTierByName(s.publisher) : getSourceTier(s.url);
 }
 
 // ── Relevance filter ──────────────────────────────────────────────────────────
 
 // Score every collected article for investor/allocator relevance to the MENA
 // region using a single fast Haiku call. Articles scoring below the threshold
-// are dropped before the expensive Opus generation step.
+// are dropped before the expensive generation step.
 async function filterForRelevance(items: RawSourceItem[]): Promise<RawSourceItem[]> {
   if (items.length === 0) return items;
 
   const client = new Anthropic();
 
-  // Build a compact list: index + title + snippet (no URLs needed for scoring)
   const list = items
     .map((s, i) => `${i}: ${s.title} — ${s.snippet.slice(0, 120)}`)
     .join("\n");
@@ -488,24 +441,23 @@ SCORE 8–10 (strong signal — always include):
 - Capital markets: IPOs, equity/bond issuance, exchange news, fund flows, index changes, asset prices
 - Deals & investment: M&A, joint ventures, FDI announcements, privatisations, major contract awards with disclosed values
 - Energy & commodities: oil/gas production, OPEC decisions, LNG contracts, refinery/pipeline news, renewable energy projects
-- Geopolitics: elections, conflicts, diplomatic shifts, sanctions, trade route disruptions — always relevant regardless of direct economic link; political context matters to anyone operating in the region
+- Geopolitics: elections, conflicts, diplomatic shifts, sanctions, trade route disruptions — always relevant regardless of direct economic link
 
 SCORE 5–7 (useful context — include):
-- National strategy announcements (Vision 2030, Egypt Vision, Morocco New Development Model) even without concrete figures
+- National strategy announcements (Vision 2030, etc.) even without concrete figures
 - Government spending plans, subsidy changes, labour market reforms
-- Social or religious policy with economic dimension (tourism, gender policy, expat rules)
+- Social or religious policy with economic dimension (tourism, expat rules)
 - Corporate earnings, leadership changes at major regional companies
 - Regulatory changes affecting a sector
 
 SCORE 2–4 (weak — exclude):
-- Sub-national and city-level stories with no national economic significance (municipal tenders, local infrastructure with no disclosed value, city-level administrative news)
-- Minor ceremonial or protocol events (state visits with no deal announced, ribbon-cuttings)
+- Sub-national and city-level stories with no national economic significance
+- Minor ceremonial or protocol events
 - Opinion pieces and editorials without new factual content
 
 SCORE 0–1 (irrelevant — always exclude):
 - Sports, entertainment, celebrity, lifestyle, fashion, food
 - Crime and security incidents with no economic/geopolitical dimension
-- Weather and natural disasters unless causing significant economic disruption
 
 Output ONLY a JSON array of integers in the same order as the input. Example for 4 articles: [8,3,9,1]
 
@@ -518,18 +470,186 @@ ${list}`,
     const match = text.match(/\[[\d,\s]+\]/);
     if (match) scores = JSON.parse(match[0]) as number[];
   } catch {
-    // If scoring fails, pass all items through rather than blocking the pipeline
     return items;
   }
 
-  // Keep articles scoring 5 or above; fall back to all items if scores are mismatched
   if (scores.length !== items.length) return items;
 
   const THRESHOLD = 5;
   const filtered = items.filter((_, i) => (scores[i] ?? 0) >= THRESHOLD);
 
-  // Safety: always return at least 10 items so Claude has enough to pick from
+  // Safety: always return at least 10 items so triage has enough to pick from
   return filtered.length >= 10 ? filtered : items.slice(0, Math.max(filtered.length, 10));
+}
+
+// ── Stage 1: triage (rank candidates by materiality hierarchy) ───────────────
+
+async function triageStories(rawSources: RawSourceItem[]): Promise<number[]> {
+  if (rawSources.length <= 5) return rawSources.map((_, i) => i);
+
+  const client = new Anthropic();
+  const list = rawSources
+    .map((s, i) => `${i}: [T${tierOf(s)}] ${s.title} (${s.publisher}) — ${s.snippet.slice(0, 120)}`)
+    .join("\n");
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
+      messages: [{
+        role: "user",
+        content: `You are the triage editor for a MENA financial intelligence briefing read by institutional allocators. Rank the candidate stories below by MATERIALITY, applying this hierarchy strictly, in order:
+
+1. Market-moving events: central bank decisions, sovereign debt moves, major equity swings, currency pressure, oil-price inflection points
+2. Capital deployment: PIF, ADIA, Mubadala, QIA or other sovereign-wealth-fund activity; major M&A or IPO announcements
+3. Macro policy shifts: fiscal policy changes, Vision 2030 milestones, regulatory announcements affecting foreign investment
+4. Geopolitical events with direct economic consequence: sanctions, trade-route disruption, diplomatic shifts affecting Gulf capital flows
+5. Corporate earnings or operational news from regionally significant companies (Aramco, SABIC, Emirates, FAB, SNB, QNB, Emaar, etc.)
+
+Significance is NOT drama. A quiet rate hold from SAMA outranks a splashy megaproject headline. Prefer higher-tier sources (T1 official > T2 established).
+
+Return the FIVE most material as a JSON array of objects, most material first:
+[{"index": 12, "materiality": "one-line rationale"}, ...]
+Output ONLY the JSON array.
+
+Candidates:
+${list}`,
+      }],
+    });
+
+    const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "[]";
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("no JSON");
+    const ranked = JSON.parse(match[0]) as Array<{ index: number }>;
+    const indices = ranked
+      .map((r) => r.index)
+      .filter((i) => Number.isInteger(i) && i >= 0 && i < rawSources.length);
+    return indices.length >= 2 ? indices.slice(0, 5) : rawSources.map((_, i) => i).slice(0, 5);
+  } catch {
+    return rawSources.map((_, i) => i).slice(0, 5);
+  }
+}
+
+// ── Stage 2: selection (pick anchor + supporting thread) ─────────────────────
+
+interface Selection {
+  selected: number[];      // indices into rawSources — [anchor, supporting]
+  rationale: string;
+  connection: string;
+}
+
+async function selectStories(rawSources: RawSourceItem[], top: number[]): Promise<Selection> {
+  const fallback: Selection = {
+    selected: top.slice(0, 2),
+    rationale: "Selected the two highest-materiality candidates.",
+    connection: "",
+  };
+  if (top.length < 2) return fallback;
+
+  const client = new Anthropic();
+  const list = top
+    .map((i) => `${i}: [T${tierOf(rawSources[i])}] ${rawSources[i].title} (${rawSources[i].publisher}) — ${rawSources[i].snippet.slice(0, 140)}`)
+    .join("\n");
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 512,
+      messages: [{
+        role: "user",
+        content: `From these ranked candidates, choose exactly TWO stories for today's briefing:
+- An ANCHOR: the single most significant development.
+- A SUPPORTING THREAD: a second movement worth tracking, ideally connected to the anchor thematically or geographically.
+
+Constraints: the two stories must NOT cover the same country. Pick the combination that gives a MENA allocator the most accurate picture of where capital is moving today.
+
+Return ONLY JSON:
+{"selected": [<anchor index>, <supporting index>], "rationale": "why these two", "connection": "how they connect (or 'independent' if not)"}
+
+Candidates:
+${list}`,
+      }],
+    });
+
+    const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "{}";
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("no JSON");
+    const parsed = JSON.parse(match[0]) as Selection;
+    const sel = (parsed.selected ?? []).filter((i) => Number.isInteger(i) && i >= 0 && i < rawSources.length);
+    if (sel.length < 2) return fallback;
+    return { selected: sel.slice(0, 2), rationale: parsed.rationale ?? "", connection: parsed.connection ?? "" };
+  } catch {
+    return fallback;
+  }
+}
+
+// ── Stage 3: research enrichment (Sonnet + server-side web search) ───────────
+
+interface Enrichment {
+  notes: string;
+  newSources: RawSourceItem[];
+}
+
+async function enrichStory(seed: RawSourceItem): Promise<Enrichment> {
+  const empty: Enrichment = { notes: "", newSources: [] };
+  const client = new Anthropic();
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }],
+      messages: [{
+        role: "user",
+        content: `You are the research desk for a MENA financial briefing. Story under development:
+
+"${seed.title}" (${seed.publisher})
+${seed.snippet}
+
+Use web search to find the SINGLE most relevant supporting data point that deepens this story for an institutional allocator — a specific price move, an IMF/World Bank/central-bank figure, a prior official statement, or a directly comparable historical event. Prefer primary and established financial sources. Be precise with figures and dates.
+
+Then output ONLY a JSON object (after any searching):
+{"notes": "1–3 sentences of specific supporting facts, with exact figures and dates", "new_sources": [{"title": "...", "url": "https://...", "publisher": "...", "date": "YYYY-MM-DD or empty"}]}
+
+Include in new_sources only pages you actually found and would cite. Output nothing but the JSON.`,
+      }],
+    });
+
+    const text = res.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("");
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return empty;
+    const parsed = JSON.parse(match[0]) as {
+      notes?: string;
+      new_sources?: Array<{ title?: string; url?: string; publisher?: string; date?: string }>;
+    };
+
+    const newSources: RawSourceItem[] = (parsed.new_sources ?? [])
+      .filter((s) => s.url && s.url.startsWith("http"))
+      .map((s) => {
+        const url = s.url!;
+        let publisher = (s.publisher ?? "").trim();
+        if (!publisher) publisher = getPublisherName(url);
+        let pubDate: string | null = null;
+        if (s.date && /^\d{4}-\d{2}-\d{2}/.test(s.date)) {
+          try { pubDate = new Date(s.date).toISOString(); } catch { pubDate = null; }
+        }
+        return {
+          title: (s.title ?? "").trim() || publisher,
+          url,
+          snippet: (parsed.notes ?? "").slice(0, 250),
+          pubDate,
+          lang: "en" as const,
+          publisher,
+        };
+      });
+
+    return { notes: (parsed.notes ?? "").trim(), newSources };
+  } catch {
+    return empty;
+  }
 }
 
 // ── Validation layer ──────────────────────────────────────────────────────────
@@ -563,7 +683,6 @@ function validateBriefing(
   const staleSentinelWords: string[] = [];
   for (const word of STALE_RECENCY_WORDS) {
     if (bodyLower.includes(word)) {
-      // See if any referenced source is within the last 7 days
       const recentSourceExists = sourcesUsed.some((i) => {
         const s = rawSources[i - 1];
         if (!s?.pubDate) return false;
@@ -683,13 +802,9 @@ ${sourcesList}`,
       .filter((r) => typeof r.claim_index === "number" && r.claim_index >= 0 && r.claim_index < claims.length)
       .map((r) => {
         const originalClaim = claims[r.claim_index];
-        // Blocks publish when a tier-1 or tier-2 source directly contradicts or
-        // provides official data contradicting the claim at high severity
         const counterTiers = (r.counter_source_indices ?? []).map((i) => {
           const s = rawSources[i - 1];
           if (!s) return 3 as const;
-          // Mirror buildSourceRefs: unresolved Google News URLs always score
-          // tier 3 by URL, so fall back to publisher-name tier in that case.
           return s.url.includes("news.google.com")
             ? getSourceTierByName(s.publisher)
             : getSourceTier(s.url);
@@ -806,7 +921,7 @@ function buildIntelligence(
   };
 }
 
-// ── Photo generation ──────────────────────────────────────────────────────────
+// ── Photo generation (Unsplash only) ─────────────────────────────────────────
 
 interface PhotoResult {
   url: string;
@@ -814,88 +929,39 @@ interface PhotoResult {
   creditLink: string | null;
 }
 
-const LOCATION_CONTEXT: Record<string, string> = {
-  "Saudi Arabia": "Saudi Arabia",
-  "UAE": "United Arab Emirates",
-  "Qatar": "Qatar, Doha",
-  "Kuwait": "Kuwait City",
-  "Bahrain": "Bahrain, Manama",
-  "Oman": "Oman, Muscat",
-  "Egypt": "Egypt, Cairo",
-  "Morocco": "Morocco, Casablanca",
-  "Jordan": "Jordan, Amman",
-  "Iraq": "Iraq, Baghdad",
-  "Lebanon": "Lebanon, Beirut",
-  "Libya": "Libya, Tripoli",
-  "Tunisia": "Tunisia, Tunis",
-  "Algeria": "Algeria, Algiers",
-};
-
-// Vary lighting per story so images don't all look identical
-const LIGHTING_VARIANTS = [
-  "overcast daylight, dramatic storm clouds, moody atmosphere",
-  "blue hour, city lights, twilight sky",
-  "bright midday sunlight, clear blue sky, sharp shadows",
-  "dusk, deep blue and orange horizon",
-  "morning light, soft haze, golden tones",
-];
-
-function buildImagePrompt(query: string, location?: string): string {
-  const place = location ? (LOCATION_CONTEXT[location] ?? location) : "Gulf region";
-  const lightingIdx = query.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % LIGHTING_VARIANTS.length;
-  const lighting = LIGHTING_VARIANTS[lightingIdx];
-  return `Professional editorial photography: ${query} in ${place}. ${lighting}. Realistic scene, high detail, no text, no logos, no people`;
-}
-
-async function generateFalPhoto(query: string, location?: string): Promise<PhotoResult | null> {
-  const key = process.env.FAL_API_KEY;
-  if (!key) return null;
-  try {
-    const prompt = buildImagePrompt(query, location);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-    const res = await fetch("https://fal.run/fal-ai/flux/schnell", {
-      method: "POST",
-      headers: { "Authorization": `Key ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, image_size: "landscape_16_9", num_inference_steps: 4, num_images: 1, enable_safety_checker: true }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "(empty)");
-      console.error(`[fal.ai] ${res.status}: ${errText.slice(0, 200)}`);
-      return null;
-    }
-    const text = await res.text();
-    if (!text) { console.error("[fal.ai] empty response body"); return null; }
-    const data = JSON.parse(text) as { images?: Array<{ url: string }> };
-    const url = data.images?.[0]?.url;
-    if (!url) return null;
-    return { url, credit: "AI-generated image", creditLink: null };
-  } catch (err) {
-    console.error("[fal.ai] fetch error:", err);
-    return null;
-  }
-}
-
 interface UnsplashPhoto {
   id: string;
+  width: number;
+  height: number;
+  description: string | null;
+  alt_description: string | null;
   urls: { raw: string; small: string };
   user: { name: string; links: { html: string } };
   likes: number;
 }
 
-async function fetchUnsplashPhoto(query: string): Promise<PhotoResult | null> {
+// Reject obvious non-photography. An absent image is editorially preferable to a weak one.
+const ILLUSTRATION_RE = /illustration|render|3d|vector|drawing|cartoon|clip ?art|sketch|abstract|concept art/i;
+
+// Search Unsplash with the finalised story framing, apply quality filters, and
+// return the strongest landscape photo — or null if nothing clears the bar.
+async function fetchStoryPhoto(query: string): Promise<PhotoResult | null> {
   const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key) return null;
+  if (!key || !query.trim()) return null;
   try {
     const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape&content_filter=high`,
       { headers: { Authorization: `Client-ID ${key}` } }
     );
     if (!res.ok) return null;
     const data = await res.json() as { results: UnsplashPhoto[] };
-    const photo = (data.results ?? []).sort((a, b) => b.likes - a.likes)[0];
+    const candidates = (data.results ?? []).filter((p) => {
+      if (p.width < 1200) return false;
+      const desc = `${p.description ?? ""} ${p.alt_description ?? ""}`;
+      if (ILLUSTRATION_RE.test(desc)) return false;
+      return true;
+    });
+    const photo = candidates.sort((a, b) => b.likes - a.likes)[0];
     if (!photo) return null;
     return {
       url: photo.urls.raw,
@@ -905,10 +971,6 @@ async function fetchUnsplashPhoto(query: string): Promise<PhotoResult | null> {
   } catch {
     return null;
   }
-}
-
-async function fetchStoryPhoto(query: string, location?: string): Promise<PhotoResult | null> {
-  return (await generateFalPhoto(query, location)) ?? (await fetchUnsplashPhoto(query));
 }
 
 // ── Chart data ────────────────────────────────────────────────────────────────
@@ -1007,9 +1069,7 @@ async function buildStoryChartData(spec: StoryChartSpec | null | undefined): Pro
 // ── Recent briefing deduplication ────────────────────────────────────────────
 
 interface RecentBriefingContext {
-  /** Story headlines from the last N briefings */
   recentHeadlines: string[];
-  /** Source URLs already used in the last N briefings */
   usedSourceUrls: Set<string>;
 }
 
@@ -1044,6 +1104,119 @@ async function fetchRecentBriefingContext(limit = 3): Promise<RecentBriefingCont
   }
 }
 
+// ── Stage 5: quality pass (separate Opus read + auto-revise) ─────────────────
+
+interface RawStory {
+  number?: number;
+  headline?: string;
+  location?: string;
+  city?: string;
+  body?: string;
+  image_framing?: string;
+  image_query?: string;
+  chart?: StoryChartSpec | null;
+  evidence?: {
+    market_impact?: string;
+    relevance?: string;
+    relevance_reason?: string;
+    geographies?: string[];
+    sectors?: string[];
+  } | null;
+}
+
+async function qualityPass(
+  stories: RawStory[],
+  sourceText: string
+): Promise<{ revised: Map<number, string>; editsApplied: string[] }> {
+  const revised = new Map<number, string>();
+  if (stories.length === 0) return { revised, editsApplied: [] };
+
+  const client = new Anthropic();
+  const storiesBlock = stories
+    .map((s) => `--- STORY ${s.number} (${s.location}) ---\n${s.body ?? ""}`)
+    .join("\n\n");
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 4000,
+      messages: [{
+        role: "user",
+        content: `You are the copy desk for a MENA financial briefing. Read each story below and FIX any of these problems, returning a clean revised body for every story:
+
+1. Blacklist phrases — remove and rewrite: "it remains to be seen", "against a backdrop of", "in a sign of", "as the region navigates", "amid growing", "stakeholders", "going forward", "underscores", "highlights", "it is worth noting", "in recent months", "a complex landscape". Also empty finance abstraction ("macro headwinds", "tailwinds", "growth story", "structural shift", etc.) and em dashes (—).
+2. Sentence rhythm — any sentence longer than 30 words MUST be followed by one under 12 words. Break up airless runs of long sentences.
+3. Traceability — every factual claim must have a [N] citation marker tied to a numbered source below. If a claim has no support in the sources, soften it or cut it. Do NOT invent citation numbers or facts.
+4. Analysis — every paragraph must do more than summarise. If a paragraph only restates facts, add the analytical beat (what it means for capital).
+5. Forward-looking close — each story must end on a clear, falsifiable forward-looking position (not a hedge, not a question).
+
+Keep the author's voice and the four-layer structure. Make the MINIMUM changes needed. Do not lengthen materially.
+
+Return ONLY JSON:
+{"stories": [{"number": 1, "body": "revised body"}, {"number": 2, "body": "revised body"}], "edits_applied": ["short description of each fix made, or 'no changes' per story"]}
+
+${sourceText}
+
+STORIES TO CHECK:
+${storiesBlock}`,
+      }],
+    });
+
+    const text = res.content.find((b) => b.type === "text")?.text?.trim() ?? "{}";
+    const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return { revised, editsApplied: [] };
+    const parsed = JSON.parse(match[0]) as {
+      stories?: Array<{ number?: number; body?: string }>;
+      edits_applied?: string[];
+    };
+    for (const s of parsed.stories ?? []) {
+      if (typeof s.number === "number" && typeof s.body === "string" && s.body.trim().length > 0) {
+        revised.set(s.number, s.body.trim());
+      }
+    }
+    return { revised, editsApplied: (parsed.edits_applied ?? []).filter(Boolean) };
+  } catch {
+    return { revised, editsApplied: [] };
+  }
+}
+
+// ── Per-story evidence assembly ──────────────────────────────────────────────
+
+function buildStoryEvidence(
+  body: string,
+  rawEvidence: RawStory["evidence"],
+  rawSources: RawSourceItem[],
+  verifiedAt: string
+): StoryEvidence {
+  // Count distinct [N] citations in this story's body and find the freshest source
+  const cited = new Set<number>();
+  for (const m of body.matchAll(/\[(\d+)\]/g)) {
+    const n = parseInt(m[1], 10);
+    if (n >= 1 && n <= rawSources.length) cited.add(n);
+  }
+  let asOf: string | null = null;
+  for (const n of cited) {
+    const pd = rawSources[n - 1]?.pubDate;
+    if (pd && (!asOf || new Date(pd).getTime() > new Date(asOf).getTime())) asOf = pd;
+  }
+
+  const rel = rawEvidence?.relevance;
+  const relevance: StoryEvidence["relevance"] =
+    rel === "high" || rel === "medium" || rel === "low" ? rel : "medium";
+
+  return {
+    sourcesReviewed: cited.size,
+    verifiedAt,
+    marketImpact: rawEvidence?.market_impact ?? "",
+    asOf,
+    relevance,
+    relevanceReason: rawEvidence?.relevance_reason ?? "",
+    geographies: rawEvidence?.geographies ?? [],
+    sectors: rawEvidence?.sectors ?? [],
+  };
+}
+
 // ── Main route handler ────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -1076,29 +1249,53 @@ export async function GET(request: NextRequest) {
     await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
 
   // Drop sources whose URLs were already used in recent briefings
-  const rawSources = rawSourcesAll.filter(
-    (s) => !usedSourceUrls.has(s.url)
-  );
+  const rawSources = rawSourcesAll.filter((s) => !usedSourceUrls.has(s.url));
 
-  // Re-number the filtered source list
-  const numbered = rawSources.map((s, i) => {
-    const dateStr = s.pubDate
-      ? new Date(s.pubDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-      : "date unknown";
-    const langLabel = s.lang === "ar" ? " [AR]" : "";
-    return `[${i + 1}] "${s.title}" | ${s.publisher}${langLabel} | ${dateStr} | ${s.url}\n    ${s.snippet}`;
-  });
-  const sourceText = `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
+  if (rawSources.length === 0) {
+    return NextResponse.json({ error: "No new sources after deduplication — try again later" }, { status: 503 });
+  }
+
+  // ── Stage 1: triage ──
+  const topCandidates = await triageStories(rawSources);
+
+  // ── Stage 2: selection ──
+  const selection = await selectStories(rawSources, topCandidates);
+  const selectedSeeds = selection.selected.map((i) => rawSources[i]);
+
+  // ── Stage 3: research enrichment (parallel web search) ──
+  const enrichments = await Promise.all(selectedSeeds.map((s) => enrichStory(s)));
+
+  // Fold any newly discovered sources into the numbered list (dedup by URL)
+  const existingUrls = new Set(rawSources.map((s) => s.url));
+  for (const e of enrichments) {
+    for (const ns of e.newSources) {
+      if (!existingUrls.has(ns.url)) {
+        rawSources.push(ns);
+        existingUrls.add(ns.url);
+      }
+    }
+  }
+
+  const sourceText = numberSources(rawSources);
 
   // Build "do not repeat" block from recent briefings
   const noRepeatBlock = recentHeadlines.length > 0
     ? `\n\nSTORIES ALREADY COVERED IN RECENT BRIEFINGS — do NOT write about these topics again, even from a different angle:\n${recentHeadlines.map((h) => `• ${h}`).join("\n")}\n\nChoose entirely different stories from today's sources.`
     : "";
 
-  if (rawSources.length === 0) {
-    return NextResponse.json({ error: "No new sources after deduplication — try again later" }, { status: 503 });
-  }
+  // Build the selection + enrichment block for the drafting stage
+  const selectionBlock = selectedSeeds
+    .map((s, i) => {
+      const role = i === 0 ? "ANCHOR" : "SUPPORTING THREAD";
+      const enr = enrichments[i]?.notes ? `\n  Enrichment (verified facts to weave in): ${enrichments[i].notes}` : "";
+      return `${role}: "${s.title}" (${s.publisher})\n  ${s.snippet}${enr}`;
+    })
+    .join("\n\n");
+  const connectionNote = selection.connection
+    ? `\nHow these connect: ${selection.connection}`
+    : "";
 
+  // ── Stage 4: draft generation ──
   const client = new Anthropic();
   const message = await client.messages.create({
     model: "claude-opus-4-8",
@@ -1107,7 +1304,7 @@ export async function GET(request: NextRequest) {
     messages: [
       {
         role: "user",
-        content: `Today's date: ${date}\n\n${sourceText}${noRepeatBlock}\n\nWrite today's Nusq briefing. Cite sources by their [N] number. Follow all anti-hallucination rules.`,
+        content: `Today's date: ${date}\n\nWrite today's two-story Nusq briefing on these pre-selected stories:\n\n${selectionBlock}${connectionNote}\n\n${sourceText}${noRepeatBlock}\n\nCite sources by their [N] number. Follow the four-layer structure, the voice, and all anti-hallucination rules.`,
       },
     ],
   });
@@ -1122,16 +1319,6 @@ export async function GET(request: NextRequest) {
     .replace(/\n?```$/m, "")
     .trim();
 
-  interface RawStory {
-    number?: number;
-    headline?: string;
-    location?: string;
-    city?: string;
-    body?: string;
-    image_query?: string;
-    chart?: StoryChartSpec | null;
-  }
-
   const generated = JSON.parse(jsonText) as {
     title: string;
     summary: string;
@@ -1139,7 +1326,7 @@ export async function GET(request: NextRequest) {
     tags: string[];
     body?: string;
     stories?: RawStory[];
-    image_queries?: { mena: string; topic: string; cinematic: string };
+    also_watching?: string[];
     tickers: string[];
     chart?: { type: string | null; country?: string | null } | null;
     sources_used?: number[];
@@ -1149,6 +1336,15 @@ export async function GET(request: NextRequest) {
   };
 
   const rawStories = generated.stories ?? [];
+
+  // ── Stage 5: quality pass (revise bodies) ──
+  const { revised, editsApplied } = await qualityPass(rawStories, sourceText);
+  for (const s of rawStories) {
+    if (typeof s.number === "number" && revised.has(s.number)) {
+      s.body = revised.get(s.number)!;
+    }
+  }
+
   const combinedBody = rawStories.map((s) => `## ${s.headline ?? ""}\n\n${s.body ?? ""}`).join("\n\n") || (generated.body ?? "");
   const wordCount = combinedBody.split(/\s+/).length;
   const readingTime = Math.max(1, Math.round(wordCount / 200));
@@ -1173,10 +1369,11 @@ export async function GET(request: NextRequest) {
 
   // Run validation against combined body
   const validation = validateBriefing(combinedBody, sourcesUsed, rawSources, date);
+  if (editsApplied.length > 0) validation.editsApplied = editsApplied;
 
-  // Fetch per-story images, charts, and run counter-evidence detection in parallel
+  // ── Stage 6: images + charts + counter-evidence (parallel) ──
   const [storyPhotos, storyCharts, counterpoints] = await Promise.all([
-    Promise.all(rawStories.map((s) => fetchStoryPhoto(s.image_query ?? generated.title, s.location ?? undefined))),
+    Promise.all(rawStories.map((s) => fetchStoryPhoto(s.image_framing ?? s.image_query ?? s.headline ?? generated.title))),
     Promise.all(rawStories.map((s) => buildStoryChartData(s.chart))),
     detectCounterEvidence(briefingClaims, rawSources),
   ]);
@@ -1192,27 +1389,34 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Assemble stories with images and charts
+  const verifiedAt = validation.checkedAt;
+
+  // Assemble stories with images, charts, and per-story evidence
   const stories = rawStories.map((s, i) => {
     const photo = storyPhotos[i];
+    const body = s.body ?? "";
     return {
       number: s.number ?? i + 1,
       headline: s.headline ?? "",
       location: s.location ?? "",
       city: s.city ?? "",
-      body: s.body ?? "",
+      body,
       imageUrl: photo?.url ?? null,
       imageCredit: photo?.credit ?? null,
       imageCreditLink: photo?.creditLink ?? null,
       chartData: storyCharts[i] ?? null,
+      evidence: buildStoryEvidence(body, s.evidence, rawSources, verifiedAt),
     };
   });
 
-  // Cover image: use first story's photo for multi-story; fetch separately for single-article
+  // Cover image: first story's photo
   const coverPhoto = storyPhotos[0] ?? (rawStories.length === 0 ? await fetchStoryPhoto(generated.title) : null);
   const image = coverPhoto
     ? { url: coverPhoto.url, credit: coverPhoto.credit, creditLink: coverPhoto.creditLink }
     : null;
+
+  // Also Watching (max 3 single-line items)
+  const alsoWatching = (generated.also_watching ?? []).filter(Boolean).slice(0, 3);
 
   // Legacy single chart (kept for backwards compat)
   const chartData = generated.chart ? await buildChartData(generated.chart) : null;
@@ -1241,6 +1445,7 @@ export async function GET(request: NextRequest) {
       counterpoints: counterpoints.length > 0 ? counterpoints : null,
       stories: stories.length > 0 ? stories : null,
       tldr_bullets: (generated.tldr_bullets ?? []).filter(Boolean).slice(0, 5),
+      also_watching: alsoWatching.length > 0 ? alsoWatching : null,
     })
     .select("id")
     .single();
@@ -1282,6 +1487,8 @@ export async function GET(request: NextRequest) {
     slug,
     id: briefing.id,
     sourceCount: sourceRefs.length,
+    storiesGenerated: stories.length,
+    editsApplied: editsApplied.length,
     validationWarnings: validation.warnings.length,
     needsReview: validation.needsReview,
   });

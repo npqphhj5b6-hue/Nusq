@@ -11,8 +11,9 @@ import ReadTracker from "@/components/ReadTracker";
 import MenaMap from "@/components/MenaMap";
 import { createClient } from "@/lib/supabase-server";
 import BriefingCheck from "@/components/BriefingCheck";
+import StoryEvidence from "@/components/StoryEvidence";
 import type { SourceRef, BriefingIntelligence, Counterpoint } from "@/lib/types";
-import { getPublisherDomain, SOURCE_TYPE_LABELS } from "@/lib/source-credibility";
+import { getPublisherDomain } from "@/lib/source-credibility";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,9 @@ export default async function BriefingPage({
 
   const hasStories = Array.isArray(briefing.stories) && briefing.stories.length > 0;
   const hasTldr = Array.isArray(briefing.tldrBullets) && briefing.tldrBullets.length > 0;
+  // New 2-story format carries per-story evidence; legacy briefings keep the top-level Briefing check.
+  const hasStoryEvidence = hasStories && briefing.stories!.some((s) => s.evidence);
+  const alsoWatching = Array.isArray(briefing.alsoWatching) ? briefing.alsoWatching : [];
 
   // ── Legacy body rendering (single-article format) ──────────────────────────
   const CHART_KEYWORDS: Record<string, RegExp> = {
@@ -204,14 +208,16 @@ export default async function BriefingPage({
         </ScrollReveal>
       )}
 
-      {/* ── Briefing check card ── */}
-      <BriefingCheck
-        intel={intel}
-        sources={sources}
-        validation={briefing.validation ?? null}
-        counterpoints={counterpoints}
-        checkedAt={checkedAt}
-      />
+      {/* ── Briefing check card (legacy briefings only — new format uses per-story evidence) ── */}
+      {!hasStoryEvidence && (
+        <BriefingCheck
+          intel={intel}
+          sources={sources}
+          validation={briefing.validation ?? null}
+          counterpoints={counterpoints}
+          checkedAt={checkedAt}
+        />
+      )}
 
       {/* ── MENA Map (multi-story only) ── */}
       {hasStories && (
@@ -309,6 +315,9 @@ export default async function BriefingPage({
                       <DataChart data={story.chartData} />
                     </ScrollReveal>
                   )}
+
+                  {/* Per-story evidence bubble */}
+                  {story.evidence && <StoryEvidence evidence={story.evidence} />}
                 </article>
               </ScrollReveal>
             );
@@ -359,6 +368,26 @@ export default async function BriefingPage({
         </>
       )}
 
+      {/* ── Also Watching ── */}
+      {alsoWatching.length > 0 && (
+        <ScrollReveal>
+          <div className="mt-12 pt-8 border-t border-[var(--c-border)]">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
+              <span className="eyebrow">Also Watching</span>
+            </div>
+            <ul className="space-y-2.5">
+              {alsoWatching.map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="text-[var(--c-amber)] mt-[3px] shrink-0 text-xs" aria-hidden="true">→</span>
+                  <span className="text-sm text-[var(--c-text-2)] leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ScrollReveal>
+      )}
+
       {/* Bottom share row */}
       <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
         <Link href="/briefings" className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] hover:text-[var(--c-amber)] transition-colors cursor-pointer">
@@ -382,9 +411,7 @@ export default async function BriefingPage({
                   : null;
                 const domain = s.domain || getPublisherDomain(s.publisher);
                 const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
-                const typeLabel = s.sourceType && s.sourceType !== "news_report" && s.sourceType !== "unknown"
-                  ? SOURCE_TYPE_LABELS[s.sourceType]
-                  : null;
+                const isArabic = s.language === "ar";
                 return (
                   <a
                     key={s.index}
@@ -405,22 +432,18 @@ export default async function BriefingPage({
                         <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-amber)] transition-colors">
                           {s.publisher}
                         </span>
-                        {s.isPrimarySource && (
-                          <span className="text-[9px] font-bold tracking-[0.08em] uppercase text-[var(--c-amber)] opacity-80">Primary</span>
-                        )}
-                        {typeLabel && !s.isPrimarySource && (
-                          <span className="text-[9px] font-semibold tracking-[0.06em] uppercase text-[var(--c-text-3)]">{typeLabel}</span>
-                        )}
                         {pubDate && (
                           <span className="text-[10px] text-[var(--c-text-3)] ml-auto shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
                             {pubDate}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[var(--c-text-3)] truncate mt-0.5" dir="auto">{s.title}</p>
-                      {s.summaryOfRelevance && (
-                        <p className="text-[10px] text-[var(--c-text-3)] opacity-70 mt-0.5 leading-relaxed line-clamp-1">{s.summaryOfRelevance}</p>
-                      )}
+                      <p
+                        className={`text-[11px] text-[var(--c-text-3)] truncate mt-0.5 ${isArabic ? "text-right" : ""}`}
+                        dir={isArabic ? "rtl" : "ltr"}
+                      >
+                        {s.title}
+                      </p>
                     </div>
                   </a>
                 );

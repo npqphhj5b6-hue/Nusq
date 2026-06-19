@@ -69,6 +69,7 @@ function rowToBriefing(row: any): Briefing {
     counterpoints: (row.counterpoints as Counterpoint[] | null) ?? null,
     stories: (row.stories as BriefingStory[] | null) ?? null,
     tldrBullets: (row.tldr_bullets as string[] | null) ?? null,
+    alsoWatching: (row.also_watching as string[] | null) ?? null,
   };
 }
 

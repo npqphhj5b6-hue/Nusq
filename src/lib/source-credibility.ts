@@ -40,7 +40,7 @@ const TIER_2_DOMAINS = new Set([
   "cnbc.com", "bbc.com", "apnews.com", "ap.org",
   // MENA-specialist media
   "zawya.com", "arabianbusiness.com", "meed.com", "thenationalnews.com",
-  "gulfnews.com", "khaleejtimes.com", "agbi.com",
+  "gulfnews.com", "khaleejtimes.com", "agbi.com", "arabnews.com", "alarabiya.net",
   "asharq.com", "asharqbusiness.com", "argaam.com", "mubasher.info",
   "aljazeera.com", "middleeasteye.net", "al-monitor.com",
   // Arabic financial press
@@ -120,6 +120,7 @@ const SOURCE_TYPE_MAP: Record<string, SourceType> = {
   "asharqbusiness.com": "news_report",
   "argaam.com": "news_report",
   "mubasher.info": "news_report",
+  "arabnews.com": "news_report",
   "aljazeera.com": "news_report",
   "middleeasteye.net": "news_report",
   "al-monitor.com": "news_report",
@@ -212,6 +213,8 @@ const PUBLISHER_MAP: Record<string, string> = {
   "asharq.com": "Asharq News",
   "asharqbusiness.com": "Asharq Business",
   "agbi.com": "AGBI",
+  "arabnews.com": "Arab News",
+  "alarabiya.net": "Al Arabiya",
   "sama.gov.sa": "Saudi Central Bank (SAMA)",
   "pif.gov.sa": "Public Investment Fund",
   "imf.org": "IMF",

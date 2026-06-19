@@ -68,6 +68,20 @@ export interface ValidationResult {
   staleSentinelWords: string[];
   needsReview: boolean;
   checkedAt: string;
+  // Stage 5 quality pass: human-readable list of edits the quality pass applied
+  editsApplied?: string[];
+}
+
+// Per-story evidence metadata (the "Evidence bubble" — Part 5)
+export interface StoryEvidence {
+  sourcesReviewed: number;        // exact count of sources behind this story
+  verifiedAt: string;             // ISO — when sources were last checked
+  marketImpact: string;           // directional clause, never a single word
+  asOf: string | null;            // ISO of the most-recent source → rendered "Xh ago"
+  relevance: "high" | "medium" | "low";
+  relevanceReason: string;        // one clause
+  geographies: string[];          // pill tags
+  sectors: string[];              // pill tags
 }
 
 export interface BriefingIntelligence {
@@ -94,6 +108,8 @@ export interface BriefingStory {
   imageCredit?: string | null;
   imageCreditLink?: string | null;
   chartData?: ChartData | null;
+  // Per-story evidence bubble (new 2-story format)
+  evidence?: StoryEvidence | null;
 }
 
 export interface Briefing {
@@ -119,6 +135,8 @@ export interface Briefing {
   // Multi-story format
   stories?: BriefingStory[] | null;
   tldrBullets?: string[] | null;
+  // "Also Watching" — three single-line signal flags (new 2-story format)
+  alsoWatching?: string[] | null;
 }
 
 export interface Essay {
