@@ -1307,8 +1307,16 @@ export async function GET(request: NextRequest) {
   }
 
   // Fetch recent briefing context and news in parallel
-  const [{ recentHeadlines, usedSourceUrls }, { rawSources: rawSourcesAll }] =
-    await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
+  let recentHeadlines: string[], usedSourceUrls: Set<string>, rawSourcesAll: RawSourceItem[];
+  try {
+    const [ctx, news] = await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
+    recentHeadlines = ctx.recentHeadlines;
+    usedSourceUrls = ctx.usedSourceUrls;
+    rawSourcesAll = news.rawSources;
+  } catch (fetchErr) {
+    console.error("[pipeline] news fetch failed —", String(fetchErr));
+    return NextResponse.json({ error: "News fetch failed", detail: String(fetchErr) }, { status: 500 });
+  }
 
   // Drop sources whose URLs were already used in recent briefings
   const rawSources = rawSourcesAll.filter((s) => !usedSourceUrls.has(s.url));
@@ -1404,7 +1412,9 @@ export async function GET(request: NextRequest) {
     .replace(/\n?```$/m, "")
     .trim();
 
-  const generated = JSON.parse(jsonText) as {
+  console.log("[pipeline] stage 4 — json parse", { rawLen: rawText.length, jsonLen: jsonText.length, preview: jsonText.slice(0, 120) });
+
+  let generated: {
     title: string;
     summary: string;
     tldr_bullets?: string[];
@@ -1419,6 +1429,12 @@ export async function GET(request: NextRequest) {
     claims?: RawClaim[];
     intelligence?: RawIntelligence | null;
   };
+  try {
+    generated = JSON.parse(jsonText);
+  } catch (parseErr) {
+    console.error("[pipeline] JSON parse failed —", String(parseErr), "raw:", jsonText.slice(0, 500));
+    return NextResponse.json({ error: "Draft JSON parse failed", detail: String(parseErr), rawPreview: jsonText.slice(0, 500) }, { status: 500 });
+  }
 
   const rawStories = generated.stories ?? [];
 
@@ -1535,7 +1551,10 @@ export async function GET(request: NextRequest) {
     .select("id")
     .single();
 
-  if (insertError) throw new Error(insertError.message);
+  if (insertError) {
+    console.error("[pipeline] Supabase insert failed —", insertError.message);
+    return NextResponse.json({ error: "Database insert failed", detail: insertError.message }, { status: 500 });
+  }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
   const reviewUrl = `${siteUrl}/admin/drafts/${briefing.id}`;
