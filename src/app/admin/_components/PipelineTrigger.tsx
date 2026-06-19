@@ -19,7 +19,7 @@ export default function PipelineTrigger() {
         setMessage(data.slug ? `Draft created: ${data.slug}` : (data.message ?? "Done"));
       } else if (data.error) {
         setState("error");
-        setMessage(data.error);
+        setMessage(data.detail ? `${data.error}: ${data.detail}` : data.error);
       } else {
         setState("success");
         setMessage(data.message ?? "Done");
