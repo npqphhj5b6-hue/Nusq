@@ -56,7 +56,7 @@ export default async function Home() {
             {today}
           </p>
 
-          <h1 className="font-display mb-8 md:mb-10" style={{ fontSize: "clamp(2.75rem, 11vw, 9.5rem)" }}>
+          <h1 className="font-display mb-8 md:mb-10" style={{ fontSize: "clamp(2.75rem, 17vw, 9.5rem)" }}>
             <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "0ms" }}>
               MENA
             </span>

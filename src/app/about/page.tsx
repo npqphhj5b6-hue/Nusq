@@ -16,7 +16,7 @@ export default function AboutPage() {
             <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
             <span className="eyebrow">About</span>
           </div>
-          <h1 className="font-display mb-6" style={{ fontSize: "clamp(3rem, 8vw, 6rem)" }}>
+          <h1 className="font-display mb-6" style={{ fontSize: "clamp(3rem, 17vw, 6rem)" }}>
             <span className="text-[var(--c-text-1)] block">MENA</span>
             <span className="text-[var(--c-text-1)] block">MARKETS,</span>
             <span className="text-[var(--c-amber)] text-glow block">MADE CLEAR.</span>
