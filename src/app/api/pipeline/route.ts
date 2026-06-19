@@ -1358,18 +1358,31 @@ export async function GET(request: NextRequest) {
     : "";
 
   // ── Stage 4: draft generation ──
-  const client = new Anthropic();
-  const message = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 10000,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Today's date: ${date}\n\nWrite today's two-story Nusq briefing on these pre-selected stories:\n\n${selectionBlock}${connectionNote}\n\n${sourceText}${noRepeatBlock}\n\nCite sources by their [N] number. Follow the four-layer structure, the voice, and all anti-hallucination rules.`,
-      },
-    ],
+  console.log("[pipeline] stage 4 — draft generation start", {
+    systemLen: SYSTEM_PROMPT.length,
+    userMsgLen: selectionBlock.length + connectionNote.length + sourceText.length + noRepeatBlock.length,
+    rawSourceCount: rawSources.length,
   });
+  const client = new Anthropic();
+  let message: Awaited<ReturnType<typeof client.messages.create>>;
+  try {
+    message = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 10000,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: `Today's date: ${date}\n\nWrite today's two-story Nusq briefing on these pre-selected stories:\n\n${selectionBlock}${connectionNote}\n\n${sourceText}${noRepeatBlock}\n\nCite sources by their [N] number. Follow the four-layer structure, the voice, and all anti-hallucination rules.`,
+        },
+      ],
+    });
+  } catch (draftErr) {
+    const errMsg = draftErr instanceof Error ? draftErr.message : String(draftErr);
+    console.error("[pipeline] stage 4 FAILED —", errMsg);
+    return NextResponse.json({ error: "Draft generation failed", detail: errMsg }, { status: 500 });
+  }
+  console.log("[pipeline] stage 4 — draft generation done", { stopReason: message.stop_reason });
 
   const rawText = message.content
     .filter((b) => b.type === "text")
