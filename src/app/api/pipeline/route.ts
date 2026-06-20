@@ -1363,7 +1363,7 @@ async function runPipelineCore({
   date,
   slug,
   skipEnrichment = false,
-  draftModel = "claude-opus-4-8",
+  draftModel = "claude-sonnet-4-6",
 }: {
   selectedSeeds: RawSourceItem[];
   rawSources: RawSourceItem[];
