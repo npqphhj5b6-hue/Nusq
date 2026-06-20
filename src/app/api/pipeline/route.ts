@@ -1733,14 +1733,6 @@ export async function POST(request: NextRequest) {
     inputs.map((input) => resolveArticle(input.url, input.title, input.context))
   );
 
-  // Enforce 24-hour freshness — reject if any resolved article is older
-  for (const r of resolved) {
-    if (r.ageHours !== null && r.ageHours > 48) {
-      return NextResponse.json({
-        error: `"${r.seed.title.slice(0, 80)}" is ${Math.round(r.ageHours)}h old — stories must be published within the past 48 hours`,
-      }, { status: 400 });
-    }
-  }
   console.log("[pipeline] manual — resolved", resolved.map((r) => ({ title: r.seed.title.slice(0, 60), ageHours: r.ageHours })));
 
   const rawSources: RawSourceItem[] = resolved.map((r) => r.seed);
