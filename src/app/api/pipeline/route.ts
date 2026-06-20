@@ -721,6 +721,74 @@ Include in new_sources only pages you actually found and would cite. Output noth
   }
 }
 
+// ── Article resolver (manual mode) ───────────────────────────────────────────
+
+async function resolveArticle(
+  url: string,
+  userTitle?: string,
+  userContext?: string
+): Promise<{ seed: RawSourceItem; ageHours: number | null }> {
+  const publisher = getPublisherName(url);
+  const client = new Anthropic();
+
+  try {
+    const res = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 600,
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 2 }],
+      messages: [{
+        role: "user",
+        content: `Fetch and read this article: ${url}
+
+Extract the following. Output ONLY JSON with no other text:
+{"title": "exact headline from the article", "date": "YYYY-MM-DD (publication date)", "summary": "2-3 sentences capturing the key facts"}
+
+If the URL is inaccessible, search for: ${userTitle ? `"${userTitle}"` : url} to find coverage of the same story.`,
+      }],
+    });
+
+    const text = res.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("");
+
+    const match = text.match(/\{[\s\S]*?\}/);
+    if (!match) throw new Error("no JSON");
+
+    const parsed = JSON.parse(match[0]) as { title?: string; date?: string; summary?: string };
+
+    const title = userTitle?.trim() || parsed.title?.trim() || publisher;
+    const snippet = userContext?.trim() || parsed.summary?.trim() || "";
+
+    let pubDate: string | null = null;
+    let ageHours: number | null = null;
+    if (parsed.date && /^\d{4}-\d{2}-\d{2}/.test(parsed.date)) {
+      try {
+        const d = new Date(parsed.date);
+        pubDate = d.toISOString();
+        ageHours = (Date.now() - d.getTime()) / (1000 * 60 * 60);
+      } catch { /* ignore */ }
+    }
+
+    return {
+      seed: { title, url, snippet, pubDate, lang: "en" as const, publisher },
+      ageHours,
+    };
+  } catch {
+    return {
+      seed: {
+        title: userTitle?.trim() || publisher,
+        url,
+        snippet: userContext?.trim() || "",
+        pubDate: null,
+        lang: "en" as const,
+        publisher,
+      },
+      ageHours: null,
+    };
+  }
+}
+
 // ── Validation layer ──────────────────────────────────────────────────────────
 
 const STALE_RECENCY_WORDS = [
@@ -1659,15 +1727,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Provide at least 2 stories" }, { status: 400 });
   }
 
-  const rawSources: RawSourceItem[] = inputs.map((input) => ({
-    title: (input.title ?? "").trim() || getPublisherName(input.url),
-    url: input.url,
-    snippet: (input.context ?? "").trim(),
-    pubDate: new Date().toISOString(),
-    lang: "en" as const,
-    publisher: getPublisherName(input.url),
-  }));
+  // Resolve each URL: fetch article content and publication date
+  console.log("[pipeline] manual — resolving articles", inputs.map((i) => i.url));
+  const resolved = await Promise.all(
+    inputs.map((input) => resolveArticle(input.url, input.title, input.context))
+  );
 
+  // Enforce 24-hour freshness — reject if any resolved article is older
+  for (const r of resolved) {
+    if (r.ageHours !== null && r.ageHours > 24) {
+      return NextResponse.json({
+        error: `"${r.seed.title.slice(0, 80)}" is ${Math.round(r.ageHours)}h old — stories must be published within the past 24 hours`,
+      }, { status: 400 });
+    }
+  }
+  console.log("[pipeline] manual — resolved", resolved.map((r) => ({ title: r.seed.title.slice(0, 60), ageHours: r.ageHours })));
+
+  const rawSources: RawSourceItem[] = resolved.map((r) => r.seed);
   const selectedSeeds = rawSources.slice(0, 2);
 
   return runPipelineCore({
