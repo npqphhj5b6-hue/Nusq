@@ -4,7 +4,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
   title: "About — Nusq",
-  description: "Nusq is a daily briefing on MENA markets and what moves them.",
+  description: "Nusq draws on Arabic and English sources to cover Gulf capital, written by Yousef Quaba.",
 };
 
 export default function AboutPage() {
@@ -17,9 +17,9 @@ export default function AboutPage() {
             <span className="eyebrow">About</span>
           </div>
           <h1 className="font-display mb-6" style={{ fontSize: "clamp(3rem, 17vw, 6rem)" }}>
-            <span className="text-[var(--c-text-1)] block">MENA</span>
-            <span className="text-[var(--c-text-1)] block">MARKETS,</span>
-            <span className="text-[var(--c-amber)] text-glow block">MADE CLEAR.</span>
+            <span className="text-[var(--c-text-1)] block">THE GULF</span>
+            <span className="text-[var(--c-text-1)] block">IN ITS</span>
+            <span className="text-[var(--c-amber)] text-glow block">OWN WORDS.</span>
           </h1>
         </div>
       </ScrollReveal>
@@ -27,20 +27,28 @@ export default function AboutPage() {
       <ScrollReveal delay={100}>
         <div className="prose-nusq space-y-5 mb-16">
           <p>
-            Nusq is a daily financial briefing focused on the Gulf and the broader MENA region.
-            Every morning, it distils what moved markets, what it means, and why it matters —
-            written for people who need to know, not just want to know.
+            I first noticed the gap in Cairo. On exchange at the American University in my
+            third year, I started reading the Arabic financial press alongside my coursework —
+            the central bank statements, market commentary, filings from Saudi and Emirati
+            firms. What struck me was how much appeared there first, and how little of it
+            reached English-language coverage — or how watered-down it was when it did.
           </p>
           <p>
-            The name comes from <strong>نسق</strong> — an Arabic word
-            meaning order, pattern, and coherence. That is the aim: to bring clarity to a
-            region that is complex, fast-moving, and often underreported.
+            That observation became Nusq. The Gulf is one of the most consequential parts of
+            the global economy right now: Saudi Arabia&apos;s Vision 2030 is redirecting hundreds
+            of billions of dollars; sovereign wealth funds from Abu Dhabi to Doha are
+            reshaping industries from technology to infrastructure. Most of that, in the
+            first instance, is said and written in Arabic — in official statements, domestic
+            press, and market filings that most Western analysts never reach. Each briefing
+            draws on both: Arabic and English sources, written clearly for people who need to
+            understand the region, not just follow it.
           </p>
           <p>
-            Nusq covers Saudi Arabia, the UAE, Qatar, Kuwait, Bahrain, Oman, Egypt, and the
-            broader emerging markets that intersect with Gulf capital. Oil, Vision 2030,
-            sovereign wealth, monetary policy, corporate earnings — whatever is moving the
-            region that day.
+            The name comes from <strong>نسق</strong> — an Arabic word meaning order, pattern,
+            and coherence. Nusq covers Saudi Arabia, the UAE, Qatar, Kuwait, Bahrain, Oman,
+            Egypt, and the broader emerging markets that intersect with Gulf capital: oil,
+            sovereign wealth, monetary policy, corporate earnings — whatever is actually
+            moving that day.
           </p>
         </div>
       </ScrollReveal>
@@ -54,20 +62,16 @@ export default function AboutPage() {
           <div className="prose-nusq space-y-5">
             <p>
               Yousef Quaba is a fourth-year student of Arabic and History at the University of Edinburgh.
-              He spent his third year on exchange at the American University in Cairo, studying Modern
-              Standard Arabic and Egyptian Colloquial alongside economics and history — and developing a
+              His third year was spent on exchange at the American University in Cairo — studying Modern
+              Standard Arabic and Egyptian Colloquial alongside economics and history, and developing a
               close familiarity with how the region&apos;s media, business press, and official communications
               actually work.
             </p>
             <p>
-              Nusq came from a simple observation: the Gulf and broader MENA region are reshaping global
-              capital flows, but the most important signals — announcements, filings, market commentary,
-              policy statements — often appear first in Arabic, in sources most Western analysts never
-              reach. The gap between what&apos;s happening and what&apos;s reported in English is wider than it looks.
-            </p>
-            <p>
-              Each briefing draws on Arabic and English sources, written for readers who need to
-              understand the region, not just follow it.
+              The gap between what is happening in the Gulf and what gets reported in English is wider
+              than it looks. The most important signals — policy statements, filings, market commentary —
+              often appear first in Arabic, in sources most Western analysts never reach. That gap is what
+              Nusq is trying to close.
             </p>
             <p>
               Yousef has worked in equity research and is building towards a career in asset management

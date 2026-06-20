@@ -58,13 +58,13 @@ export default async function Home() {
 
           <h1 className="font-display mb-8 md:mb-10" style={{ fontSize: "clamp(2.75rem, 17vw, 9.5rem)" }}>
             <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "0ms" }}>
-              MENA
+              THE GULF
             </span>
             <span className="hero-word text-[var(--c-text-1)] block" style={{ animationDelay: "100ms" }}>
-              MARKETS,
+              IN ITS
             </span>
             <span className="hero-word text-[var(--c-amber)] text-glow block" style={{ animationDelay: "200ms" }}>
-              MADE CLEAR.
+              OWN WORDS.
             </span>
           </h1>
 
@@ -72,15 +72,16 @@ export default async function Home() {
             className="hero-fade text-[var(--c-text-2)] text-base leading-relaxed max-w-xs mb-2 tracking-wide"
             style={{ animationDelay: "550ms" }}
           >
-            A briefing on what moved the Gulf and why — written for
-            people who need to know, not just want to know.
+            Most Gulf coverage reaches you filtered — through wire services
+            that don&apos;t read Arabic, through analysts who weren&apos;t in the room.
+            Nusq goes to the original sources.
           </p>
 
           <p
             className="hero-fade text-[var(--c-text-3)] text-sm leading-relaxed max-w-xs mb-3 tracking-wide"
             style={{ animationDelay: "580ms" }}
           >
-            Integrating Arabic and English sources — the signal most coverage never reaches.
+            Arabic and English, every morning, before the wires catch up.
           </p>
 
           <p

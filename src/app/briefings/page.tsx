@@ -43,7 +43,7 @@ export default async function BriefingsPage() {
           <span className="text-[var(--c-text-1)]">BRIEFINGS</span>
         </h1>
         <p className="text-sm text-[var(--c-text-2)] tracking-wide">
-          Daily summaries of what moved in MENA markets and why it matters.
+          What moved the Gulf — and what Arabic sources were saying about it first.
         </p>
       </div>
 

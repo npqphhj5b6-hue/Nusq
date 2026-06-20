@@ -22,7 +22,7 @@ export default async function EssaysPage() {
           Research
         </h1>
         <p className="text-[var(--c-text-2)] text-base leading-relaxed max-w-lg">
-          Longer analysis on MENA political economy, trade, and capital.
+          Longer reads on Gulf capital, political economy, and the forces shaping MENA.
         </p>
       </div>
 
