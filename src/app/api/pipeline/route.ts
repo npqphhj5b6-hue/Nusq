@@ -1393,11 +1393,12 @@ export async function GET(request: NextRequest) {
     message = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 10000,
+      thinking: { type: "adaptive" },
       system: SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content: `Today's date: ${date}\n\nWrite today's two-story Nusq briefing on these pre-selected stories:\n\n${selectionBlock}${connectionNote}\n\n${sourceText}${noRepeatBlock}\n\nCite sources by their [N] number. Follow the four-layer structure, the voice, and all anti-hallucination rules.`,
+          content: `Today's date: ${date}\n\nWrite today's two-story Nusq briefing on these pre-selected stories:\n\n${selectionBlock}${connectionNote}\n\n${sourceText}${noRepeatBlock}\n\nCite sources by their [N] number. Follow the four-layer structure, the voice, and all anti-hallucination rules. Output ONLY the JSON object — no preamble, no explanation, no refusal.`,
         },
       ],
     });
