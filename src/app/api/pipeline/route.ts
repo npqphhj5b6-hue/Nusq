@@ -1285,67 +1285,23 @@ function buildStoryEvidence(
   };
 }
 
-// ── Main route handler ────────────────────────────────────────────────────────
+// ── Shared pipeline core (stages 3–6 + insert) ───────────────────────────────
 
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const now = new Date();
-  // const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  // if (dayOfWeek === 0 || dayOfWeek === 6) {
-  //   return NextResponse.json({ ok: true, message: "Weekend — no briefing today" });
-  // }
-
-  const slug = todaySlug();
-  const date = todayISO();
-
-  const { data: existing } = await supabaseAdmin
-    .from("briefings")
-    .select("id")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (existing) {
-    return NextResponse.json({ ok: true, message: "Already generated today", slug });
-  }
-
-  // Fetch recent briefing context and news in parallel
-  let recentHeadlines: string[], usedSourceUrls: Set<string>, rawSourcesAll: RawSourceItem[];
-  try {
-    const [ctx, news] = await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
-    recentHeadlines = ctx.recentHeadlines;
-    usedSourceUrls = ctx.usedSourceUrls;
-    rawSourcesAll = news.rawSources;
-  } catch (fetchErr) {
-    console.error("[pipeline] news fetch failed —", String(fetchErr));
-    return NextResponse.json({ error: "News fetch failed", detail: String(fetchErr) }, { status: 500 });
-  }
-
-  // Drop sources whose URLs were already used in recent briefings
-  const rawSources = rawSourcesAll.filter((s) => !usedSourceUrls.has(s.url));
-
-  if (rawSources.length === 0) {
-    return NextResponse.json({ error: "No new sources after deduplication — try again later" }, { status: 503 });
-  }
-
-  // ── Stage 1: triage ──
-  console.log("[pipeline] stage 1 — triage start", { candidates: rawSources.length });
-  const topCandidates = await triageStories(rawSources);
-  console.log("[pipeline] stage 1 — triage done", { top: topCandidates });
-
-  // ── Stage 2: selection ──
-  console.log("[pipeline] stage 2 — selection start");
-  const selection = await selectStories(rawSources, topCandidates);
-  const selectedSeeds = selection.selected.map((i) => rawSources[i]);
-  console.log("[pipeline] stage 2 — selection done", {
-    selected: selection.selected,
-    anchor: selectedSeeds[0]?.title?.slice(0, 60),
-    supporting: selectedSeeds[1]?.title?.slice(0, 60),
-  });
-
+async function runPipelineCore({
+  selectedSeeds,
+  rawSources,
+  recentHeadlines,
+  connection,
+  date,
+  slug,
+}: {
+  selectedSeeds: RawSourceItem[];
+  rawSources: RawSourceItem[];
+  recentHeadlines: string[];
+  connection: string;
+  date: string;
+  slug: string;
+}): Promise<NextResponse> {
   // ── Stage 3: research enrichment (parallel web search) ──
   console.log("[pipeline] stage 3 — enrichment start");
   const enrichments = await Promise.all(selectedSeeds.map((s) => enrichStory(s)));
@@ -1377,8 +1333,8 @@ export async function GET(request: NextRequest) {
       return `${role}: "${s.title}" (${s.publisher})\n  ${s.snippet}${enr}`;
     })
     .join("\n\n");
-  const connectionNote = selection.connection
-    ? `\nHow these connect: ${selection.connection}`
+  const connectionNote = connection
+    ? `\nHow these connect: ${connection}`
     : "";
 
   // ── Stage 4: draft generation ──
@@ -1603,5 +1559,123 @@ export async function GET(request: NextRequest) {
     editsApplied: editsApplied.length,
     validationWarnings: validation.warnings.length,
     needsReview: validation.needsReview,
+  });
+}
+
+// ── Main route handler ────────────────────────────────────────────────────────
+
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const now = new Date();
+  // const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  // if (dayOfWeek === 0 || dayOfWeek === 6) {
+  //   return NextResponse.json({ ok: true, message: "Weekend — no briefing today" });
+  // }
+
+  const slug = todaySlug();
+  const date = todayISO();
+
+  const { data: existing } = await supabaseAdmin
+    .from("briefings")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ ok: true, message: "Already generated today", slug });
+  }
+
+  // Fetch recent briefing context and news in parallel
+  let recentHeadlines: string[], usedSourceUrls: Set<string>, rawSourcesAll: RawSourceItem[];
+  try {
+    const [ctx, news] = await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
+    recentHeadlines = ctx.recentHeadlines;
+    usedSourceUrls = ctx.usedSourceUrls;
+    rawSourcesAll = news.rawSources;
+  } catch (fetchErr) {
+    console.error("[pipeline] news fetch failed —", String(fetchErr));
+    return NextResponse.json({ error: "News fetch failed", detail: String(fetchErr) }, { status: 500 });
+  }
+
+  // Drop sources whose URLs were already used in recent briefings
+  const rawSources = rawSourcesAll.filter((s) => !usedSourceUrls.has(s.url));
+
+  if (rawSources.length === 0) {
+    return NextResponse.json({ error: "No new sources after deduplication — try again later" }, { status: 503 });
+  }
+
+  // ── Stage 1: triage ──
+  console.log("[pipeline] stage 1 — triage start", { candidates: rawSources.length });
+  const topCandidates = await triageStories(rawSources);
+  console.log("[pipeline] stage 1 — triage done", { top: topCandidates });
+
+  // ── Stage 2: selection ──
+  console.log("[pipeline] stage 2 — selection start");
+  const selection = await selectStories(rawSources, topCandidates);
+  const selectedSeeds = selection.selected.map((i) => rawSources[i]);
+  console.log("[pipeline] stage 2 — selection done", {
+    selected: selection.selected,
+    anchor: selectedSeeds[0]?.title?.slice(0, 60),
+    supporting: selectedSeeds[1]?.title?.slice(0, 60),
+  });
+
+  return runPipelineCore({
+    selectedSeeds,
+    rawSources,
+    recentHeadlines,
+    connection: selection.connection ?? "",
+    date,
+    slug,
+  });
+}
+
+// ── POST handler (manual story entry) ────────────────────────────────────────
+
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const slug = todaySlug();
+  const date = todayISO();
+
+  const { data: existing } = await supabaseAdmin
+    .from("briefings")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing) {
+    return NextResponse.json({ ok: true, message: "Already generated today", slug });
+  }
+
+  const body = await request.json().catch(() => ({ stories: [] }));
+  const inputs: Array<{ url: string; title?: string; context?: string }> = body.stories ?? [];
+  if (inputs.length < 2) {
+    return NextResponse.json({ error: "Provide at least 2 stories" }, { status: 400 });
+  }
+
+  const rawSources: RawSourceItem[] = inputs.map((input) => ({
+    title: (input.title ?? "").trim() || getPublisherName(input.url),
+    url: input.url,
+    snippet: (input.context ?? "").trim(),
+    pubDate: new Date().toISOString(),
+    lang: "en" as const,
+    publisher: getPublisherName(input.url),
+  }));
+
+  const selectedSeeds = rawSources.slice(0, 2);
+
+  return runPipelineCore({
+    selectedSeeds,
+    rawSources,
+    recentHeadlines: [],
+    connection: (body.connection as string | undefined) ?? "",
+    date,
+    slug,
   });
 }

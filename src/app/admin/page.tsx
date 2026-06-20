@@ -43,7 +43,7 @@ export default async function AdminPage() {
       <div className="mb-10 p-5 rounded-xl border border-[#E5E2DC] bg-white">
         <p className="text-[10px] font-bold uppercase tracking-wider text-[#737373] mb-3">Pipeline</p>
         <p className="text-xs text-[#737373] mb-4">
-          Runs automatically Monday – Friday. Use this to trigger manually or re-run after changes.
+          Paste the two stories you want in today&apos;s briefing. The pipeline enriches them, drafts the copy, adds photos, and creates a draft for review.
         </p>
         <PipelineTrigger />
       </div>
