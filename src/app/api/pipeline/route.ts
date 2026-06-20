@@ -741,7 +741,7 @@ async function resolveArticle(
         content: `Fetch and read this article: ${url}
 
 Extract the following. Output ONLY JSON with no other text:
-{"title": "exact headline from the article", "date": "YYYY-MM-DD (publication date)", "summary": "2-3 sentences capturing the key facts"}
+{"title": "exact headline from the article", "date": "YYYY-MM-DD (the date this article was published or posted online — NOT the date of the event it covers)", "summary": "2-3 sentences capturing the key facts"}
 
 If the URL is inaccessible, search for: ${userTitle ? `"${userTitle}"` : url} to find coverage of the same story.`,
       }],
