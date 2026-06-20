@@ -1362,6 +1362,8 @@ async function runPipelineCore({
   connection,
   date,
   slug,
+  skipEnrichment = false,
+  draftModel = "claude-opus-4-8",
 }: {
   selectedSeeds: RawSourceItem[];
   rawSources: RawSourceItem[];
@@ -1369,11 +1371,19 @@ async function runPipelineCore({
   connection: string;
   date: string;
   slug: string;
+  skipEnrichment?: boolean;
+  draftModel?: string;
 }): Promise<NextResponse> {
   // ── Stage 3: research enrichment (parallel web search) ──
-  console.log("[pipeline] stage 3 — enrichment start");
-  const enrichments = await Promise.all(selectedSeeds.map((s) => enrichStory(s)));
-  console.log("[pipeline] stage 3 — enrichment done", enrichments.map((e) => ({ notesLen: e.notes.length, newSources: e.newSources.length })));
+  let enrichments: Awaited<ReturnType<typeof enrichStory>>[];
+  if (skipEnrichment) {
+    enrichments = selectedSeeds.map(() => ({ notes: "", newSources: [] }));
+    console.log("[pipeline] stage 3 — enrichment skipped");
+  } else {
+    console.log("[pipeline] stage 3 — enrichment start");
+    enrichments = await Promise.all(selectedSeeds.map((s) => enrichStory(s)));
+    console.log("[pipeline] stage 3 — enrichment done", enrichments.map((e) => ({ notesLen: e.notes.length, newSources: e.newSources.length })));
+  }
 
   // Fold any newly discovered sources into the numbered list (dedup by URL)
   const existingUrls = new Set(rawSources.map((s) => s.url));
@@ -1414,11 +1424,11 @@ async function runPipelineCore({
   const client = new Anthropic();
   let message: Awaited<ReturnType<typeof client.messages.create>>;
   try {
+    const isOpus = draftModel.startsWith("claude-opus");
     message = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: draftModel,
       max_tokens: 10000,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "low" },
+      ...(isOpus ? { thinking: { type: "adaptive" }, output_config: { effort: "low" } } : {}),
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -1721,22 +1731,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: "Already generated today", slug });
   }
 
+  // stories: [{ title, context?, urls: string[] }, ...]
   const body = await request.json().catch(() => ({ stories: [] }));
-  const inputs: Array<{ url: string; title?: string; context?: string }> = body.stories ?? [];
+  const inputs: Array<{ title: string; context?: string; urls: string[] }> = body.stories ?? [];
   if (inputs.length < 2) {
     return NextResponse.json({ error: "Provide at least 2 stories" }, { status: 400 });
   }
+  if (inputs.some((s) => !s.title?.trim())) {
+    return NextResponse.json({ error: "Each story needs a title" }, { status: 400 });
+  }
+  if (inputs.some((s) => !s.urls?.length)) {
+    return NextResponse.json({ error: "Each story needs at least one source URL" }, { status: 400 });
+  }
 
-  // Resolve each URL: fetch article content and publication date
-  console.log("[pipeline] manual — resolving articles", inputs.map((i) => i.url));
-  const resolved = await Promise.all(
-    inputs.map((input) => resolveArticle(input.url, input.title, input.context))
-  );
+  // Build rawSources from all user-provided URLs — no web-search resolver needed
+  const rawSources: RawSourceItem[] = [];
+  const selectedSeeds: RawSourceItem[] = [];
 
-  console.log("[pipeline] manual — resolved", resolved.map((r) => ({ title: r.seed.title.slice(0, 60), ageHours: r.ageHours })));
+  for (const input of inputs.slice(0, 2)) {
+    const primaryUrl = input.urls[0];
+    const publisher = getPublisherName(primaryUrl);
+    const seed: RawSourceItem = {
+      title: input.title.trim(),
+      url: primaryUrl,
+      snippet: (input.context ?? "").trim(),
+      pubDate: new Date().toISOString(),
+      lang: "en" as const,
+      publisher,
+    };
+    selectedSeeds.push(seed);
+    for (const url of input.urls) {
+      rawSources.push({
+        title: input.title.trim(),
+        url,
+        snippet: (input.context ?? "").trim(),
+        pubDate: new Date().toISOString(),
+        lang: "en" as const,
+        publisher: getPublisherName(url),
+      });
+    }
+  }
 
-  const rawSources: RawSourceItem[] = resolved.map((r) => r.seed);
-  const selectedSeeds = rawSources.slice(0, 2);
+  console.log("[pipeline] manual — seeds", selectedSeeds.map((s) => ({ title: s.title.slice(0, 60), sources: rawSources.filter((r) => r.title === s.title).length })));
 
   return runPipelineCore({
     selectedSeeds,
@@ -1745,5 +1781,7 @@ export async function POST(request: NextRequest) {
     connection: (body.connection as string | undefined) ?? "",
     date,
     slug,
+    skipEnrichment: true,
+    draftModel: "claude-sonnet-4-6",
   });
 }
