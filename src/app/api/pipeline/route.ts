@@ -1294,10 +1294,10 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date();
-  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    return NextResponse.json({ ok: true, message: "Weekend — no briefing today" });
-  }
+  // const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  // if (dayOfWeek === 0 || dayOfWeek === 6) {
+  //   return NextResponse.json({ ok: true, message: "Weekend — no briefing today" });
+  // }
 
   const slug = todaySlug();
   const date = todayISO();
