@@ -1735,9 +1735,9 @@ export async function POST(request: NextRequest) {
 
   // Enforce 24-hour freshness — reject if any resolved article is older
   for (const r of resolved) {
-    if (r.ageHours !== null && r.ageHours > 24) {
+    if (r.ageHours !== null && r.ageHours > 48) {
       return NextResponse.json({
-        error: `"${r.seed.title.slice(0, 80)}" is ${Math.round(r.ageHours)}h old — stories must be published within the past 24 hours`,
+        error: `"${r.seed.title.slice(0, 80)}" is ${Math.round(r.ageHours)}h old — stories must be published within the past 48 hours`,
       }, { status: 400 });
     }
   }
