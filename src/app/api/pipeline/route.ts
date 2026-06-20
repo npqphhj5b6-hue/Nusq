@@ -1206,7 +1206,7 @@ async function qualityPass(
 
   try {
     const res = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       messages: [{
         role: "user",
@@ -1394,6 +1394,7 @@ export async function GET(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 10000,
       thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
       system: SYSTEM_PROMPT,
       messages: [
         {
