@@ -5,87 +5,70 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* ── Color tokens — dark mode (default) ── */
+/* ── Color tokens ── */
 :root {
-  --c-bg:        #040C1A;
-  --c-surface:   #091422;
-  --c-border:    #132030;
-  --c-border-2:  #1E3A52;
-  --c-text-1:    #F0ECE5;
-  --c-text-2:    #E8E4DD;
-  --c-text-3:    #4E6880;
-  --c-amber:     #F59E0B;
-  --c-amber-2:   #D97706;
-  --c-green:     #15A06E;
-  --c-green-bg:  #0A1F15;
-}
-
-/* ── Light mode overrides ── */
-.light {
-  --c-bg:        #F5F1EB;
-  --c-surface:   #FFFFFF;
-  --c-border:    #E0D7CD;
-  --c-border-2:  #C5BAB0;
-  --c-text-1:    #1A1410;
-  --c-text-2:    #5C5048;
-  --c-text-3:    #9C8880;
-  --c-amber:     #D97706;
-  --c-amber-2:   #B45309;
-  --c-green:     #0D7A52;
-  --c-green-bg:  #E6F7F0;
+  --c-bg:        #FFFFFF;
+  --c-surface:   #F5F5F3;
+  --c-border:    #EBEBEB;
+  --c-border-2:  #D4D4D4;
+  --c-text-1:    #0F0F0F;
+  --c-text-2:    #696969;
+  --c-text-3:    #ABABAB;
+  --c-green:     #0A5C3B;
+  --c-green-2:   #085031;
+  --c-green-bg:  #E3F5EE;
+  /* legacy aliases so untouched components pick up the right colour */
+  --c-amber:     #0A5C3B;
+  --c-amber-2:   #085031;
 }
 
 /* ── Base ── */
 body {
   background-color: var(--c-bg);
   color: var(--c-text-1);
-  transition: background-color 0.2s ease, color 0.2s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Header scrolled backdrop (needs opacity on dynamic color) ── */
+/* ── Header scrolled backdrop ── */
 .header-scrolled {
-  background-color: color-mix(in srgb, var(--c-bg) 92%, transparent);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid color-mix(in srgb, var(--c-border) 80%, transparent);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--c-border);
 }
 
-/* ── Prose (article body) ── */
+/* ── Prose ── */
 .prose-nusq {
   font-size: 1.125rem;
-  line-height: 1.9;
+  line-height: 1.85;
   color: var(--c-text-2);
 }
 .prose-nusq h2 {
-  font-size: 1.3125rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  margin-top: 2.75rem;
-  margin-bottom: 1rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.875rem;
   color: var(--c-text-1);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .prose-nusq p {
-  margin-bottom: 1.625rem;
+  margin-bottom: 1.5rem;
 }
 .prose-nusq strong {
   font-weight: 600;
   color: var(--c-text-1);
 }
 .citation-link {
-  color: var(--c-amber);
+  color: var(--c-green);
   text-decoration: none;
   font-size: 0.6em;
   font-weight: 500;
-  letter-spacing: 0.01em;
-  opacity: 0.7;
+  opacity: 0.85;
   transition: opacity 0.15s;
   position: relative;
   top: -0.5em;
 }
-.citation-link:hover {
-  opacity: 1;
-}
+.citation-link:hover { opacity: 1; }
 .citation-ref {
   color: var(--c-text-3);
   font-size: 0.6em;
@@ -95,133 +78,62 @@ body {
 
 /* ── Page entrance ── */
 @keyframes nusq-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .page-enter {
-  animation: nusq-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ── Hero word stagger ── */
-@keyframes hero-word-in {
-  from {
-    opacity: 0;
-    transform: translateY(36px);
-    filter: blur(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-}
-.hero-word {
-  display: block;
-  opacity: 0;
-  animation: hero-word-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* ── Hero subtitle + CTA fade ── */
-@keyframes hero-fade-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero-fade {
-  opacity: 0;
-  animation: hero-fade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* ── Ambient orb pulse (very slow, subtle) ── */
-@keyframes orb-breathe {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.08); }
-}
-.orb {
-  pointer-events: none;
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  animation: orb-breathe 10s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .orb { animation: none; }
+  animation: nusq-fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Scroll reveal ── */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(16px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .reveal.in-view {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* ── Card lift ── */
+/* ── Card hover ── */
 .card-lift {
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.3s ease,
-              border-color 0.3s ease;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.2s ease;
 }
 .card-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.6),
-              0 0 0 1px rgba(245, 158, 11, 0.2),
-              0 0 30px rgba(245, 158, 11, 0.06);
+  transform: translateY(-2px);
+  border-color: var(--c-border-2) !important;
 }
 
 /* ── Button press ── */
 .btn-press {
-  transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.1s ease;
 }
-.btn-press:active {
-  transform: scale(0.96);
-}
+.btn-press:active { transform: scale(0.97); }
 
-/* ── Ken Burns image hover ── */
-.img-wrap {
-  overflow: hidden;
-}
+/* ── Image hover zoom ── */
+.img-wrap { overflow: hidden; }
 .img-wrap img {
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
-.img-wrap:hover img {
-  transform: scale(1.05);
-}
+.img-wrap:hover img { transform: scale(1.04); }
 
-/* ── Amber line expand ── */
-@keyframes amber-expand {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
-.gold-line {
-  transform-origin: left;
-  animation: amber-expand 1s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ── Section label eyebrow ── */
+/* ── Eyebrow label ── */
 .eyebrow {
   font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--c-amber);
+  color: var(--c-green);
 }
 
-/* ── Amber glow text ── */
-.text-glow {
-  text-shadow: 0 0 40px rgba(245, 158, 11, 0.4),
-               0 0 80px rgba(245, 158, 11, 0.15);
-}
-
-/* ── Barlow display shorthand ── */
+/* ── Display shorthand ── */
 .font-display {
-  font-family: var(--font-barlow);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  line-height: 0.92;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
 }

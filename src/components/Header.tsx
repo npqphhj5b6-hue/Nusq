@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ReadingProgress from "./ReadingProgress";
 import AuthButton from "./AuthButton";
-import ThemeToggle from "./ThemeToggle";
 
 const NAV_LINKS = [
   { label: "Briefings", href: "/briefings" },
@@ -18,16 +17,14 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close on navigation
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
+    const onScroll = () => setScrolled(window.scrollY > 32);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -35,79 +32,71 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-500 ${
-        scrolled ? "header-scrolled" : "bg-transparent"
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled ? "header-scrolled" : "bg-white border-b border-[var(--c-border)]"
       }`}
     >
-      {/* Amber accent line */}
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-[#F59E0B]/60 to-transparent" />
-
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
-          <span
-            className="text-[1.3rem] font-bold tracking-[-0.02em] text-[var(--c-amber)] transition-opacity duration-200 group-hover:opacity-80"
-            style={{ fontFamily: "var(--font-barlow)" }}
-          >
-            NUSQ
+        <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
+          <span className="text-[1.2rem] font-bold tracking-[-0.04em] text-[var(--c-text-1)]">
+            nusq
           </span>
-          <span className="w-px h-4 bg-[#F59E0B]/25" />
+          <span className="w-px h-3.5 bg-[var(--c-border-2)]" />
           <span
-            className="text-[1.05rem] font-medium text-[var(--c-amber)]/80 transition-opacity duration-200 group-hover:opacity-60"
+            className="text-[0.95rem] text-[var(--c-text-3)]"
             style={{ fontFamily: "var(--font-arabic)" }}
           >
             نسق
           </span>
         </Link>
 
-        {/* Desktop nav — hidden on mobile */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-0.5">
           {NAV_LINKS.map(({ label, href }) => (
             <Link
               key={label}
               href={href}
-              className="text-xs font-semibold tracking-[0.08em] uppercase text-[var(--c-text-2)] hover:text-[var(--c-text-1)] transition-colors duration-200 px-3 py-1.5 cursor-pointer"
+              className="text-sm text-[var(--c-text-2)] hover:text-[var(--c-text-1)] transition-colors duration-200 px-3 py-1.5 rounded-md hover:bg-[var(--c-surface)]"
             >
               {label}
             </Link>
           ))}
-          <ThemeToggle />
-          <div className="ml-1">
+          <div className="ml-2">
             <AuthButton />
           </div>
         </nav>
 
         {/* Mobile controls */}
         <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
           <AuthButton />
           <button
             onClick={() => setMobileOpen(v => !v)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--c-border)] text-[var(--c-text-2)] hover:text-[var(--c-text-1)] transition-colors ml-1"
+            className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--c-border)] text-[var(--c-text-2)] hover:text-[var(--c-text-1)] transition-colors"
           >
             {mobileOpen ? (
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M2 2l11 11M13 2L2 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             ) : (
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M1.5 3.5h12M1.5 7.5h12M1.5 11.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 3h12M1 7h12M1 11h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             )}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu dropdown */}
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[var(--c-border)] bg-[var(--c-bg)]">
-          <nav className="max-w-5xl mx-auto px-6 py-2 flex flex-col">
+        <div className="md:hidden border-t border-[var(--c-border)] bg-white">
+          <nav className="max-w-5xl mx-auto px-6 py-1 flex flex-col">
             {NAV_LINKS.map(({ label, href }) => (
               <Link
                 key={label}
                 href={href}
-                className="text-sm font-semibold tracking-[0.08em] uppercase text-[var(--c-text-2)] hover:text-[var(--c-amber)] transition-colors duration-200 py-3.5 border-b border-[var(--c-border)] last:border-b-0"
+                className="text-sm text-[var(--c-text-2)] hover:text-[var(--c-text-1)] transition-colors py-3.5 border-b border-[var(--c-border)] last:border-b-0"
               >
                 {label}
               </Link>

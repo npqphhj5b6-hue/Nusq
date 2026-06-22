@@ -144,7 +144,7 @@ export default async function BriefingPage({
       {/* Back */}
       <Link
         href="/briefings"
-        className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] hover:text-[var(--c-amber)] transition-colors mb-10 cursor-pointer"
+        className="inline-flex items-center gap-1.5 text-xs text-[var(--c-text-3)] hover:text-[var(--c-text-1)] transition-colors mb-10 cursor-pointer"
       >
         ← Briefings
       </Link>
@@ -160,8 +160,8 @@ export default async function BriefingPage({
 
       {/* Headline */}
       <h1
-        className="text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] leading-[1.06] text-[var(--c-text-1)] mb-5"
-        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
+        className="font-bold leading-[1.06] text-[var(--c-text-1)] mb-5"
+        style={{ fontSize: "clamp(1.75rem, 5vw, 3rem)", letterSpacing: "-0.035em" }}
       >
         {briefing.title}
       </h1>
@@ -189,17 +189,17 @@ export default async function BriefingPage({
       {/* ── TL;DR card ── */}
       {hasTldr && (
         <ScrollReveal>
-          <div className="mb-8 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/[0.06] overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#F59E0B]/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--c-amber)]" />
-              <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[var(--c-amber)]">
+          <div className="mb-8 rounded-xl border border-[var(--c-green)]/20 bg-[var(--c-green-bg)] overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[var(--c-green)]/15">
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--c-green)]" />
+              <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[var(--c-green)]">
                 Key takeaways
               </span>
             </div>
             <ul className="px-5 py-4 space-y-2.5">
               {briefing.tldrBullets!.map((bullet, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="text-[var(--c-amber)] mt-[3px] shrink-0 text-xs">→</span>
+                  <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs">→</span>
                   <span className="text-sm text-[var(--c-text-1)] leading-relaxed">{bullet}</span>
                 </li>
               ))}
@@ -249,8 +249,8 @@ export default async function BriefingPage({
                   {/* Story number + headline */}
                   <div className="flex items-start gap-5 mb-6">
                     <span
-                      className="shrink-0 text-[4rem] leading-none font-black text-[var(--c-amber)]/15 select-none"
-                      style={{ fontFamily: "var(--font-barlow)", lineHeight: 0.9 }}
+                      className="shrink-0 text-[3.5rem] leading-none font-black text-[var(--c-border-2)] select-none"
+                      style={{ lineHeight: 0.9 }}
                       aria-hidden="true"
                     >
                       {story.number}
@@ -262,8 +262,8 @@ export default async function BriefingPage({
                         </p>
                       )}
                       <h2
-                        className="text-[1.4rem] sm:text-[1.75rem] leading-[1.1] text-[var(--c-text-1)]"
-                        style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
+                        className="font-bold leading-[1.1] text-[var(--c-text-1)]"
+                        style={{ fontSize: "clamp(1.25rem, 3vw, 1.6rem)", letterSpacing: "-0.03em" }}
                       >
                         {story.headline}
                       </h2>
@@ -278,7 +278,7 @@ export default async function BriefingPage({
                         alt={story.headline}
                         className="w-full h-full object-cover block"
                       />
-                      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(4,12,26,0.45) 0%, transparent 45%)" }} />
+                      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
                       {story.imageCredit && (
                         <a
                           href={story.imageCreditLink ?? "#"}
@@ -291,8 +291,8 @@ export default async function BriefingPage({
                       )}
                     </div>
                   ) : (
-                    <div className="relative w-full mb-7 overflow-hidden rounded-xl flex items-center justify-center" style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.02) 100%)", border: "1px solid rgba(245,158,11,0.10)" }}>
-                      <span className="text-[var(--c-amber)]/20 font-black select-none" style={{ fontSize: "clamp(5rem, 15vw, 9rem)", fontFamily: "var(--font-barlow)", lineHeight: 1 }} aria-hidden="true">
+                    <div className="relative w-full mb-7 overflow-hidden rounded-xl flex items-center justify-center bg-[var(--c-surface)] border border-[var(--c-border)]" style={{ aspectRatio: "16/9" }}>
+                      <span className="font-black select-none text-[var(--c-border-2)]" style={{ fontSize: "clamp(5rem, 15vw, 9rem)", lineHeight: 1 }} aria-hidden="true">
                         {story.number}
                       </span>
                     </div>
@@ -334,7 +334,7 @@ export default async function BriefingPage({
                   alt={briefing.title}
                   className="w-full h-auto block"
                 />
-                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(4,12,26,0.5) 0%, transparent 40%)" }} />
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
                 {briefing.coverImageCredit && (
                   <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
                     className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
@@ -372,14 +372,11 @@ export default async function BriefingPage({
       {alsoWatching.length > 0 && (
         <ScrollReveal>
           <div className="mt-12 pt-8 border-t border-[var(--c-border)]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
-              <span className="eyebrow">Also Watching</span>
-            </div>
+            <span className="eyebrow block mb-4">Also Watching</span>
             <ul className="space-y-2.5">
               {alsoWatching.map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="text-[var(--c-amber)] mt-[3px] shrink-0 text-xs" aria-hidden="true">→</span>
+                  <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs" aria-hidden="true">→</span>
                   <span className="text-sm text-[var(--c-text-2)] leading-relaxed">{item}</span>
                 </li>
               ))}
@@ -390,7 +387,7 @@ export default async function BriefingPage({
 
       {/* Bottom share row */}
       <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
-        <Link href="/briefings" className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)] hover:text-[var(--c-amber)] transition-colors cursor-pointer">
+        <Link href="/briefings" className="text-xs text-[var(--c-text-3)] hover:text-[var(--c-text-1)] transition-colors cursor-pointer">
           ← All briefings
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
@@ -400,10 +397,7 @@ export default async function BriefingPage({
       {hasSources && (
         <ScrollReveal>
           <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-5 h-[1px] bg-[var(--c-amber)] gold-line" />
-              <span className="eyebrow">Sources</span>
-            </div>
+            <span className="eyebrow block mb-4">Sources</span>
             <div>
               {sources.map((s) => {
                 const pubDate = s.publishedAt
@@ -429,7 +423,7 @@ export default async function BriefingPage({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-amber)] transition-colors">
+                        <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-green)] transition-colors">
                           {s.publisher}
                         </span>
                         {pubDate && (

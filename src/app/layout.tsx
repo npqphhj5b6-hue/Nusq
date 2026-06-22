@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  DM_Serif_Display,
   IBM_Plex_Sans_Arabic,
-  Barlow_Condensed,
 } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -21,22 +19,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const dmSerif = DM_Serif_Display({
-  variable: "--font-dm-serif",
-  subsets: ["latin"],
-  weight: "400",
-});
-
 const arabicSans = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic"],
   weight: ["400", "700"],
-});
-
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -54,17 +40,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${dmSerif.variable} ${arabicSans.variable} ${barlowCondensed.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${arabicSans.variable} h-full`}
     >
-      <head>
-        {/* Prevent flash of wrong theme */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('nusq-theme');if(t==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
-          }}
-        />
-      </head>
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans bg-white">
         <ThemeProvider>
           <Header />
           <main className="flex-1 page-enter">{children}</main>
