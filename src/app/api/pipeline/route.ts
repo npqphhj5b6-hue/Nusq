@@ -1612,8 +1612,8 @@ async function runPipelineCore({
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error: emailError } = await resend.emails.send({
-    from: "nusq <onboarding@resend.dev>",
-    to: "yousefquaba@icloud.com",
+    from: process.env.RESEND_FROM_EMAIL ?? "nusq <onboarding@resend.dev>",
+    to: process.env.ADMIN_EMAIL ?? "yousefquaba@icloud.com",
     subject: `nusq draft ready: ${generated.title}`,
     html: `
       <div style="font-family:sans-serif;max-width:540px;color:#1C1C1C;">

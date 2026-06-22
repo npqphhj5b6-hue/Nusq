@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAllBriefings, getAllEssays, formatDate, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import BriefingCover from "@/components/BriefingCover";
+import SubscribeForm from "@/components/SubscribeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export default async function Home() {
         </p>
 
         {featured && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-10">
             <Link
               href={`/briefings/${featured.slug}`}
               className="inline-flex items-center gap-2 bg-[var(--c-text-1)] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#222] transition-colors btn-press cursor-pointer"
@@ -65,6 +66,13 @@ export default async function Home() {
             </Link>
           </div>
         )}
+
+        <div className="border-t border-[var(--c-border)] pt-8">
+          <p className="text-xs text-[var(--c-text-3)] mb-3 tracking-[0.04em] uppercase">
+            Get it in your inbox · Free · Every weekday
+          </p>
+          <SubscribeForm />
+        </div>
       </section>
 
       {/* ── Featured briefing ── */}

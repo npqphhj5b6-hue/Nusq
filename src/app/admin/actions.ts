@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendBriefingToSubscribers } from "@/lib/email";
 
 export async function login(_prev: unknown, formData: FormData) {
   const password = formData.get("password") as string;
@@ -36,6 +37,13 @@ export async function approveBriefing(id: string) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  try {
+    await sendBriefingToSubscribers(id);
+  } catch (err) {
+    console.error("[publish] subscriber blast failed (non-fatal):", err);
+  }
+
   redirect("/admin");
 }
 
