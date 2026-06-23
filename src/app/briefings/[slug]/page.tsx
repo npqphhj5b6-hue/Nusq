@@ -316,6 +316,14 @@ export default async function BriefingPage({
                     </ScrollReveal>
                   )}
 
+                  {/* Why this matters — pulled from evidence.marketImpact */}
+                  {story.evidence?.marketImpact && (
+                    <div className="mt-6 pl-4 border-l-2 border-[var(--c-green)]">
+                      <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--c-green)] mb-1.5">Why this matters</p>
+                      <p className="text-sm text-[var(--c-text-2)] leading-relaxed">{story.evidence.marketImpact}</p>
+                    </div>
+                  )}
+
                   {/* Per-story evidence bubble */}
                   {story.evidence && <StoryEvidence evidence={story.evidence} />}
                 </article>

@@ -155,7 +155,7 @@ Output a "claims" array of the 5–10 most important verifiable claims: "claim" 
 Output ONLY a valid JSON object — no prose before or after, no markdown fences.
 
 {
-  "title": "Headline for the whole briefing — max 12 words, no full stop",
+  "title": "Headline for the whole briefing — max 12 words, no full stop. Carry a verdict or tension: state what happened AND what it signals, not just two events side by side. 'Gulf rates locked to the Fed as Saudi tourism climbs' not 'Fed holds; Saudi tourism up'.",
   "summary": "2–3 sentences. A hook that sets up the day's main theme.",
   "tldr_bullets": [
     "First key takeaway — one sharp sentence, max 15 words, with the specific figure",
@@ -166,7 +166,7 @@ Output ONLY a valid JSON object — no prose before or after, no markdown fences
   "stories": [
     {
       "number": 1,
-      "headline": "Anchor story headline — max 8 words, no full stop",
+      "headline": "Anchor story headline — max 8 words, no full stop. Take a position: the analytical conclusion, not just the event. 'SAMA holds — but the peg decides' not 'SAMA holds rates'.",
       "location": "Saudi Arabia",
       "city": "Riyadh",
       "body": "One continuous piece of prose in the four-layer structure (fact, context, implication, watch). Inline [N] markers after facts. No subheadings, no bullet lists, no **bold**. 150–250 words.",
@@ -190,7 +190,7 @@ Output ONLY a valid JSON object — no prose before or after, no markdown fences
     },
     {
       "number": 2,
-      "headline": "Supporting thread headline",
+      "headline": "Supporting thread headline — max 8 words, no full stop. Same rule: verdict or tension, not just a summary of the event.",
       "location": "UAE",
       "city": "Abu Dhabi",
       "body": "...",

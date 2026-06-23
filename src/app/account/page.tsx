@@ -20,6 +20,23 @@ type HistoryRow = {
   briefings: { id: string; slug: string; title: string; date: string; reading_time: number } | null;
 };
 
+function prevWeekday(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00Z");
+  do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d.toISOString().split("T")[0];
+}
+
+function computeStreak(dates: string[]): number {
+  if (dates.length === 0) return 0;
+  const unique = [...new Set(dates)].sort().reverse();
+  let streak = 1;
+  for (let i = 0; i < unique.length - 1; i++) {
+    if (unique[i + 1] === prevWeekday(unique[i])) streak++;
+    else break;
+  }
+  return streak;
+}
+
 type SavedRow = {
   id: string;
   saved_at: string;
@@ -53,6 +70,9 @@ export default async function AccountPage() {
   const history = (historyResult.data ?? []) as unknown as HistoryRow[];
   const saved = (savedResult.data ?? []) as unknown as SavedRow[];
   const prefs = prefsResult.data;
+
+  const readDates = history.map((r) => r.briefings?.date).filter((d): d is string => !!d);
+  const streak = computeStreak(readDates);
 
   const initials = getInitials({ email: user.email, user_metadata: user.user_metadata });
   const provider = user.app_metadata?.provider ?? "email";
@@ -91,6 +111,11 @@ export default async function AccountPage() {
             <p className="text-xs text-[var(--c-text-3)] mt-0.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
               Member since {joined}
             </p>
+            {streak > 0 && (
+              <p className="text-xs text-[var(--c-green)] font-medium mt-1.5">
+                {streak}-day reading streak
+              </p>
+            )}
           </div>
         </div>
 
