@@ -1274,10 +1274,8 @@ async function qualityPass(
 
   try {
     const res = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "low" },
       messages: [{
         role: "user",
         content: `You are the copy desk for a MENA financial briefing. Read each story below and FIX any of these problems, returning a clean revised body for every story:
@@ -1710,7 +1708,7 @@ export async function GET(request: NextRequest) {
     connection: selection.connection ?? "",
     date,
     slug,
-    draftModel: "claude-opus-4-8",
+    draftModel: "claude-sonnet-4-6",
   });
 }
 
