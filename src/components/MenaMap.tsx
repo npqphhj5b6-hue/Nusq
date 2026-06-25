@@ -119,13 +119,13 @@ export default function MenaMap({ stories }: Props) {
       </div>
 
       {/* Map */}
-      <div style={{ background: "#04101E" }}>
+      <div style={{ background: "#F7F5F2" }}>
         <svg viewBox="-67 55 723 292" width="100%" className="block">
-          <rect width={W} height={H} fill="#04101E" />
+          <rect width={W} height={H} fill="#F7F5F2" />
 
-          {/* Filled countries — muted slate land on dark ocean */}
+          {/* Filled countries — warm grey land on light parchment ocean */}
           {COUNTRY_SHAPES.map(({ name, d }) => (
-            <path key={name} d={d} fill="#0d2137" stroke="rgba(255,255,255,0.18)" strokeWidth="0.7" strokeLinejoin="round" />
+            <path key={name} d={d} fill="#E2DDD6" stroke="rgba(0,0,0,0.12)" strokeWidth="0.7" strokeLinejoin="round" />
           ))}
 
           {/* Clusters — draw connector lines first, then pins on top */}
@@ -149,7 +149,7 @@ export default function MenaMap({ stories }: Props) {
                       key={i}
                       x1={pinPositions[0].px} y1={pinPositions[0].py}
                       x2={px} y2={py}
-                      stroke="rgba(245,158,11,0.35)" strokeWidth="1" strokeDasharray="2,2"
+                      stroke="rgba(10,92,59,0.35)" strokeWidth="1" strokeDasharray="2,2"
                     />
                   )
                 ))}
@@ -163,13 +163,13 @@ export default function MenaMap({ stories }: Props) {
                     className="group/pin"
                   >
                     {/* Outer glow */}
-                    <circle cx={px} cy={py} r={PIN_R + 5} fill="#F59E0B" fillOpacity="0.10" />
-                    {/* Solid amber pin */}
-                    <circle cx={px} cy={py} r={PIN_R} fill="#F59E0B" stroke="#04101E" strokeWidth="2" />
+                    <circle cx={px} cy={py} r={PIN_R + 5} fill="#0A5C3B" fillOpacity="0.12" />
+                    {/* Solid green pin */}
+                    <circle cx={px} cy={py} r={PIN_R} fill="#0A5C3B" stroke="white" strokeWidth="1.5" />
                     <text
                       x={px} y={py + 0.5}
                       textAnchor="middle" dominantBaseline="middle"
-                      style={{ fontSize: "10px", fontWeight: 800, fill: "#040C1A", fontFamily: "monospace", pointerEvents: "none" }}
+                      style={{ fontSize: "10px", fontWeight: 800, fill: "white", fontFamily: "monospace", pointerEvents: "none" }}
                     >
                       {story.number}
                     </text>
@@ -180,9 +180,9 @@ export default function MenaMap({ stories }: Props) {
                       className="opacity-0 group-hover/pin:opacity-100"
                       style={{ transition: "opacity 0.15s" }}
                     >
-                      <rect x={-66} y={-18} width="132" height="14" rx="3" fill="#040C1A" stroke="rgba(245,158,11,0.3)" strokeWidth="0.8" />
+                      <rect x={-66} y={-18} width="132" height="14" rx="3" fill="#1C1C1C" stroke="rgba(10,92,59,0.4)" strokeWidth="0.8" />
                       <text x={0} y={-8} textAnchor="middle"
-                        style={{ fontSize: "7.5px", fill: "rgba(255,255,255,0.8)", fontFamily: "monospace", pointerEvents: "none" }}>
+                        style={{ fontSize: "7.5px", fill: "rgba(255,255,255,0.85)", fontFamily: "monospace", pointerEvents: "none" }}>
                         {story.headline.length > 30 ? story.headline.slice(0, 30) + "…" : story.headline}
                       </text>
                     </g>
@@ -200,10 +200,10 @@ export default function MenaMap({ stories }: Props) {
           <button
             key={s.number}
             onClick={() => scrollToStory(s.number)}
-            className="flex items-center gap-2 text-[10px] font-semibold tracking-wide text-[var(--c-text-2)] hover:text-[var(--c-amber)] transition-colors duration-200"
+            className="flex items-center gap-2 text-[10px] font-semibold tracking-wide text-[var(--c-text-2)] hover:text-[var(--c-green)] transition-colors duration-200"
             style={{ fontFamily: "var(--font-geist-mono)" }}
           >
-            <span className="w-4 h-4 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex items-center justify-center text-[8px] font-bold text-[var(--c-amber)]">
+            <span className="w-4 h-4 rounded-full bg-[var(--c-green-bg)] border border-[var(--c-green)]/30 flex items-center justify-center text-[8px] font-bold text-[var(--c-green)]">
               {s.number}
             </span>
             {s.location}

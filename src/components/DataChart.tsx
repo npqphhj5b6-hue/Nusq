@@ -59,8 +59,8 @@ function BarChart({ data }: { data: ChartData }) {
             <g key={i}>
               <defs>
                 <linearGradient id={`bar-${i}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.5" />
+                  <stop offset="0%" stopColor="#0A5C3B" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#0A5C3B" stopOpacity="0.5" />
                 </linearGradient>
               </defs>
               <rect x={x} y={y} width={barInner} height={barH} fill={`url(#bar-${i})`} rx="2" />
@@ -132,8 +132,8 @@ function LineChart({ data }: { data: ChartData }) {
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block", overflow: "visible" }} aria-label={title}>
         <defs>
           <linearGradient id={`${uid}-grad`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+            <stop offset="0%" stopColor="#0A5C3B" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#0A5C3B" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -148,9 +148,9 @@ function LineChart({ data }: { data: ChartData }) {
           </g>
         ))}
 
-        <polyline points={points} fill="none" stroke="#F59E0B" strokeWidth="1.5"
+        <polyline points={points} fill="none" stroke="#0A5C3B" strokeWidth="1.5"
           strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={px(values.length - 1)} cy={py(values[values.length - 1])} r="3" fill="#F59E0B" />
+        <circle cx={px(values.length - 1)} cy={py(values[values.length - 1])} r="3" fill="#0A5C3B" />
 
         {xTicks.map(({ i, label }) => (
           <text key={i} x={px(i)} y={PAD.top + chartH + 16} textAnchor="middle"
