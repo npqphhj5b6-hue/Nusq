@@ -86,6 +86,66 @@ function rowToEssay(row: any): Essay {
   };
 }
 
+export interface TrendsData {
+  briefingCount: number;
+  topSectors: { name: string; count: number }[];
+  topGeographies: { name: string; count: number }[];
+  marketImpact: { label: string; count: number }[];
+  topTags: { name: string; count: number }[];
+}
+
+export async function getTrendsData(): Promise<TrendsData | null> {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("briefings")
+    .select("tags, stories, intelligence")
+    .eq("status", "published")
+    .gte("date", since);
+
+  if (error || !data || data.length === 0) return null;
+
+  const sectorCounts: Record<string, number> = {};
+  const geoCounts: Record<string, number> = {};
+  const impactCounts: Record<string, number> = {};
+  const tagCounts: Record<string, number> = {};
+
+  for (const b of data) {
+    for (const tag of (b.tags as string[]) ?? []) {
+      tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+    }
+    const impact = (b.intelligence as { marketImpact?: string } | null)?.marketImpact;
+    if (impact) impactCounts[impact] = (impactCounts[impact] ?? 0) + 1;
+    for (const s of (b.stories as Array<{ evidence?: { sectors?: string[]; geographies?: string[] } }> | null) ?? []) {
+      for (const sector of s.evidence?.sectors ?? []) {
+        sectorCounts[sector] = (sectorCounts[sector] ?? 0) + 1;
+      }
+      for (const geo of s.evidence?.geographies ?? []) {
+        geoCounts[geo] = (geoCounts[geo] ?? 0) + 1;
+      }
+    }
+  }
+
+  const top = (counts: Record<string, number>, n: number) =>
+    Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, n)
+      .map(([name, count]) => ({ name, count }));
+
+  const IMPACT_ORDER = ["positive", "mixed", "negative", "neutral", "unclear"];
+  const marketImpact = IMPACT_ORDER
+    .filter((k) => impactCounts[k] !== undefined)
+    .map((k) => ({ label: k, count: impactCounts[k] ?? 0 }));
+
+  return {
+    briefingCount: data.length,
+    topSectors: top(sectorCounts, 6),
+    topGeographies: top(geoCounts, 7),
+    marketImpact,
+    topTags: top(tagCounts, 12),
+  };
+}
+
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {
     day: "numeric",

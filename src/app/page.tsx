@@ -3,6 +3,7 @@ import { getAllBriefings, getAllEssays, formatDate, formatDateShort } from "@/li
 import ScrollReveal from "@/components/ScrollReveal";
 import BriefingCover from "@/components/BriefingCover";
 import SubscribeForm from "@/components/SubscribeForm";
+import TrendsDashboard from "@/components/TrendsDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -171,6 +172,9 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* ── Trends ── */}
+      <TrendsDashboard />
 
       {/* ── Essays ── */}
       {essays.length > 0 && (
