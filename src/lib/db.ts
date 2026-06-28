@@ -94,8 +94,8 @@ export interface TrendsData {
   topTags: { name: string; count: number }[];
 }
 
-export async function getTrendsData(): Promise<TrendsData | null> {
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+export async function getTrendsData(days = 30): Promise<TrendsData | null> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const { data, error } = await supabase
     .from("briefings")
