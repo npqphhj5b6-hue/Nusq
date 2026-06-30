@@ -277,6 +277,9 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--c-border-2); border-radius: 2px; }
 
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* Mobile bottom padding for nav bar */
 .page-content { padding-bottom: 80px; }
 @media (min-width: 768px) { .page-content { padding-bottom: 0; } }

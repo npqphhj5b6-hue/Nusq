@@ -61,21 +61,21 @@ export default async function BriefingsPage() {
                 <span className="eyebrow block mb-4">Latest</span>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {prefs && matchesBriefing(prefs, featured.tags) && (
-                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-green)] bg-[var(--c-green-bg)] px-2.5 py-1 rounded-full border border-[var(--c-green)]/20">
+                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] bg-[var(--c-accent-glow)] px-2.5 py-1 rounded-full border border-[var(--c-accent)]/20">
                       For You
                     </span>
                   )}
                   {featured.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-green)] bg-[var(--c-green-bg)] px-2.5 py-1 rounded-full"
+                      className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] bg-[var(--c-accent-glow)] px-2.5 py-1 rounded-full"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
                 <h2
-                  className="font-bold leading-[1.1] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-green)] transition-colors duration-200"
+                  className="font-bold leading-[1.1] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200"
                   style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.03em" }}
                 >
                   {featured.title}
@@ -108,17 +108,17 @@ export default async function BriefingsPage() {
                 </div>
                 <div className="flex flex-col flex-1 p-4">
                   {prefs && matchesBriefing(prefs, b.tags) && (
-                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-green)] bg-[var(--c-green-bg)] px-2 py-0.5 rounded-full border border-[var(--c-green)]/20 mb-2 block w-fit">
+                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] bg-[var(--c-accent-glow)] px-2 py-0.5 rounded-full border border-[var(--c-accent)]/20 mb-2 block w-fit">
                       For You
                     </span>
                   )}
                   {b.tags[0] && (
-                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-green)] mb-2 hidden md:block">
+                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] mb-2 hidden md:block">
                       {b.tags[0]}
                     </span>
                   )}
                   <h3
-                    className="text-sm md:text-[0.95rem] font-bold leading-[1.3] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-green)] transition-colors duration-200 flex-1"
+                    className="text-sm md:text-[0.95rem] font-bold leading-[1.3] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200 flex-1"
                     style={{ letterSpacing: "-0.02em" }}
                   >
                     {b.title}

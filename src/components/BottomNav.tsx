@@ -20,13 +20,13 @@ function ZapIcon({ active }: { active: boolean }) {
   );
 }
 
-function BriefcaseIcon({ active }: { active: boolean }) {
+function BookOpenIcon({ active }: { active: boolean }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="7" width="20" height="14" rx="2"/>
-      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-      {active && <line x1="12" y1="12" x2="12" y2="16" stroke="var(--c-bg)" strokeWidth="1.75"/>}
-      {active && <line x1="10" y1="14" x2="14" y2="14" stroke="var(--c-bg)" strokeWidth="1.75"/>}
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.15 : 0}/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.15 : 0}/>
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
     </svg>
   );
 }
@@ -43,10 +43,10 @@ function GridIcon({ active }: { active: boolean }) {
 }
 
 const TABS = [
-  { href: "/",          label: "Home",      Icon: HomeIcon },
-  { href: "/signals",   label: "Signals",   Icon: ZapIcon },
-  { href: "/portfolio", label: "Portfolio", Icon: BriefcaseIcon },
-  { href: "/heatmap",   label: "Heatmap",   Icon: GridIcon },
+  { href: "/",           label: "Home",      Icon: HomeIcon },
+  { href: "/briefings",  label: "Briefings", Icon: BookOpenIcon },
+  { href: "/signals",    label: "Signals",   Icon: ZapIcon },
+  { href: "/heatmap",    label: "Heatmap",   Icon: GridIcon },
 ];
 
 export default function BottomNav() {

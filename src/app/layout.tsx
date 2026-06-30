@@ -14,9 +14,28 @@ const arabicSans = IBM_Plex_Sans_Arabic({
   weight: ["400", "700"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Nusq — MENA financial intelligence",
-  description: "Daily briefings and analysis on Gulf and MENA markets, deals, and macro.",
+  title: {
+    default: "Nusq — MENA markets, explained.",
+    template: "%s — Nusq",
+  },
+  description: "Daily signals and briefings on Gulf and MENA markets. Plain language. No finance degree needed.",
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    siteName: "Nusq",
+    type: "website",
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@nusqapp",
+  },
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)",  color: "#080E1C" },
+    { media: "(prefers-color-scheme: light)", color: "#F4F7FF" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

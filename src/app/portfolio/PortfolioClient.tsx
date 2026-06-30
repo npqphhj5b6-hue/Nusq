@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SignalCard from "@/components/SignalCard";
 import type { Signal } from "@/lib/signals";
+
+const STORAGE_KEY = "nusq-portfolio-holdings";
 
 const SECTOR_OPTIONS = [
   "Banking", "Energy", "Real Estate", "Technology",
@@ -24,9 +26,21 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
   const [market, setMarket] = useState(MARKET_OPTIONS[0]);
   const [adding, setAdding] = useState(false);
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) setHoldings(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
+
+  function persist(next: Holding[]) {
+    setHoldings(next);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  }
+
   function addHolding() {
     if (!name.trim()) return;
-    setHoldings(h => [...h, { name: name.trim(), sector, market }]);
+    persist([...holdings, { name: name.trim(), sector, market }]);
     setName("");
     setAdding(false);
   }
@@ -136,7 +150,7 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
                   </p>
                 </div>
                 <button
-                  onClick={() => setHoldings(hs => hs.filter((_, idx) => idx !== i))}
+                  onClick={() => persist(holdings.filter((_, idx) => idx !== i))}
                   className="text-xs w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-100 opacity-40"
                   style={{ color: "var(--c-text-3)", background: "var(--c-surface-3)" }}
                   aria-label="Remove"

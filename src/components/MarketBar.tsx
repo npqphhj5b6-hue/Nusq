@@ -18,6 +18,13 @@ export default function MarketBar() {
       style={{ borderBottom: "1px solid var(--c-border)" }}
     >
       <div className="flex items-center gap-0 overflow-x-auto py-2.5 px-1 no-scrollbar">
+        {/* Indicative label */}
+        <span
+          className="text-[9px] font-bold tracking-widest uppercase shrink-0 mr-3 whitespace-nowrap"
+          style={{ color: "var(--c-text-3)" }}
+        >
+          Indicative
+        </span>
         {MARKETS.map((m, i) => (
           <div
             key={m.name}
@@ -50,6 +57,10 @@ export default function MarketBar() {
         ))}
       </div>
       {/* Fade edges */}
+      <div
+        className="absolute top-0 left-0 bottom-0 w-8 pointer-events-none"
+        style={{ background: "linear-gradient(to left, transparent, var(--c-bg))" }}
+      />
       <div
         className="absolute top-0 right-0 bottom-0 w-12 pointer-events-none"
         style={{ background: "linear-gradient(to right, transparent, var(--c-bg))" }}
