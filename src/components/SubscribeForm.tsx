@@ -28,8 +28,8 @@ export default function SubscribeForm() {
       setState("success");
       setMessage(
         data.status === "already_subscribed"
-          ? "You're already subscribed."
-          : "You're in. Expect the first brief on the next weekday morning."
+          ? "You're already on the list."
+          : "You're in. Check your inbox — your welcome email is on its way."
       );
       setEmail("");
     } catch {
@@ -40,9 +40,15 @@ export default function SubscribeForm() {
 
   if (state === "success") {
     return (
-      <p className="text-sm text-[var(--c-text-2)]">
-        {message}
-      </p>
+      <div className="flex items-center gap-2.5">
+        <span
+          className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: "var(--c-positive)", fontSize: 11 }}
+        >
+          ✓
+        </span>
+        <p className="text-sm" style={{ color: "var(--c-text-2)" }}>{message}</p>
+      </div>
     );
   }
 
@@ -55,17 +61,28 @@ export default function SubscribeForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="your@email.com"
         disabled={state === "loading"}
-        className="text-sm px-4 py-2.5 rounded-lg border border-[var(--c-border-2)] bg-white text-[var(--c-text-1)] placeholder:text-[var(--c-text-3)] focus:outline-none focus:border-[var(--c-green)] transition-colors w-56 disabled:opacity-60"
+        className="text-sm px-4 py-2.5 rounded-xl outline-none transition-all w-52"
+        style={{
+          background: "var(--c-surface-2)",
+          border: "1px solid var(--c-border-2)",
+          color: "var(--c-text-1)",
+        }}
+        onFocus={(e) => (e.currentTarget.style.borderColor = "var(--c-accent)")}
+        onBlur={(e) => (e.currentTarget.style.borderColor = "var(--c-border-2)")}
       />
       <button
         type="submit"
         disabled={state === "loading" || !email}
-        className="text-sm font-medium px-5 py-2.5 rounded-lg bg-[var(--c-green)] text-white hover:bg-[var(--c-green-2)] transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+        className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50"
+        style={{
+          background: "var(--c-accent)",
+          color: "var(--c-bg)",
+        }}
       >
         {state === "loading" ? "Subscribing…" : "Get the brief"}
       </button>
       {state === "error" && (
-        <p className="w-full text-xs text-red-600 mt-1">{message}</p>
+        <p className="w-full text-xs mt-1" style={{ color: "var(--c-negative)" }}>{message}</p>
       )}
     </form>
   );

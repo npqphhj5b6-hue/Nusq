@@ -2,15 +2,16 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--c-border)] mt-20">
-      <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+    <footer style={{ borderTop: "1px solid var(--c-border)", marginTop: "5rem" }}>
+      <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold tracking-[-0.03em] text-[var(--c-text-1)]">nusq</span>
-          <span className="text-xs text-[var(--c-text-3)]">MENA financial intelligence</span>
+          <span className="text-sm font-bold tracking-[-0.03em]" style={{ color: "var(--c-text-1)" }}>nusq</span>
+          <span className="text-xs" style={{ color: "var(--c-text-3)" }}>MENA financial intelligence</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/about" className="text-xs text-[var(--c-text-3)] hover:text-[var(--c-text-2)] transition-colors">About</Link>
-          <span className="text-xs text-[var(--c-text-3)]">Not investment advice.</span>
+          <Link href="/about" className="text-xs transition-colors" style={{ color: "var(--c-text-3)" }}>About</Link>
+          <Link href="/briefings" className="text-xs transition-colors" style={{ color: "var(--c-text-3)" }}>Briefings</Link>
+          <span className="text-xs" style={{ color: "var(--c-text-3)" }}>Not investment advice.</span>
         </div>
       </div>
     </footer>

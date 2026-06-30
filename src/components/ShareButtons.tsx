@@ -1,14 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   title: string;
   url: string;
+  text?: string;
 }
 
-export default function ShareButtons({ title, url }: Props) {
+export default function ShareButtons({ title, url, text }: Props) {
   const [copied, setCopied] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator.share === "function");
+  }, []);
+
+  const nativeShare = async () => {
+    try {
+      await navigator.share({ title, text: text ?? title, url });
+    } catch {
+      // user cancelled — do nothing
+    }
+  };
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
@@ -21,6 +35,24 @@ export default function ShareButtons({ title, url }: Props) {
 
   const btnClass =
     "flex items-center justify-center w-8 h-8 rounded-full border border-[var(--c-border)] text-[var(--c-text-3)] hover:border-[var(--c-border-2)] hover:text-[var(--c-text-2)] hover:scale-110 active:scale-95 transition-all duration-150";
+
+  // On mobile with Web Share API: show one native share button
+  if (canNativeShare) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-[var(--c-text-3)] mr-1">Share</span>
+        <button onClick={nativeShare} className={btnClass} aria-label="Share">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">
@@ -50,11 +82,7 @@ export default function ShareButtons({ title, url }: Props) {
         </svg>
       </a>
 
-      <button
-        onClick={copyLink}
-        className={btnClass}
-        aria-label="Copy link"
-      >
+      <button onClick={copyLink} className={btnClass} aria-label="Copy link">
         {copied ? (
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="20 6 9 17 4 12" />

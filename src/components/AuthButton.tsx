@@ -25,8 +25,12 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth"
-        className="text-xs font-semibold tracking-[0.08em] uppercase text-[#040C1A] bg-[var(--c-amber)] hover:bg-[var(--c-amber-2)] transition-colors duration-200 px-3 py-1.5 rounded-md"
-        style={{ color: "#040C1A" }}
+        className="text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all duration-150"
+        style={{
+          background: "var(--c-accent)",
+          color: "var(--c-bg)",
+          letterSpacing: "0.02em",
+        }}
       >
         Sign in
       </Link>
@@ -38,15 +42,20 @@ export default function AuthButton() {
     .filter(Boolean)
     .slice(0, 2)
     .map((s: string) => s[0].toUpperCase())
-    .join("");
+    .join("")
+    .slice(0, 2);
 
   return (
     <Link href="/account" aria-label="My account">
       <div
-        className="w-8 h-8 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B] text-xs font-bold hover:bg-[#F59E0B]/25 transition-colors"
-        style={{ fontFamily: "var(--font-barlow)" }}
+        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-150"
+        style={{
+          background: "var(--c-accent-glow)",
+          border: "1.5px solid var(--c-accent)",
+          color: "var(--c-accent)",
+        }}
       >
-        {initials.slice(0, 2)}
+        {initials}
       </div>
     </Link>
   );

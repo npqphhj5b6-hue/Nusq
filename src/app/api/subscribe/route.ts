@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   let email: string;
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
 
   const { data: existing } = await supabaseAdmin
     .from("subscribers")
-    .select("active")
+    .select("active, unsubscribe_token")
     .eq("email", email)
     .maybeSingle();
 
@@ -25,19 +26,30 @@ export async function POST(request: Request) {
   }
 
   if (existing && !existing.active) {
-    // Re-activate
     const { error } = await supabaseAdmin
       .from("subscribers")
       .update({ active: true, subscribed_at: new Date().toISOString() })
       .eq("email", email);
     if (error) return NextResponse.json({ error: "Could not re-subscribe" }, { status: 500 });
+    // Send welcome back — fire and forget
+    if (existing.unsubscribe_token) {
+      sendWelcomeEmail(email, existing.unsubscribe_token).catch(() => null);
+    }
     return NextResponse.json({ ok: true, status: "resubscribed" });
   }
 
-  const { error } = await supabaseAdmin
+  const { data: inserted, error } = await supabaseAdmin
     .from("subscribers")
-    .insert({ email });
+    .insert({ email })
+    .select("unsubscribe_token")
+    .single();
 
   if (error) return NextResponse.json({ error: "Could not subscribe" }, { status: 500 });
+
+  // Send welcome email — fire and forget, never block the response
+  if (inserted?.unsubscribe_token) {
+    sendWelcomeEmail(email, inserted.unsubscribe_token).catch(() => null);
+  }
+
   return NextResponse.json({ ok: true, status: "subscribed" });
 }
