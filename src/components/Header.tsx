@@ -42,10 +42,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "header-glass" : ""}`}
-      style={scrolled ? undefined : { borderBottom: "1px solid var(--c-border)" }}
-    >
+    <header className="sticky top-0 z-50 header-glass transition-all duration-300">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}

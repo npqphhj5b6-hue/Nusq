@@ -33,8 +33,8 @@ export const metadata: Metadata = {
     site: "@nusqapp",
   },
   themeColor: [
-    { media: "(prefers-color-scheme: dark)",  color: "#080E1C" },
-    { media: "(prefers-color-scheme: light)", color: "#F4F7FF" },
+    { media: "(prefers-color-scheme: dark)",  color: "#030C09" },
+    { media: "(prefers-color-scheme: light)", color: "#F2FAF8" },
   ],
 };
 
