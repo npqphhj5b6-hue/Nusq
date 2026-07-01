@@ -47,7 +47,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link href="/" className="flex items-center shrink-0 group">
           <Image
             src={theme === "dark" ? "/logo-wordmark-white.png" : "/logo-wordmark-dark.png"}
             alt="Nusq"
@@ -56,10 +56,6 @@ export default function Header() {
             priority
             className="h-5 w-auto"
           />
-          <span className="w-px h-3.5" style={{ backgroundColor: "var(--c-border-2)" }} />
-          <span className="text-sm" style={{ fontFamily: "var(--font-arabic)", color: "var(--c-text-3)" }}>
-            نسق
-          </span>
         </Link>
 
         {/* Desktop nav */}
