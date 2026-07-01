@@ -45,7 +45,7 @@ export default function SignalShareButton({ headline, detail, slug }: Props) {
   return (
     <button
       onClick={handleShare}
-      aria-label="Share signal"
+      aria-label="Share Ishara"
       title={state === "copied" ? "Link copied!" : "Share"}
       className="flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 opacity-60 hover:opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100"
       style={{

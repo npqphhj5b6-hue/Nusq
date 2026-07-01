@@ -74,7 +74,7 @@ function SectorCard({ s, rank }: { s: SectorData; rank: number }) {
         <span style={{ color: "var(--c-watch)" }}>◐ {s.watch}</span>
         <span style={{ color: "var(--c-negative)" }}>▼ {s.negative}</span>
         <span className="ml-auto" style={{ color: "var(--c-text-3)" }}>
-          {s.total} signal{s.total !== 1 ? "s" : ""}
+          Ishara total: {s.total}
         </span>
       </div>
     </div>
@@ -115,7 +115,7 @@ export default function SectorHeatmap({ sectors }: { sectors: SectorData[] }) {
           Market at a glance
         </h1>
         <p className="text-sm" style={{ color: "var(--c-text-2)" }}>
-          Signal sentiment across MENA sectors, derived from recent intelligence.
+          Ishara sentiment across MENA sectors, derived from recent intelligence.
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export default function SectorHeatmap({ sectors }: { sectors: SectorData[] }) {
           {/* KPI row */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { value: totalSignals.toString(), label: "Total signals", color: undefined },
+              { value: totalSignals.toString(), label: "Ishara total", color: undefined },
               { value: sectors.length.toString(), label: "Sectors tracked", color: undefined },
               { value: mood.label, label: "Overall mood", color: mood.color },
             ].map(({ value, label, color }) => (
@@ -174,7 +174,7 @@ export default function SectorHeatmap({ sectors }: { sectors: SectorData[] }) {
           {/* Bar chart */}
           <div className="rounded-2xl p-5" style={{ background: "var(--c-surface)", border: "1px solid var(--c-border)" }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-5" style={{ color: "var(--c-text-3)" }}>
-              Signal volume by sector
+              Ishara volume by sector
             </p>
             <div className="flex flex-col gap-3.5">
               {sorted.map(s => (
@@ -217,7 +217,7 @@ export default function SectorHeatmap({ sectors }: { sectors: SectorData[] }) {
       )}
 
       <p className="text-[11px] mt-6 text-center" style={{ color: "var(--c-text-3)" }}>
-        Derived from Nusq signal intelligence · Not investment advice
+        Derived from Nusq Ishara intelligence · Not investment advice
       </p>
     </div>
   );

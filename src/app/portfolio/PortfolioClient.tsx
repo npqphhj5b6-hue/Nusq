@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import SignalCard from "@/components/SignalCard";
+import IsharaBlock from "@/components/IsharaBlock";
 import type { Signal } from "@/lib/signals";
 
 const STORAGE_KEY = "nusq-portfolio-holdings";
@@ -61,7 +61,7 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
           Your holdings
         </h1>
         <p className="text-sm" style={{ color: "var(--c-text-2)" }}>
-          Add positions — we&apos;ll surface only signals that touch them.
+          Add positions — we&apos;ll surface only Ishara coverage that touches them.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
           <div className="py-8 text-center">
             <p className="text-sm mb-1" style={{ color: "var(--c-text-2)" }}>No holdings yet.</p>
             <p className="text-xs" style={{ color: "var(--c-text-3)" }}>
-              Add a position to see tailored signals below.
+              Add a position to see tailored Ishara coverage below.
             </p>
           </div>
         ) : (
@@ -163,11 +163,11 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
         )}
       </div>
 
-      {/* Relevant signals */}
+      {/* Relevant Isharas */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <span className="eyebrow">
-            {holdings.length > 0 ? "Signals for your portfolio" : "Recent signals"}
+            {holdings.length > 0 ? "Ishara feed — your portfolio" : "Recent Ishara feed"}
           </span>
           {relevant.length > 0 && (
             <span className="text-xs" style={{ color: "var(--c-text-3)" }}>
@@ -181,7 +181,7 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
             className="rounded-2xl p-8 text-center"
             style={{ background: "var(--c-surface)", border: "1px solid var(--c-border)" }}
           >
-            <p className="text-sm" style={{ color: "var(--c-text-2)" }}>Add a holding to see signals.</p>
+            <p className="text-sm" style={{ color: "var(--c-text-2)" }}>Add a holding to see Ishara coverage.</p>
             <p className="text-xs mt-1" style={{ color: "var(--c-text-3)" }}>
               We filter by sector to show only what matters to you.
             </p>
@@ -192,12 +192,12 @@ export default function PortfolioClient({ allSignals }: { allSignals: Signal[] }
             style={{ background: "var(--c-surface)", border: "1px solid var(--c-border)" }}
           >
             <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
-              No recent signals touch your holdings — check back soon.
+              No recent Ishara activity touches your holdings — check back soon.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {relevant.map(s => <SignalCard key={s.id} signal={s} compact />)}
+            {relevant.map(s => <IsharaBlock key={s.id} signal={s} compact />)}
           </div>
         )}
       </div>

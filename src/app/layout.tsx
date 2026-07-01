@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     default: "Nusq — MENA markets, explained.",
     template: "%s — Nusq",
   },
-  description: "Daily signals and briefings on Gulf and MENA markets. Plain language. No finance degree needed.",
+  description: "Daily Isharas and briefings on Gulf and MENA markets. Plain language. No finance degree needed.",
   metadataBase: new URL(SITE_URL),
   icons: {
     icon: [

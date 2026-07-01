@@ -8,11 +8,8 @@ import AuthButton from "./AuthButton";
 import { useTheme } from "./ThemeProvider";
 
 const NAV_LINKS = [
-  { label: "Signals", href: "/signals" },
-  { label: "Portfolio", href: "/portfolio" },
-  { label: "Heatmap", href: "/heatmap" },
-  { label: "Briefings", href: "/briefings" },
-  { label: "Glossary", href: "/glossary" },
+  { label: "Briefings", href: "/" },
+  { label: "How Nusq Works", href: "/how-it-works" },
 ];
 
 function SunIcon() {
@@ -61,7 +58,7 @@ export default function Header() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
           {NAV_LINKS.map(({ label, href }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
+            const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={label}

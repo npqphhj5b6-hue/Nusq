@@ -1,6 +1,6 @@
 import { getAllBriefings } from "@/lib/db";
 import { extractSignals } from "@/lib/signals";
-import SignalCard from "@/components/SignalCard";
+import IsharaBlock from "@/components/IsharaBlock";
 import SignalsFilter from "@/components/SignalsFilter";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export default async function SignalsPage({
 
       {/* Header */}
       <div className="mb-7">
-        <span className="eyebrow block mb-2">Signals feed</span>
+        <span className="eyebrow block mb-2">Ishara feed</span>
         <h1
           className="font-bold mb-1.5"
           style={{
@@ -36,10 +36,10 @@ export default async function SignalsPage({
             color: "var(--c-text-1)",
           }}
         >
-          All market signals
+          The market Ishara feed
         </h1>
         <p className="text-sm" style={{ color: "var(--c-text-2)" }}>
-          {allSignals.length} scored reads from MENA and global macro
+          Ishara total: {allSignals.length} — scored reads from MENA and global macro
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export default async function SignalsPage({
       {/* Count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs" style={{ color: "var(--c-text-3)" }}>
-          {filtered.length} signal{filtered.length !== 1 ? "s" : ""}
+          Ishara total: {filtered.length}
           {(params.sector || params.direction) && " matching filters"}
         </p>
         {(params.sector || params.direction) && (
@@ -68,7 +68,7 @@ export default async function SignalsPage({
         )}
       </div>
 
-      {/* Signal list */}
+      {/* Ishara list */}
       <div className="flex flex-col gap-2.5">
         {filtered.length === 0 ? (
           <div
@@ -76,11 +76,11 @@ export default async function SignalsPage({
             style={{ background: "var(--c-surface)", border: "1px solid var(--c-border)" }}
           >
             <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
-              No signals match your filters.
+              No Ishara matches your filters.
             </p>
           </div>
         ) : (
-          filtered.map(signal => <SignalCard key={signal.id} signal={signal} />)
+          filtered.map(signal => <IsharaBlock key={signal.id} signal={signal} />)
         )}
       </div>
     </div>

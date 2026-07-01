@@ -12,14 +12,6 @@ function HomeIcon({ active }: { active: boolean }) {
   );
 }
 
-function ZapIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-    </svg>
-  );
-}
-
 function BookOpenIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -31,22 +23,9 @@ function BookOpenIcon({ active }: { active: boolean }) {
   );
 }
 
-function GridIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1" fill={active ? "currentColor" : "none"}/>
-      <rect x="14" y="3" width="7" height="7" rx="1" fill={active ? "currentColor" : "none"}/>
-      <rect x="3" y="14" width="7" height="7" rx="1" fill={active ? "currentColor" : "none"} opacity={active ? 0.5 : 1}/>
-      <rect x="14" y="14" width="7" height="7" rx="1" fill={active ? "currentColor" : "none"} opacity={active ? 0.3 : 1}/>
-    </svg>
-  );
-}
-
 const TABS = [
-  { href: "/",           label: "Home",      Icon: HomeIcon },
-  { href: "/briefings",  label: "Briefings", Icon: BookOpenIcon },
-  { href: "/signals",    label: "Signals",   Icon: ZapIcon },
-  { href: "/heatmap",    label: "Heatmap",   Icon: GridIcon },
+  { href: "/",             label: "Briefings",      Icon: HomeIcon },
+  { href: "/how-it-works", label: "How Nusq Works", Icon: BookOpenIcon },
 ];
 
 export default function BottomNav() {
