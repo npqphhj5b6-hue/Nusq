@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-export default function SubscribeForm() {
+interface Props {
+  variant?: "hero" | "inline";
+}
+
+export default function SubscribeForm({ variant = "hero" }: Props) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -29,7 +33,7 @@ export default function SubscribeForm() {
       setMessage(
         data.status === "already_subscribed"
           ? "You're already on the list."
-          : "You're in. Check your inbox — your welcome email is on its way."
+          : "You're in. Check your inbox to confirm."
       );
       setEmail("");
     } catch {
@@ -40,20 +44,20 @@ export default function SubscribeForm() {
 
   if (state === "success") {
     return (
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5" style={{ padding: variant === "hero" ? "16px 0" : 0 }}>
         <span
           className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: "var(--c-positive)", fontSize: 11 }}
+          style={{ background: "var(--c-accent)", color: "var(--c-accent-ink)", fontSize: 11, fontWeight: 700 }}
         >
           ✓
         </span>
-        <p className="text-sm" style={{ color: "var(--c-text-2)" }}>{message}</p>
+        <p style={{ fontSize: 14.5, color: "var(--c-text-1)" }}>{message}</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-wrap">
+    <form onSubmit={handleSubmit} className="flex items-stretch gap-2.5 flex-wrap">
       <input
         type="email"
         required
@@ -61,28 +65,31 @@ export default function SubscribeForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="your@email.com"
         disabled={state === "loading"}
-        className="text-sm px-4 py-2.5 rounded-xl outline-none transition-all w-52"
-        style={{
-          background: "var(--c-surface-2)",
-          border: "1px solid var(--c-border-2)",
-          color: "var(--c-text-1)",
-        }}
-        onFocus={(e) => (e.currentTarget.style.borderColor = "var(--c-accent)")}
-        onBlur={(e) => (e.currentTarget.style.borderColor = "var(--c-border-2)")}
+        aria-label="Email address"
+        className="input-nusq"
+        style={{ flex: "1 1 220px", minWidth: 0 }}
       />
       <button
         type="submit"
         disabled={state === "loading" || !email}
-        className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50"
+        className="btn-gradient"
         style={{
-          background: "var(--c-accent)",
-          color: "var(--c-bg)",
+          flex: "none",
+          padding: "0 22px",
+          borderRadius: 12,
+          fontSize: 14,
+          fontWeight: 700,
+          background: "linear-gradient(135deg, var(--c-accent), var(--c-accent-2))",
+          color: "var(--c-accent-ink)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.25), 0 3px 12px var(--c-accent-glow)",
+          opacity: state === "loading" || !email ? 0.6 : 1,
+          cursor: state === "loading" || !email ? "default" : "pointer",
         }}
       >
-        {state === "loading" ? "Subscribing…" : "Get the brief"}
+        {state === "loading" ? "Subscribing…" : "Get the free briefing"}
       </button>
       {state === "error" && (
-        <p className="w-full text-xs mt-1" style={{ color: "var(--c-negative)" }}>{message}</p>
+        <p className="w-full" style={{ fontSize: 12.5, color: "var(--c-negative)", margin: 0 }}>{message}</p>
       )}
     </form>
   );

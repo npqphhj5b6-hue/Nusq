@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getBriefingBySlug } from "@/lib/db";
 import { createClient } from "@/lib/supabase-server";
 import BriefingBody from "@/components/BriefingBody";
+import SubscribeForm from "@/components/SubscribeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,19 @@ export default async function BriefingPage({
         userId={user?.id ?? null}
         initialSaved={initialSaved}
       />
+
+      {/* ── Post-read conversion: highest-intent moment ── */}
+      <div className="glass-card" style={{ padding: "28px 30px 32px", marginTop: 48 }}>
+        <div
+          style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 19, color: "var(--c-text-1)", marginBottom: 6 }}
+        >
+          Get this every weekday morning
+        </div>
+        <p style={{ margin: "0 0 18px", fontSize: 14, lineHeight: 1.6, color: "var(--c-text-2)", maxWidth: 440 }}>
+          One free briefing, straight to your inbox — plain language, Arabic sources included.
+        </p>
+        <SubscribeForm variant="inline" />
+      </div>
     </div>
   );
 }

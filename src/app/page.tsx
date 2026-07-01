@@ -3,16 +3,12 @@ import { getAllBriefings, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import StreakBadge from "@/components/StreakBadge";
 import BriefingCover from "@/components/BriefingCover";
+import SubscribeForm from "@/components/SubscribeForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const now = new Date();
-  const today = now.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-  }).toUpperCase();
   const isWeekend = [0, 6].includes(now.getUTCDay());
 
   const briefings = await getAllBriefings();
@@ -22,6 +18,27 @@ export default async function Home() {
     [...briefings].reverse().map((b, i) => [b.slug, i + 1])
   );
 
+  // The eyebrow date must reflect the briefing actually being shown, not the
+  // visitor's clock — otherwise a missed pipeline day silently presents
+  // stale content as if it were today's. Compare in UTC since `date` is a
+  // plain date column with no time component.
+  const todayISO = now.toISOString().split("T")[0];
+  const featuredISO = featured ? new Date(featured.date).toISOString().split("T")[0] : null;
+  const isFresh = featuredISO === todayISO;
+  const eyebrowDate = featured ? new Date(featured.date) : now;
+  const eyebrowLabel = eyebrowDate
+    .toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" })
+    .toUpperCase();
+
+  // The subhead used to hardcode "Four things" regardless of how many
+  // stories the featured briefing actually contains — drive it from the
+  // real story count so it can't drift out of sync with the content again.
+  const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six"];
+  const storyCount = featured?.stories?.length ?? 0;
+  const storyCountLabel = storyCount > 0 && storyCount < NUMBER_WORDS.length
+    ? NUMBER_WORDS[storyCount]
+    : String(storyCount);
+
   return (
     <div className="relative overflow-hidden">
       <div className="bg-blob" />
@@ -30,7 +47,8 @@ export default async function Home() {
         {/* ── Eyebrow ── */}
         <div className="flex items-center gap-2.5 flex-wrap" style={{ marginBottom: 20 }}>
           <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.06em", color: "var(--c-text-3)" }}>
-            {today}
+            {!isFresh && !isWeekend && featured && "LATEST · "}
+            {eyebrowLabel}
             {isWeekend && <span> · NEXT BRIEFING MONDAY</span>}
           </span>
           <StreakBadge />
@@ -51,9 +69,19 @@ export default async function Home() {
           <span>MENA markets, </span>
           <span className="gradient-text">explained.</span>
         </h1>
-        <p style={{ margin: "0 0 40px", fontSize: 15, lineHeight: 1.6, color: "var(--c-text-2)", maxWidth: 480 }}>
-          {featured ? "Four things moving Gulf and North African markets today." : "Briefings publish every weekday morning."}
+        <p style={{ margin: "0 0 28px", fontSize: 15, lineHeight: 1.6, color: "var(--c-text-2)", maxWidth: 480 }}>
+          {featured
+            ? `${storyCountLabel} thing${storyCount === 1 ? "" : "s"} moving Gulf and North African markets today.`
+            : "Briefings publish every weekday morning."}
         </p>
+
+        {/* ── Primary CTA: email signup ── */}
+        <div style={{ marginBottom: 44 }}>
+          <SubscribeForm />
+          <p style={{ margin: "10px 0 0", fontSize: 12.5, color: "var(--c-text-3)" }}>
+            Free, every weekday morning. No spam — unsubscribe anytime.
+          </p>
+        </div>
 
         {/* ── Featured briefing card ── */}
         {featured && (
