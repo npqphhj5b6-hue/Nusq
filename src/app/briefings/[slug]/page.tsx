@@ -70,13 +70,14 @@ export default async function BriefingPage({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 32px 90px" }} className="page-enter">
       {/* Back */}
       <Link
         href="/briefings"
-        className="inline-flex items-center gap-1.5 text-xs text-[var(--c-text-3)] hover:text-[var(--c-text-1)] transition-colors mb-10 cursor-pointer"
+        className="back-link inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--c-text-2)] cursor-pointer"
+        style={{ marginBottom: 28 }}
       >
-        ← Briefings
+        ← Back to briefings
       </Link>
 
       <BriefingBody
@@ -84,7 +85,6 @@ export default async function BriefingPage({
         pageUrl={pageUrl}
         userId={user?.id ?? null}
         initialSaved={initialSaved}
-        variant="archive"
       />
     </div>
   );

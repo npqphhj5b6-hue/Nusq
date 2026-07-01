@@ -48,18 +48,26 @@ const STAGES: Stage[] = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="max-w-2xl mx-auto px-6 py-16">
-
+    <div>
       {/* ── Opening framing ── */}
-      <ScrollReveal>
-        <div className="mb-14">
+      <div className="relative overflow-hidden">
+        <div className="bg-blob" />
+        <div className="max-w-2xl mx-auto px-6 pt-16 pb-8 relative">
           <span className="eyebrow block mb-4">How Nusq works</span>
           <h1
-            className="font-bold leading-[1.05] mb-6"
-            style={{ fontSize: "clamp(2rem, 6vw, 3rem)", letterSpacing: "-0.04em", color: "var(--c-text-1)" }}
+            className="leading-[1.05] mb-6"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(2.5rem, 7vw, 4rem)", letterSpacing: "-0.02em", color: "var(--c-text-1)" }}
           >
-            Full pipeline, no black box.
+            Full pipeline,
+            <br />
+            no black box.
           </h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-6 pb-16">
+      <ScrollReveal>
+        <div className="mb-14">
           <div className="prose-nusq">
             <p>
               Most financial media is built for Wall Street and the City. MENA —
@@ -113,8 +121,8 @@ export default function HowItWorksPage() {
                 </span>
                 <div className="pt-1">
                   <h3
-                    className="font-bold mb-2"
-                    style={{ fontSize: "1.05rem", letterSpacing: "-0.02em", color: "var(--c-text-1)" }}
+                    className="mb-2"
+                    style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.05rem", letterSpacing: "-0.01em", color: "var(--c-text-1)" }}
                   >
                     {stage.title}
                   </h3>
@@ -170,7 +178,7 @@ export default function HowItWorksPage() {
           </Link>
         </div>
       </ScrollReveal>
-
+      </div>
     </div>
   );
 }

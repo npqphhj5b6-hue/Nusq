@@ -1,110 +1,149 @@
-import { getAllBriefings } from "@/lib/db";
-import { createClient } from "@/lib/supabase-server";
-import BriefingBody from "@/components/BriefingBody";
+import Link from "next/link";
+import { getAllBriefings, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
-import SubscribeForm from "@/components/SubscribeForm";
 import StreakBadge from "@/components/StreakBadge";
+import BriefingCover from "@/components/BriefingCover";
 
 export const dynamic = "force-dynamic";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nusq.vercel.app";
 
 export default async function Home() {
   const now = new Date();
   const today = now.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+    month: "short",
+  }).toUpperCase();
   const isWeekend = [0, 6].includes(now.getUTCDay());
 
   const briefings = await getAllBriefings();
-  const briefing = briefings[0] ?? null;
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  let initialSaved = false;
-  if (user && briefing?.id) {
-    const { data } = await supabase
-      .from("saved_briefings")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("briefing_id", briefing.id)
-      .maybeSingle();
-    initialSaved = !!data;
-  }
+  const [featured, ...rest] = briefings;
+  const moreArticles = rest.slice(0, 3);
+  const issueNumbers = new Map(
+    [...briefings].reverse().map((b, i) => [b.slug, i + 1])
+  );
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
-      {/* ── Minimal header: date + tagline ── */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 flex-wrap mb-4">
-          <p
-            className="text-[11px] font-medium tracking-[0.12em] uppercase"
-            style={{ color: "var(--c-text-3)" }}
-          >
+    <div className="relative overflow-hidden">
+      <div className="bg-blob" />
+
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "60px 32px 90px", position: "relative", zIndex: 1 }}>
+        {/* ── Eyebrow ── */}
+        <div className="flex items-center gap-2.5 flex-wrap" style={{ marginBottom: 20 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.06em", color: "var(--c-text-3)" }}>
             {today}
-            {isWeekend && (
-              <span className="ml-3" style={{ color: "var(--c-text-3)" }}>
-                · Next briefing Monday
-              </span>
-            )}
-          </p>
+            {isWeekend && <span> · NEXT BRIEFING MONDAY</span>}
+          </span>
           <StreakBadge />
         </div>
 
+        {/* ── Hero H1 ── */}
         <h1
-          className="font-bold leading-[1.05]"
           style={{
-            fontSize: "clamp(1.7rem, 5vw, 2.5rem)",
-            letterSpacing: "-0.04em",
+            margin: "0 0 12px",
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(2.2rem, 6vw, 46px)",
+            lineHeight: 1.08,
+            fontWeight: 700,
+            letterSpacing: "-0.015em",
+            color: "var(--c-text-1)",
           }}
         >
-          <span style={{ color: "var(--c-accent)" }}>MENA</span>{" "}
-          <span style={{ color: "var(--c-text-1)" }}>markets,</span>{" "}
-          <span style={{ color: "var(--c-text-2)" }}>explained.</span>
+          <span>MENA markets, </span>
+          <span className="gradient-text">explained.</span>
         </h1>
+        <p style={{ margin: "0 0 40px", fontSize: 15, lineHeight: 1.6, color: "var(--c-text-2)", maxWidth: 480 }}>
+          {featured ? "Four things moving Gulf and North African markets today." : "Briefings publish every weekday morning."}
+        </p>
+
+        {/* ── Featured briefing card ── */}
+        {featured && (
+          <ScrollReveal>
+            <Link href={`/briefings/${featured.slug}`} className="glass-card group block" style={{ overflow: "hidden", marginBottom: 48 }}>
+              <div style={{ height: 224, overflow: "hidden" }}>
+                <div className="transition-transform duration-500 group-hover:scale-105 h-full">
+                  <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} coverImageUrl={featured.coverImageUrl} />
+                </div>
+              </div>
+              <div style={{ padding: "28px 30px 32px" }}>
+                <div className="flex flex-wrap gap-2" style={{ marginBottom: 14 }}>
+                  {featured.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="tag-pill">{tag}</span>
+                  ))}
+                </div>
+                <h2
+                  style={{
+                    margin: "0 0 10px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 24,
+                    lineHeight: 1.28,
+                    fontWeight: 700,
+                    color: "var(--c-text-1)",
+                  }}
+                >
+                  {featured.title}
+                </h2>
+                <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: "var(--c-text-2)" }}>
+                  {featured.summary}
+                </p>
+              </div>
+            </Link>
+          </ScrollReveal>
+        )}
+
+        {/* ── More briefings list ── */}
+        {moreArticles.length > 0 && (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: "var(--c-text-3)", marginBottom: 6 }}>
+              MORE BRIEFINGS
+            </div>
+            <div className="flex flex-col">
+              {moreArticles.map((b, i) => (
+                <ScrollReveal key={b.slug} delay={i * 100}>
+                  <Link
+                    href={`/briefings/${b.slug}`}
+                    className="feed-row group"
+                    style={{ borderTop: "1px solid var(--c-border)" }}
+                  >
+                    <div style={{ flex: "none", width: 76, height: 76, borderRadius: 14, overflow: "hidden" }}>
+                      <BriefingCover issueNumber={issueNumbers.get(b.slug)!} coverImageUrl={b.coverImageUrl} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {b.tags[0] && (
+                        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.03em", color: "var(--c-secondary)", marginBottom: 5 }}>
+                          {b.tags[0]}
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 16.5,
+                          fontWeight: 700,
+                          color: "var(--c-text-1)",
+                          lineHeight: 1.3,
+                          marginBottom: 4,
+                        }}
+                      >
+                        {b.title}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "var(--c-text-3)" }}>
+                        {formatDateShort(b.date)} · {b.readingTime} min read
+                      </div>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+              ))}
+            </div>
+          </>
+        )}
+
+        {!featured && (
+          <div className="py-12 text-center">
+            <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
+              No briefing yet — briefings publish every weekday morning.
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* ── The day's full briefing ── */}
-      {briefing ? (
-        <BriefingBody
-          briefing={briefing}
-          pageUrl={SITE_URL}
-          userId={user?.id ?? null}
-          initialSaved={initialSaved}
-          variant="home"
-        />
-      ) : (
-        <div className="py-12 text-center">
-          <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
-            No briefing yet — briefings publish every weekday morning.
-          </p>
-        </div>
-      )}
-
-      {/* ── Email signup — once, at the end ── */}
-      <ScrollReveal>
-        <div className="mt-10 mb-6 glass-card px-6 py-6">
-          <p
-            className="text-xs font-bold tracking-widest uppercase mb-2"
-            style={{ color: "var(--c-accent)" }}
-          >
-            Daily brief
-          </p>
-          <p
-            className="font-semibold mb-1 leading-snug"
-            style={{ color: "var(--c-text-1)", fontSize: "1rem", letterSpacing: "-0.02em" }}
-          >
-            Get it in your inbox every weekday morning.
-          </p>
-          <p className="text-sm mb-4" style={{ color: "var(--c-text-2)" }}>
-            Plain language. No jargon. Free.
-          </p>
-          <SubscribeForm />
-        </div>
-      </ScrollReveal>
     </div>
   );
 }

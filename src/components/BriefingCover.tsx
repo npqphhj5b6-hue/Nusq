@@ -1,9 +1,10 @@
 interface BriefingCoverProps {
   issueNumber: number;
   coverImageUrl?: string | null;
+  caption?: string;
 }
 
-export default function BriefingCover({ issueNumber, coverImageUrl }: BriefingCoverProps) {
+export default function BriefingCover({ issueNumber, coverImageUrl, caption }: BriefingCoverProps) {
   const numStr = String(issueNumber).padStart(2, "0");
   const imgSrc = coverImageUrl
     ? coverImageUrl.includes("images.unsplash.com")
@@ -34,7 +35,7 @@ export default function BriefingCover({ issueNumber, coverImageUrl }: BriefingCo
               fontWeight: 700,
               letterSpacing: "0.14em",
               textTransform: "uppercase" as const,
-              color: "rgba(255,255,255,0.6)",
+              color: "rgba(255,255,255,0.7)",
               fontFamily: "var(--font-mono)",
             }}
           >
@@ -45,58 +46,25 @@ export default function BriefingCover({ issueNumber, coverImageUrl }: BriefingCo
     );
   }
 
-  /* ── Branded no-image variant — based on Claude Design candidate C ── */
+  /* ── Placeholder variant: diagonal accent-tinted gradient + mono caption ── */
   return (
     <div
-      className="w-full h-full flex flex-col overflow-hidden"
-      style={{ background: "#0D1829" }}
+      className="w-full h-full flex items-center justify-center text-center"
+      style={{
+        background: "linear-gradient(135deg, var(--c-accent-glow), var(--c-secondary-soft))",
+        padding: "0 8%",
+      }}
     >
-      {/* Top: label + rule */}
-      <div style={{ padding: "8% 8% 0", flexShrink: 0 }}>
-        <span
-          style={{
-            display: "block",
-            fontSize: "clamp(0.45rem, 1.1vw, 0.65rem)",
-            fontWeight: 700,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase" as const,
-            color: "#4B8ABF",
-            fontFamily: "var(--font-mono)",
-            marginBottom: "5%",
-          }}
-        >
-          Nusq Intelligence
-        </span>
-        <div style={{ height: "1px", background: "rgba(55, 90, 140, 0.45)" }} />
-      </div>
-
-      {/* Center: large condensed-bold issue number */}
-      <div
+      <span
         style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          letterSpacing: "0.04em",
+          color: "var(--c-text-3)",
         }}
       >
-        <span
-          style={{
-            fontSize: "clamp(3.5rem, 9vw, 7rem)",
-            fontWeight: 800,
-            letterSpacing: "-0.04em",
-            lineHeight: 1,
-            color: "#EDE3D5",
-            fontFamily: "var(--font-geist-sans)",
-          }}
-        >
-          {numStr}
-        </span>
-      </div>
-
-      {/* Bottom: rule */}
-      <div style={{ padding: "0 8% 8%", flexShrink: 0 }}>
-        <div style={{ height: "1px", background: "rgba(55, 90, 140, 0.45)" }} />
-      </div>
+        {caption ? caption.toUpperCase() : `ISSUE — #${numStr}`}
+      </span>
     </div>
   );
 }

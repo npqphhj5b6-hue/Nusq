@@ -68,7 +68,7 @@ export default function PreferencesPage() {
         </Link>
         <h1
           className="text-[2rem] leading-[1.1] text-[var(--c-text-1)]"
-          style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
+          style={{ fontFamily: "var(--font-display)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
         >
           Preferences
         </h1>
@@ -87,10 +87,10 @@ export default function PreferencesPage() {
               onClick={() => toggle(m, markets, setMarkets)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 markets.includes(m)
-                  ? "bg-[var(--c-amber)] border-[var(--c-amber)] text-[#040C1A]"
-                  : "border-[var(--c-border)] text-[var(--c-text-2)] hover:border-[var(--c-amber)]/50"
+                  ? "bg-[var(--c-accent)] border-[var(--c-accent)] text-[var(--c-accent-ink)]"
+                  : "border-[var(--c-border)] text-[var(--c-text-2)] hover:border-[var(--c-accent)]/50"
               }`}
-              style={{ color: markets.includes(m) ? "#040C1A" : undefined }}
+              style={{ color: markets.includes(m) ? "var(--c-accent-ink)" : undefined }}
             >
               {m}
             </button>
@@ -108,10 +108,10 @@ export default function PreferencesPage() {
               onClick={() => toggle(s, sectors, setSectors)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 sectors.includes(s)
-                  ? "bg-[var(--c-amber)] border-[var(--c-amber)] text-[#040C1A]"
-                  : "border-[var(--c-border)] text-[var(--c-text-2)] hover:border-[var(--c-amber)]/50"
+                  ? "bg-[var(--c-accent)] border-[var(--c-accent)] text-[var(--c-accent-ink)]"
+                  : "border-[var(--c-border)] text-[var(--c-text-2)] hover:border-[var(--c-accent)]/50"
               }`}
-              style={{ color: sectors.includes(s) ? "#040C1A" : undefined }}
+              style={{ color: sectors.includes(s) ? "var(--c-accent-ink)" : undefined }}
             >
               {s}
             </button>
@@ -123,13 +123,13 @@ export default function PreferencesPage() {
         <button
           onClick={save}
           disabled={saving}
-          className="h-11 px-8 rounded-lg bg-[var(--c-amber)] hover:bg-[var(--c-amber-2)] transition-colors text-[#040C1A] text-sm font-bold disabled:opacity-50 flex items-center gap-2"
-          style={{ color: "#040C1A" }}
+          className="h-11 px-8 rounded-lg bg-[var(--c-accent)] hover:bg-[var(--c-accent-2)] transition-colors text-[var(--c-accent-ink)] text-sm font-bold disabled:opacity-50 flex items-center gap-2"
+          style={{ color: "var(--c-accent-ink)" }}
         >
           {saving ? (
             <svg className="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6" stroke="#040C1A" strokeOpacity="0.3" strokeWidth="2"/>
-              <path d="M8 2a6 6 0 016 6" stroke="#040C1A" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="6" stroke="var(--c-accent-ink)" strokeOpacity="0.3" strokeWidth="2"/>
+              <path d="M8 2a6 6 0 016 6" stroke="var(--c-accent-ink)" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           ) : "Save preferences"}
         </button>

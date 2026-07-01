@@ -8,10 +8,9 @@ import BookmarkButton from "@/components/BookmarkButton";
 import ReadTracker from "@/components/ReadTracker";
 import MenaMap from "@/components/MenaMap";
 import BriefingCheck from "@/components/BriefingCheck";
-import IsharaBlock from "@/components/IsharaBlock";
+import StoryEvidence from "@/components/StoryEvidence";
 import AnnotatedText from "@/components/AnnotatedText";
 import { annotateParagraph } from "@/lib/terms";
-import { extractSignals } from "@/lib/signals";
 import type { SourceRef, BriefingIntelligence, Counterpoint, Briefing } from "@/lib/types";
 import { getPublisherDomain } from "@/lib/source-credibility";
 
@@ -20,9 +19,6 @@ interface Props {
   pageUrl: string;
   userId: string | null;
   initialSaved: boolean;
-  /** "home" renders inline on the homepage (Ishara blocks per story, no Also Watching, links back to the archive).
-   *  "archive" is the standalone /briefings/[slug] page (per-story evidence bubble, Also Watching shown). */
-  variant: "home" | "archive";
 }
 
 function unsplashUrlFull(raw: string, w: number) {
@@ -39,7 +35,7 @@ const CHART_KEYWORDS: Record<string, RegExp> = {
   inflation:   /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
 };
 
-export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, variant }: Props) {
+export default function BriefingBody({ briefing, pageUrl, userId, initialSaved }: Props) {
   const sourceMap = new Map<number, SourceRef>(
     (briefing.sources ?? []).map((s) => [s.index, s])
   );
@@ -54,11 +50,6 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
   const hasTldr = Array.isArray(briefing.tldrBullets) && briefing.tldrBullets.length > 0;
   const hasStoryEvidence = hasStories && briefing.stories!.some((s) => s.evidence);
   const alsoWatching = Array.isArray(briefing.alsoWatching) ? briefing.alsoWatching : [];
-
-  const embedIshara = variant === "home";
-  const storySignalById = new Map(
-    embedIshara ? extractSignals([briefing]).map((s) => [s.id, s]) : []
-  );
 
   // Shared across every paragraph in this briefing so each glossary term is only
   // wrapped as click-to-define on its first appearance in the whole read.
@@ -86,7 +77,7 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-5">
         {briefing.tags.map((tag) => (
-          <span key={tag} className="text-[9px] font-bold tracking-[0.14em] text-[var(--c-green)] uppercase bg-[var(--c-green-bg)] px-2.5 py-1 rounded-full">
+          <span key={tag} className="tag-pill">
             {tag}
           </span>
         ))}
@@ -94,14 +85,14 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
 
       {/* Headline */}
       <h1
-        className="font-bold leading-[1.06] text-[var(--c-text-1)] mb-5"
-        style={{ fontSize: "clamp(1.75rem, 5vw, 3rem)", letterSpacing: "-0.035em" }}
+        className="leading-[1.1] text-[var(--c-text-1)] mb-5"
+        style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.75rem, 5vw, 2.75rem)", letterSpacing: "-0.02em" }}
       >
         {briefing.title}
       </h1>
 
       {/* Summary */}
-      <p className="text-base md:text-[1.125rem] text-[var(--c-text-2)] leading-[1.7] mb-6 font-light">
+      <p className="text-base md:text-[1.0625rem] text-[var(--c-text-2)] leading-[1.7] mb-6">
         {briefing.summary}
       </p>
 
@@ -109,7 +100,7 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
 
       {/* Meta row */}
       <div className="flex items-center justify-between mb-6 pb-6 border-b border-[var(--c-border)]">
-        <div className="flex items-center gap-3 text-xs text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-geist-mono)" }}>
+        <div className="flex items-center gap-3 text-xs text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-mono)" }}>
           <span>{formatDate(briefing.date)}</span>
           <span>·</span>
           <span>{briefing.readingTime} min read</span>
@@ -174,7 +165,6 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
         <div className="space-y-0">
           {briefing.stories!.map((story, si) => {
             const storyParagraphs = (story.body ?? "").split("\n\n").filter((p) => p.trim().length > 0);
-            const signal = storySignalById.get(`${briefing.slug}-story-${story.number}`);
             return (
               <ScrollReveal key={story.number} delay={si * 60}>
                 <article
@@ -192,13 +182,13 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
                     </span>
                     <div className="pt-1">
                       {story.location && (
-                        <p className="text-[9px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-2" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                        <p className="text-[9px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-2" style={{ fontFamily: "var(--font-mono)" }}>
                           {story.city ? `${story.city}, ${story.location}` : story.location}
                         </p>
                       )}
                       <h2
-                        className="font-bold leading-[1.1] text-[var(--c-text-1)]"
-                        style={{ fontSize: "clamp(1.25rem, 3vw, 1.6rem)", letterSpacing: "-0.03em" }}
+                        className="leading-[1.15] text-[var(--c-text-1)]"
+                        style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.25rem, 3vw, 1.6rem)", letterSpacing: "-0.015em" }}
                       >
                         {story.headline}
                       </h2>
@@ -251,24 +241,16 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
                     </ScrollReveal>
                   )}
 
-                  {embedIshara ? (
-                    /* ── Ishara block, embedded at its natural point right after the story ── */
-                    signal && (
-                      <div className="mt-6">
-                        <IsharaBlock signal={signal} />
-                      </div>
-                    )
-                  ) : (
-                    <>
-                      {/* Why this matters — pulled from evidence.marketImpact */}
-                      {story.evidence?.marketImpact && (
-                        <div className="mt-6 pl-4 border-l-2 border-[var(--c-green)]">
-                          <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--c-green)] mb-1.5">Why this matters</p>
-                          <p className="text-sm text-[var(--c-text-2)] leading-relaxed">{story.evidence.marketImpact}</p>
-                        </div>
-                      )}
-                    </>
+                  {/* Why this matters — pulled from evidence.marketImpact */}
+                  {story.evidence?.marketImpact && (
+                    <div className="mt-6 pl-4 border-l-2 border-[var(--c-green)]">
+                      <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--c-green)] mb-1.5">Why this matters</p>
+                      <p className="text-sm text-[var(--c-text-2)] leading-relaxed">{story.evidence.marketImpact}</p>
+                    </div>
                   )}
+
+                  {/* Per-story evidence bubble */}
+                  {story.evidence && <StoryEvidence evidence={story.evidence} />}
                 </article>
               </ScrollReveal>
             );
@@ -319,8 +301,8 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
         </>
       )}
 
-      {/* ── Also Watching (archive variant only — homepage drops it) ── */}
-      {variant === "archive" && alsoWatching.length > 0 && (
+      {/* ── Also Watching ── */}
+      {alsoWatching.length > 0 && (
         <ScrollReveal>
           <div className="mt-12 pt-8 border-t border-[var(--c-border)]">
             <span className="eyebrow block mb-4">Also Watching</span>
@@ -338,8 +320,8 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved, 
 
       {/* Bottom share row */}
       <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
-        <Link href="/briefings" className="text-xs text-[var(--c-text-3)] hover:text-[var(--c-text-1)] transition-colors cursor-pointer">
-          {variant === "home" ? "Browse past briefings →" : "← All briefings"}
+        <Link href="/briefings" className="back-link inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--c-text-2)] cursor-pointer">
+          ← All briefings
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>

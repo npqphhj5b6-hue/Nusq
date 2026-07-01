@@ -34,7 +34,7 @@ export default function StoryEvidence({ evidence }: Props) {
   const asOf = evidence.asOf ? timeAgo(evidence.asOf) : null;
 
   return (
-    <div className="mt-6 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] px-4 py-3.5">
+    <div className="mt-6 card-glow px-4 py-3.5">
       <p className="text-[9px] font-bold tracking-[0.16em] uppercase text-[var(--c-amber)] mb-2.5">
         Evidence
       </p>

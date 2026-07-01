@@ -2,40 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { formatDate } from "@/lib/db";
-import SignOutButton from "@/components/SignOutButton";
+import SettingsControls from "@/components/SettingsControls";
 
 export const dynamic = "force-dynamic";
-
-function getInitials(user: { email?: string | null; user_metadata?: { full_name?: string } }): string {
-  const name = user.user_metadata?.full_name;
-  if (name) {
-    return name.split(" ").slice(0, 2).map((s: string) => s[0]?.toUpperCase() ?? "").join("");
-  }
-  return (user.email ?? "?")[0].toUpperCase();
-}
-
-type HistoryRow = {
-  id: string;
-  read_at: string;
-  briefings: { id: string; slug: string; title: string; date: string; reading_time: number } | null;
-};
-
-function prevWeekday(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00Z");
-  do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
-  return d.toISOString().split("T")[0];
-}
-
-function computeStreak(dates: string[]): number {
-  if (dates.length === 0) return 0;
-  const unique = [...new Set(dates)].sort().reverse();
-  let streak = 1;
-  for (let i = 0; i < unique.length - 1; i++) {
-    if (unique[i + 1] === prevWeekday(unique[i])) streak++;
-    else break;
-  }
-  return streak;
-}
 
 type SavedRow = {
   id: string;
@@ -43,12 +12,23 @@ type SavedRow = {
   briefings: { id: string; slug: string; title: string; date: string; reading_time: number; summary: string } | null;
 };
 
+type HistoryRow = {
+  id: string;
+  read_at: string;
+  briefings: { id: string; slug: string; title: string; date: string; reading_time: number } | null;
+};
+
 export default async function AccountPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
-  const [historyResult, savedResult, prefsResult] = await Promise.all([
+  const [savedResult, historyResult, prefsResult] = await Promise.all([
+    supabase
+      .from("saved_briefings")
+      .select("id, saved_at, briefings(id, slug, title, date, reading_time, summary)")
+      .eq("user_id", user.id)
+      .order("saved_at", { ascending: false }),
     supabase
       .from("reading_history")
       .select("id, read_at, briefings(id, slug, title, date, reading_time)")
@@ -56,105 +36,49 @@ export default async function AccountPage() {
       .order("read_at", { ascending: false })
       .limit(20),
     supabase
-      .from("saved_briefings")
-      .select("id, saved_at, briefings(id, slug, title, date, reading_time, summary)")
-      .eq("user_id", user.id)
-      .order("saved_at", { ascending: false }),
-    supabase
       .from("user_preferences")
       .select("markets, sectors")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
 
-  const history = (historyResult.data ?? []) as unknown as HistoryRow[];
   const saved = (savedResult.data ?? []) as unknown as SavedRow[];
+  const history = (historyResult.data ?? []) as unknown as HistoryRow[];
   const prefs = prefsResult.data;
 
-  const readDates = history.map((r) => r.briefings?.date).filter((d): d is string => !!d);
-  const streak = computeStreak(readDates);
-
-  const initials = getInitials({ email: user.email, user_metadata: user.user_metadata });
-  const provider = user.app_metadata?.provider ?? "email";
-  const joined = user.created_at
-    ? new Date(user.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-    : "—";
-
   return (
-    <div className="max-w-2xl mx-auto px-6 py-16">
-      {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-5 h-[1px] bg-[var(--c-amber)]" />
-          <span className="text-[10px] font-bold tracking-[0.15em] text-[var(--c-amber)] uppercase">Account</span>
-        </div>
-        <h1
-          className="text-[2.5rem] leading-[1.06] text-[var(--c-text-1)]"
-          style={{ fontFamily: "var(--font-barlow)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "-0.02em" }}
-        >
-          My Account
-        </h1>
-      </div>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "48px 32px 90px" }} className="page-enter">
+      <Link
+        href="/"
+        className="back-link inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--c-text-2)] cursor-pointer"
+        style={{ marginBottom: 28 }}
+      >
+        ← Back to briefings
+      </Link>
 
-      {/* Profile card */}
-      <div className="border border-[var(--c-border)] rounded-xl p-6 mb-8">
-        <div className="flex items-center gap-5 mb-6 pb-6 border-b border-[var(--c-border)]">
-          <div
-            className="w-14 h-14 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] text-xl font-bold flex-shrink-0"
-            style={{ fontFamily: "var(--font-barlow)" }}
-          >
-            {initials}
-          </div>
-          <div>
-            <p className="text-[var(--c-text-1)] font-medium">{user.user_metadata?.full_name ?? user.email}</p>
-            <p className="text-xs text-[var(--c-text-3)] mt-0.5">{user.email}</p>
-            <p className="text-xs text-[var(--c-text-3)] mt-0.5" style={{ fontFamily: "var(--font-geist-mono)" }}>
-              Member since {joined}
-            </p>
-            {streak > 0 && (
-              <p className="text-xs text-[var(--c-green)] font-medium mt-1.5">
-                {streak}-day reading streak
-              </p>
-            )}
-          </div>
-        </div>
+      <h1
+        style={{ margin: "0 0 32px", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 28, color: "var(--c-text-1)" }}
+      >
+        Settings
+      </h1>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-2">
-            <span className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)]">Sign-in method</span>
-            <span className="text-sm text-[var(--c-text-2)] capitalize">{provider === "google" ? "Google" : "Email & password"}</span>
-          </div>
-          {provider === "email" && (
-            <>
-              <div className="h-px bg-[var(--c-border)]" />
-              <div className="flex items-center justify-between py-2">
-                <span className="text-xs font-bold tracking-[0.1em] uppercase text-[var(--c-text-3)]">Password</span>
-                <Link href="/auth/reset-password" className="text-sm text-[var(--c-amber)] hover:opacity-80 transition-opacity">
-                  Change password
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      <SettingsControls />
 
-      {/* Saved Briefings */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--c-text-3)]">
-            Saved Briefings
-          </p>
-          <span className="text-[10px] text-[var(--c-text-3)]">{saved.length}</span>
+      {/* Saved briefings — kept as an additional section beyond the base spec */}
+      <div style={{ marginTop: 44, paddingTop: 28, borderTop: "1px solid var(--c-border)" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", color: "var(--c-text-3)" }}>
+            SAVED BRIEFINGS
+          </div>
+          <span style={{ fontSize: 12, color: "var(--c-text-3)" }}>{saved.length}</span>
         </div>
         {saved.length === 0 ? (
-          <div className="rounded-xl border border-[var(--c-border)] p-6 text-center">
-            <p className="text-sm text-[var(--c-text-3)]">No saved briefings yet.</p>
-            <Link href="/briefings" className="inline-block mt-2 text-xs text-[var(--c-amber)] hover:opacity-80">
-              Browse briefings →
-            </Link>
-          </div>
+          <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
+            No saved briefings yet.{" "}
+            <Link href="/briefings" style={{ color: "var(--c-accent)" }}>Browse briefings →</Link>
+          </p>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {saved.map((row) => {
               const b = row.briefings;
               if (!b) return null;
@@ -162,13 +86,13 @@ export default async function AccountPage() {
                 <Link
                   key={row.id}
                   href={`/briefings/${b.slug}`}
-                  className="flex items-start justify-between gap-4 p-4 rounded-xl border border-[var(--c-border)] hover:border-[var(--c-amber)]/40 transition-colors bg-[var(--c-surface)]"
+                  className="card-glow"
+                  style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", gap: 16 }}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[var(--c-text-1)] leading-snug line-clamp-2 mb-1">{b.title}</p>
-                    <p className="text-xs text-[var(--c-text-3)]">{formatDate(b.date)} · {b.reading_time} min read</p>
+                  <div style={{ minWidth: 0 }}>
+                    <p className="text-sm line-clamp-2" style={{ fontWeight: 600, color: "var(--c-text-1)", marginBottom: 4 }}>{b.title}</p>
+                    <p className="text-xs" style={{ color: "var(--c-text-3)" }}>{formatDate(b.date)} · {b.reading_time} min read</p>
                   </div>
-                  <span className="text-xs text-[var(--c-amber)] shrink-0 mt-0.5">→</span>
                 </Link>
               );
             })}
@@ -176,23 +100,20 @@ export default async function AccountPage() {
         )}
       </div>
 
-      {/* Reading History */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--c-text-3)]">
-            Reading History
-          </p>
-          <span className="text-[10px] text-[var(--c-text-3)]">{history.length}</span>
+      {/* Reading history */}
+      <div style={{ marginTop: 44, paddingTop: 28, borderTop: "1px solid var(--c-border)" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", color: "var(--c-text-3)" }}>
+            READING HISTORY
+          </div>
+          <span style={{ fontSize: 12, color: "var(--c-text-3)" }}>{history.length}</span>
         </div>
         {history.length === 0 ? (
-          <div className="rounded-xl border border-[var(--c-border)] p-6 text-center">
-            <p className="text-sm text-[var(--c-text-3)]">Start reading to build your history.</p>
-            <Link href="/briefings" className="inline-block mt-2 text-xs text-[var(--c-amber)] hover:opacity-80">
-              Read today&apos;s briefing →
-            </Link>
-          </div>
+          <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
+            Start reading to build your history.
+          </p>
         ) : (
-          <div className="space-y-0">
+          <div className="flex flex-col">
             {history.map((row) => {
               const b = row.briefings;
               if (!b) return null;
@@ -201,10 +122,11 @@ export default async function AccountPage() {
                 <Link
                   key={row.id}
                   href={`/briefings/${b.slug}`}
-                  className="flex items-center justify-between gap-4 py-3 border-b border-[var(--c-border)] last:border-b-0 hover:text-[var(--c-amber)] transition-colors group"
+                  className="flex items-center justify-between gap-4 group"
+                  style={{ padding: "10px 0", borderBottom: "1px solid var(--c-border)" }}
                 >
-                  <p className="text-sm text-[var(--c-text-1)] group-hover:text-[var(--c-amber)] transition-colors line-clamp-1 flex-1">{b.title}</p>
-                  <span className="text-[10px] text-[var(--c-text-3)] shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
+                  <p className="text-sm line-clamp-1 flex-1 group-hover:text-[var(--c-accent)] transition-colors" style={{ color: "var(--c-text-1)" }}>{b.title}</p>
+                  <span style={{ fontSize: 11, color: "var(--c-text-3)", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
                     {readDate}
                   </span>
                 </Link>
@@ -215,41 +137,26 @@ export default async function AccountPage() {
       </div>
 
       {/* Preferences */}
-      <div className="mb-8 p-5 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)]">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--c-text-3)]">Preferences</p>
-          <Link href="/account/preferences" className="text-xs text-[var(--c-amber)] hover:opacity-80 transition-opacity">
-            Edit
-          </Link>
+      <div style={{ marginTop: 44, paddingTop: 28, borderTop: "1px solid var(--c-border)" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", color: "var(--c-text-3)" }}>
+            PREFERENCES
+          </div>
+          <Link href="/account/preferences" style={{ fontSize: 12, color: "var(--c-accent)" }}>Edit</Link>
         </div>
         {prefs && (prefs.markets.length > 0 || prefs.sectors.length > 0) ? (
-          <div className="space-y-2">
-            {prefs.markets.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {prefs.markets.map((m: string) => (
-                  <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--c-green-bg)] text-[var(--c-green)] font-medium">{m}</span>
-                ))}
-              </div>
-            )}
-            {prefs.sectors.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {prefs.sectors.map((s: string) => (
-                  <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] font-medium">{s}</span>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-wrap gap-1.5">
+            {[...prefs.markets, ...prefs.sectors].map((p: string) => (
+              <span key={p} className="tag-pill">{p}</span>
+            ))}
           </div>
         ) : (
-          <p className="text-sm text-[var(--c-text-3)]">
+          <p className="text-sm" style={{ color: "var(--c-text-3)" }}>
             No preferences set.{" "}
-            <Link href="/account/preferences" className="text-[var(--c-amber)] hover:opacity-80">
-              Set up your feed →
-            </Link>
+            <Link href="/account/preferences" style={{ color: "var(--c-accent)" }}>Set up your feed →</Link>
           </p>
         )}
       </div>
-
-      <SignOutButton />
     </div>
   );
 }

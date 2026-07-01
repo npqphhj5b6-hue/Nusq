@@ -31,20 +31,25 @@ export default async function BriefingsPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12">
+    <div>
       {/* Header */}
-      <div className="mb-14">
-        <span className="eyebrow block mb-4">Archive</span>
-        <h1
-          className="font-bold text-[var(--c-text-1)] mb-3"
-          style={{ fontSize: "clamp(2.2rem, 7vw, 4.5rem)", letterSpacing: "-0.04em", lineHeight: 1.02 }}
-        >
-          Briefings
-        </h1>
-        <p className="text-sm text-[var(--c-text-2)]">
-          What moved the Gulf — and what Arabic sources were saying about it first.
-        </p>
+      <div className="relative overflow-hidden">
+        <div className="bg-blob" />
+        <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 relative">
+          <span className="eyebrow block mb-4">Archive</span>
+          <h1
+            className="text-[var(--c-text-1)] mb-4"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(2.75rem, 8vw, 5.5rem)", letterSpacing: "-0.02em", lineHeight: 0.98 }}
+          >
+            Briefings
+          </h1>
+          <p className="text-sm text-[var(--c-text-2)]">
+            What moved the Gulf — and what Arabic sources were saying about it first.
+          </p>
+        </div>
       </div>
+
+      <div className="max-w-5xl mx-auto px-6 pb-12">
 
       {/* Featured */}
       {featured && (
@@ -75,8 +80,8 @@ export default async function BriefingsPage() {
                   ))}
                 </div>
                 <h2
-                  className="font-bold leading-[1.1] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200"
-                  style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.03em" }}
+                  className="leading-[1.2] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200"
+                  style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.015em" }}
                 >
                   {featured.title}
                 </h2>
@@ -85,7 +90,7 @@ export default async function BriefingsPage() {
                 </p>
                 <div
                   className="flex items-center gap-3 text-xs text-[var(--c-text-3)]"
-                  style={{ fontFamily: "var(--font-geist-mono)" }}
+                  style={{ fontFamily: "var(--font-mono)" }}
                 >
                   <span>{formatDate(featured.date)}</span>
                   <span>·</span>
@@ -102,8 +107,8 @@ export default async function BriefingsPage() {
         {rest.map((b, i) => (
           <ScrollReveal key={b.slug} delay={(i % 3) * 60}>
             <Link href={`/briefings/${b.slug}`} className="group block h-full cursor-pointer">
-              <div className="flex flex-col h-full card-lift rounded-xl overflow-hidden bg-[var(--c-surface)] border border-[var(--c-border)]">
-                <div className="shrink-0 img-wrap" style={{ aspectRatio: "3/2" }}>
+              <div className="flex flex-col h-full card-glow">
+                <div className="shrink-0 img-wrap" style={{ aspectRatio: "3/2", borderRadius: "20px 20px 0 0" }}>
                   <BriefingCover issueNumber={issueNumbers.get(b.slug)!} coverImageUrl={b.coverImageUrl} />
                 </div>
                 <div className="flex flex-col flex-1 p-4">
@@ -118,14 +123,14 @@ export default async function BriefingsPage() {
                     </span>
                   )}
                   <h3
-                    className="text-sm md:text-[0.95rem] font-bold leading-[1.3] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200 flex-1"
-                    style={{ letterSpacing: "-0.02em" }}
+                    className="text-sm md:text-[0.95rem] leading-[1.3] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200 flex-1"
+                    style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.01em" }}
                   >
                     {b.title}
                   </h3>
                   <div
                     className="flex items-center gap-1.5 text-[10px] text-[var(--c-text-3)] mt-auto"
-                    style={{ fontFamily: "var(--font-geist-mono)" }}
+                    style={{ fontFamily: "var(--font-mono)" }}
                   >
                     <span>{formatDateShort(b.date)}</span>
                     <span>·</span>
@@ -136,6 +141,7 @@ export default async function BriefingsPage() {
             </Link>
           </ScrollReveal>
         ))}
+      </div>
       </div>
     </div>
   );

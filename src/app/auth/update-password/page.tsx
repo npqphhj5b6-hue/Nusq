@@ -32,8 +32,8 @@ export default function UpdatePasswordPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <span
-            className="text-[2rem] font-bold text-[var(--c-amber)]"
-            style={{ fontFamily: "var(--font-barlow)", letterSpacing: "-0.02em" }}
+            className="text-[2rem] font-bold text-[var(--c-accent)]"
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
             NUSQ
           </span>
@@ -62,13 +62,13 @@ export default function UpdatePasswordPage() {
           <button
             type="submit"
             disabled={loading || !password || !confirm}
-            className="w-full h-11 rounded-lg bg-[var(--c-amber)] hover:bg-[var(--c-amber-2)] transition-colors text-[#040C1A] text-sm font-bold tracking-wide disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ color: "#040C1A" }}
+            className="w-full h-11 rounded-lg bg-[var(--c-accent)] hover:bg-[var(--c-accent-2)] transition-colors text-[var(--c-accent-ink)] text-sm font-bold tracking-wide disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ color: "var(--c-accent-ink)" }}
           >
             {loading ? (
               <svg className="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6" stroke="#040C1A" strokeOpacity="0.3" strokeWidth="2"/>
-                <path d="M8 2a6 6 0 016 6" stroke="#040C1A" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="8" cy="8" r="6" stroke="var(--c-accent-ink)" strokeOpacity="0.3" strokeWidth="2"/>
+                <path d="M8 2a6 6 0 016 6" stroke="var(--c-accent-ink)" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             ) : "Update password"}
           </button>

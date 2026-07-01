@@ -15,15 +15,19 @@ export default function StreakBadge() {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-xl"
+      className="inline-flex items-center gap-1.5"
       style={{
-        background: "var(--c-surface)",
-        border: "1px solid var(--c-border)",
-        color: "var(--c-text-2)",
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "4px 10px",
+        borderRadius: 100,
+        background: "var(--c-accent-glow)",
+        color: "var(--c-accent)",
       }}
       title={`${count}-day reading streak`}
     >
-      🔥 {count}-day streak
+      <span style={{ display: "inline-block", animation: "pulseSoft 2.2s ease-in-out infinite" }}>🔥</span>
+      {count}-day streak
     </span>
   );
 }

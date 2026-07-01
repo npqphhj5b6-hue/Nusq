@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Bricolage_Grotesque, Karla, IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const displayFont = Bricolage_Grotesque({ variable: "--font-display-raw", subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+const bodyFont = Karla({ variable: "--font-body-raw", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const monoFont = IBM_Plex_Mono({ variable: "--font-mono-raw", subsets: ["latin"], weight: ["400", "500"] });
 const arabicSans = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic"],
@@ -40,8 +40,8 @@ export const metadata: Metadata = {
     site: "@nusqapp",
   },
   themeColor: [
-    { media: "(prefers-color-scheme: dark)",  color: "#030C09" },
-    { media: "(prefers-color-scheme: light)", color: "#F2FAF8" },
+    { media: "(prefers-color-scheme: dark)",  color: "oklch(17% 0.014 250)" },
+    { media: "(prefers-color-scheme: light)", color: "oklch(98% 0.004 250)" },
   ],
 };
 
@@ -51,16 +51,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       data-theme="dark"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${arabicSans.variable} h-full`}
+      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${arabicSans.variable} h-full`}
     >
       <body className="min-h-full flex flex-col font-sans" style={{ backgroundColor: "var(--c-bg)" }}>
         <ThemeProvider>
           <Header />
-          <main className="flex-1 page-enter page-content">{children}</main>
-          <div className="hidden md:block">
-            <Footer />
-          </div>
-          <BottomNav />
+          <main className="flex-1 page-enter">{children}</main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

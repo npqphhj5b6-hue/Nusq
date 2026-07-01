@@ -50,7 +50,7 @@ export default function BriefingCheck({ intel, sources, validation, counterpoint
     !!checkedAt;
 
   return (
-    <div className="mb-10 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] overflow-hidden">
+    <div className="mb-10 card-glow">
       {/* ── Compact summary ── */}
       <div className="px-4 pt-3.5 pb-3">
         <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-[var(--c-amber)] mb-2.5">

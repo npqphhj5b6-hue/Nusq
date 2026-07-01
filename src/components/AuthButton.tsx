@@ -25,11 +25,17 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth"
-        className="text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all duration-150"
+        className="btn-gradient"
         style={{
-          background: "var(--c-accent)",
-          color: "var(--c-bg)",
-          letterSpacing: "0.02em",
+          padding: "9px 20px",
+          borderRadius: 100,
+          fontSize: 13,
+          fontWeight: 700,
+          background: "linear-gradient(135deg, var(--c-accent), var(--c-accent-2))",
+          color: "var(--c-accent-ink)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.25), 0 3px 12px var(--c-accent-glow)",
+          transition: "transform 0.25s ease, box-shadow 0.25s ease",
+          display: "inline-block",
         }}
       >
         Sign in
@@ -40,19 +46,29 @@ export default function AuthButton() {
   const initials = (user.email ?? user.user_metadata?.full_name ?? "?")
     .split(/[@\s]/)
     .filter(Boolean)
-    .slice(0, 2)
+    .slice(0, 1)
     .map((s: string) => s[0].toUpperCase())
     .join("")
-    .slice(0, 2);
+    .slice(0, 1);
 
   return (
     <Link href="/account" aria-label="My account">
       <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-150"
+        className="avatar-lift"
         style={{
-          background: "var(--c-accent-glow)",
-          border: "1.5px solid var(--c-accent)",
-          color: "var(--c-accent)",
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, var(--c-accent), var(--c-accent-2))",
+          color: "var(--c-accent-ink)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          fontSize: 13,
+          fontFamily: "var(--font-display)",
+          boxShadow: "0 2px 10px var(--c-accent-glow)",
+          transition: "transform 0.25s ease, box-shadow 0.25s ease",
         }}
       >
         {initials}
