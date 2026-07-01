@@ -23,6 +23,13 @@ export const metadata: Metadata = {
   },
   description: "Daily signals and briefings on Gulf and MENA markets. Plain language. No finance degree needed.",
   metadataBase: new URL(SITE_URL),
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     siteName: "Nusq",
     type: "website",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AuthButton from "./AuthButton";
@@ -46,10 +47,15 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0 group">
-          <span className="text-[1.1rem] font-bold tracking-[-0.05em]" style={{ color: "var(--c-text-1)" }}>
-            nusq
-          </span>
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <Image
+            src={theme === "dark" ? "/logo-wordmark-white.png" : "/logo-wordmark-dark.png"}
+            alt="Nusq"
+            width={90}
+            height={40}
+            priority
+            className="h-5 w-auto"
+          />
           <span className="w-px h-3.5" style={{ backgroundColor: "var(--c-border-2)" }} />
           <span className="text-sm" style={{ fontFamily: "var(--font-arabic)", color: "var(--c-text-3)" }}>
             نسق

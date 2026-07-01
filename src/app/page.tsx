@@ -152,7 +152,7 @@ function SecondarySignal({ signal }: { signal: Signal }) {
       <div
         className="flex items-start gap-3 p-4 rounded-2xl transition-all duration-200"
         style={{
-          background: "rgba(7,20,16,0.6)",
+          background: "color-mix(in srgb, var(--c-surface) 70%, transparent)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           border: "1px solid var(--c-border)",
@@ -393,7 +393,7 @@ export default async function Home() {
             <div
               className="px-5 py-5 mb-6 rounded-2xl"
               style={{
-                background: "rgba(7,20,16,0.7)",
+                background: "color-mix(in srgb, var(--c-surface) 80%, transparent)",
                 backdropFilter: "blur(16px)",
                 WebkitBackdropFilter: "blur(16px)",
                 border: "1px solid var(--c-border)",
