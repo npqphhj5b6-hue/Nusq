@@ -256,6 +256,9 @@ interface RawSourceItem {
   pubDate: string | null;
   lang: "en" | "ar";
   publisher: string;
+  // Full article text, populated only for the two selected stories after
+  // Stage 2 (scrapeSelectedSeeds). Everything upstream works from `snippet`.
+  fullText?: string | null;
 }
 
 // Decode the actual article URL from a Google News RSS article path.
@@ -308,42 +311,67 @@ async function resolveRedirect(url: string): Promise<string> {
   }
 }
 
-async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSourceItem[] }> {
+interface FeedQuery {
+  url: string;
+  lang: "en" | "ar";
+  // When set, this is a native RSS feed from a known outlet (not Google News):
+  // the item link is already the real article URL and the publisher is fixed,
+  // so we skip the Google-News title/publisher parsing entirely.
+  publisher?: string;
+}
+
+async function fetchNewsWithSources(): Promise<{
+  text: string;
+  rawSources: RawSourceItem[];
+  feedStats: { total: number; failed: number; failedUrls: string[] };
+}> {
   const parser = new Parser({ timeout: 10000 });
 
-  const queries = [
+  const queries: FeedQuery[] = [
+    // ── Native outlet feeds (direct, not via Google News) ──
+    // Reduces sole dependence on Google News' index and reaches these outlets
+    // faster. Only feeds confirmed live, fresh, and mapped to a known tier are
+    // included; broken feeds fail gracefully and are now counted (feedStats).
+    { url: "https://www.agbi.com/feed/", lang: "en", publisher: "AGBI" }, // Arabian Gulf Business Insight — Gulf financial specialist
+    { url: "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml", lang: "en", publisher: "The National" }, // UAE, strong Gulf business desk
     // Gulf — general
-    { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=UAE+economy+investment+trade&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Qatar+economy+LNG+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Kuwait+Oman+Bahrain+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Saudi+Arabia+economy+oil+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=UAE+economy+investment+trade&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=Qatar+economy+LNG+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=Kuwait+Oman+Bahrain+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" },
     // Tier-1-targeted — central banks, exchanges, sovereign funds, multilaterals
-    { url: "https://news.google.com/rss/search?q=SAMA+OR+%22Saudi+Central+Bank%22+interest+rate+OR+reserves&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Tadawul+OR+%22Saudi+Exchange%22+OR+ADX+OR+DFM+listing+OR+IPO&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=PIF+OR+Mubadala+OR+ADIA+OR+QIA+investment+stake+acquisition&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=IMF+OR+%22World+Bank%22+OR+OPEC+Gulf+OR+MENA+forecast+OR+report&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=%22UAE+Central+Bank%22+OR+%22Qatar+Central+Bank%22+rate+OR+policy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=SAMA+OR+%22Saudi+Central+Bank%22+interest+rate+OR+reserves&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=Tadawul+OR+%22Saudi+Exchange%22+OR+ADX+OR+DFM+listing+OR+IPO&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=PIF+OR+Mubadala+OR+ADIA+OR+QIA+investment+stake+acquisition&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=IMF+OR+%22World+Bank%22+OR+OPEC+Gulf+OR+MENA+forecast+OR+report&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=%22UAE+Central+Bank%22+OR+%22Qatar+Central+Bank%22+rate+OR+policy&hl=en-US&gl=US&ceid=US:en", lang: "en" },
     // North Africa
-    { url: "https://news.google.com/rss/search?q=Egypt+economy+IMF+pound+investment&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Morocco+economy+trade+industry&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
-    { url: "https://news.google.com/rss/search?q=Tunisia+Algeria+Libya+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Egypt+economy+IMF+pound+investment&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=Morocco+economy+trade+industry&hl=en-US&gl=US&ceid=US:en", lang: "en" },
+    { url: "https://news.google.com/rss/search?q=Tunisia+Algeria+Libya+economy&hl=en-US&gl=US&ceid=US:en", lang: "en" },
     // Levant & Iraq
-    { url: "https://news.google.com/rss/search?q=Jordan+Iraq+Lebanon+economy+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=Jordan+Iraq+Lebanon+economy+finance&hl=en-US&gl=US&ceid=US:en", lang: "en" },
     // Broad MENA
-    { url: "https://news.google.com/rss/search?q=MENA+economy+markets+investment+2026&hl=en-US&gl=US&ceid=US:en", lang: "en" as const },
+    { url: "https://news.google.com/rss/search?q=MENA+economy+markets+investment+2026&hl=en-US&gl=US&ceid=US:en", lang: "en" },
     // Arabic — North Africa
-    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D9%85%D8%B5%D8%B1&hl=ar&gl=EG&ceid=EG:ar", lang: "ar" as const },
-    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8&hl=ar&gl=MA&ceid=MA:ar", lang: "ar" as const },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D9%85%D8%B5%D8%B1&hl=ar&gl=EG&ceid=EG:ar", lang: "ar" },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8&hl=ar&gl=MA&ceid=MA:ar", lang: "ar" },
     // Arabic — Gulf
-    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9&hl=ar&gl=SA&ceid=SA:ar", lang: "ar" as const },
-    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%A5%D9%85%D8%A7%D8%B1%D8%A7%D8%AA&hl=ar&gl=AE&ceid=AE:ar", lang: "ar" as const },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9&hl=ar&gl=SA&ceid=SA:ar", lang: "ar" },
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D8%A5%D9%85%D8%A7%D8%B1%D8%A7%D8%AA&hl=ar&gl=AE&ceid=AE:ar", lang: "ar" },
+    // Arabic — Gulf, targeted at markets/central-bank/sovereign-fund terms (strengthens the Arabic edge)
+    { url: "https://news.google.com/rss/search?q=%D8%B5%D9%86%D8%AF%D9%88%D9%82+%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D8%AB%D9%85%D8%A7%D8%B1%D8%A7%D8%AA+%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9+OR+%D8%AA%D8%AF%D8%A7%D9%88%D9%84&hl=ar&gl=SA&ceid=SA:ar", lang: "ar" }, // PIF OR Tadawul
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%84%D8%A8%D9%86%D9%83+%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2%D9%8A+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A+OR+%D8%A3%D8%B3%D8%B9%D8%A7%D8%B1+%D8%A7%D9%84%D9%86%D9%81%D8%B7&hl=ar&gl=SA&ceid=SA:ar", lang: "ar" }, // Saudi Central Bank OR oil prices
+    { url: "https://news.google.com/rss/search?q=%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D9%82%D8%B7%D8%B1+OR+%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF+%D8%A7%D9%84%D9%83%D9%88%D9%8A%D8%AA&hl=ar&gl=QA&ceid=QA:ar", lang: "ar" }, // Qatar / Kuwait economy
   ];
 
   const collected: RawSourceItem[] = [];
   const seen = new Set<string>();
+  const failedUrls: string[] = [];
 
   await Promise.allSettled(
-    queries.map(async ({ url, lang }) => {
+    queries.map(async ({ url, lang, publisher: feedPublisher }) => {
+      const isNative = !!feedPublisher;
       try {
         const feed = await parser.parseURL(url);
         for (const item of feed.items.slice(0, 8)) {
@@ -351,23 +379,32 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
           if (!title || seen.has(title)) continue;
           seen.add(title);
 
-          // Extract publisher: Google News RSS uses "Headline - Publisher" (English)
-          // or "Headline  Publisher" double-space (Arabic). Try both.
-          const titleDashParts = title.split(" - ");
-          let publisher = titleDashParts.length > 1
-            ? titleDashParts[titleDashParts.length - 1].trim()
-            : "";
-          const cleanTitle = titleDashParts.length > 1
-            ? titleDashParts.slice(0, -1).join(" - ").trim()
-            : title;
-          // Fallback: extract publisher from contentSnippet "headline  Publisher" (Google News uses NBSP pairs)
-          if (!publisher) {
-            const snip = (item.contentSnippet ?? "").trim();
-            const sep = "  ";
-            const dblIdx = snip.lastIndexOf(sep);
-            if (dblIdx > 0) publisher = snip.substring(dblIdx + sep.length).trim();
+          let publisher: string;
+          let cleanTitle: string;
+
+          if (isNative) {
+            // Native feed: title is the plain headline, publisher is fixed.
+            publisher = feedPublisher!;
+            cleanTitle = title;
+          } else {
+            // Google News RSS uses "Headline - Publisher" (English) or
+            // "Headline  Publisher" double-space (Arabic). Try both.
+            const titleDashParts = title.split(" - ");
+            publisher = titleDashParts.length > 1
+              ? titleDashParts[titleDashParts.length - 1].trim()
+              : "";
+            cleanTitle = titleDashParts.length > 1
+              ? titleDashParts.slice(0, -1).join(" - ").trim()
+              : title;
+            // Fallback: extract publisher from contentSnippet "headline  Publisher" (Google News uses NBSP pairs)
+            if (!publisher) {
+              const snip = (item.contentSnippet ?? "").trim();
+              const sep = "  ";
+              const dblIdx = snip.lastIndexOf(sep);
+              if (dblIdx > 0) publisher = snip.substring(dblIdx + sep.length).trim();
+            }
+            if (!publisher) publisher = item.creator ?? "";
           }
-          if (!publisher) publisher = item.creator ?? "";
 
           const itemUrl = (item.link ?? item.guid ?? "").trim();
           const snippet = (item.contentSnippet ?? item.content ?? title).substring(0, 250).trim();
@@ -382,9 +419,12 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
             }
           }
 
+          // Tier by real URL for native feeds; by publisher name for Google News.
           const resolvedPublisher = normalizePublisherName(publisher || getPublisherName(itemUrl));
-          // Drop unrecognised (Tier 3) sources — only ingest established outlets
-          if (getSourceTierByName(resolvedPublisher) === 3) continue;
+          const tier = isNative ? getSourceTier(itemUrl) : getSourceTierByName(resolvedPublisher);
+          // Native URLs may not be in the domain map even for known outlets, so
+          // also accept a recognised publisher name before dropping as Tier 3.
+          if (tier === 3 && getSourceTierByName(resolvedPublisher) === 3) continue;
 
           collected.push({
             title: cleanTitle,
@@ -395,11 +435,18 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
             publisher: resolvedPublisher,
           });
         }
-      } catch {
-        // skip failed feeds silently
+      } catch (feedErr) {
+        // Record the failure instead of swallowing it silently — a run where
+        // most feeds failed still "succeeds" with a thin pool, so this is
+        // surfaced in the draft-ready email for visibility.
+        failedUrls.push(url);
+        console.warn(`[pipeline] feed failed (${isNative ? "native" : "gnews"}) — ${url} — ${feedErr instanceof Error ? feedErr.message : String(feedErr)}`);
       }
     })
   );
+
+  const feedStats = { total: queries.length, failed: failedUrls.length, failedUrls };
+  console.log("[pipeline] ingestion feed stats", { total: feedStats.total, failed: feedStats.failed });
 
   if (collected.length === 0) {
     throw new Error("No news fetched from any RSS feed");
@@ -441,7 +488,7 @@ async function fetchNewsWithSources(): Promise<{ text: string; rawSources: RawSo
   const relevant = await filterForRelevance(dateFiltered);
 
   const text = numberSources(relevant);
-  return { text, rawSources: relevant };
+  return { text, rawSources: relevant, feedStats };
 }
 
 // Build the numbered source list block for prompts.
@@ -451,7 +498,13 @@ function numberSources(items: RawSourceItem[]): string {
       ? new Date(s.pubDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
       : "date unknown";
     const langLabel = s.lang === "ar" ? " [AR]" : "";
-    return `[${i + 1}] "${s.title}" | ${s.publisher}${langLabel} | ${dateStr} | ${s.url}\n    ${s.snippet}`;
+    // When we have the scraped article body, hand the model the full text
+    // (labelled) instead of the 250-char snippet — this is the substance the
+    // four-layer structure needs to be specific rather than generic.
+    const content = s.fullText
+      ? `FULL ARTICLE TEXT:\n${s.fullText}`
+      : s.snippet;
+    return `[${i + 1}] "${s.title}" | ${s.publisher}${langLabel} | ${dateStr} | ${s.url}\n    ${content}`;
   });
   return `Numbered sources — cite by [N] number in the briefing body:\n\n${numbered.join("\n\n")}`;
 }
@@ -459,6 +512,110 @@ function numberSources(items: RawSourceItem[]): string {
 // Mirror buildSourceRefs tier logic: unresolved Google News URLs score by publisher name.
 function tierOf(s: RawSourceItem): 1 | 2 | 3 {
   return s.url.includes("news.google.com") ? getSourceTierByName(s.publisher) : getSourceTier(s.url);
+}
+
+// ── Full-text article scraping ───────────────────────────────────────────────
+
+// Cap on how much article text is passed into prompts, per source. Roughly
+// 8k chars ≈ 2k tokens; two selected articles stay well within budget while
+// giving the drafting model the real substance instead of a 250-char snippet.
+// Sized so leading page chrome (nav/share links Firecrawl leaves in) doesn't
+// crowd out the article body.
+const FULLTEXT_CHAR_CAP = 8000;
+
+// Scrape one URL to clean article text. Firecrawl is primary (handles JS
+// rendering and anti-bot on MENA financial sites); a lightweight fetch +
+// paragraph extraction is the free fallback. Returns null if both fail or the
+// URL still points at Google News (which has no article body to scrape).
+async function scrapeFullText(url: string): Promise<string | null> {
+  if (!url || !url.startsWith("http") || url.includes("news.google.com")) return null;
+
+  const key = process.env.FIRECRAWL_API_KEY;
+  if (key) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
+      });
+      clearTimeout(timeout);
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; data?: { markdown?: string } };
+        const md = data?.data?.markdown?.trim();
+        if (md && md.length > 200) return md.slice(0, FULLTEXT_CHAR_CAP);
+      } else {
+        console.warn(`[pipeline] Firecrawl scrape ${res.status} for ${url}`);
+      }
+    } catch (err) {
+      console.warn(`[pipeline] Firecrawl scrape failed for ${url} — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // Free fallback: fetch the page and extract paragraph text.
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Nusq/1.0)" },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    // Strip script/style/noscript/template blocks and HTML comments BEFORE
+    // paragraph extraction — otherwise inline CSS/JS leaks in as fake "text".
+    const html = (await res.text())
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<template[\s\S]*?<\/template>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ");
+    const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+      .map((m) =>
+        m[1]
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&#39;|&rsquo;|&lsquo;/g, "'")
+          .replace(/&quot;|&ldquo;|&rdquo;/g, '"')
+          .replace(/\s+/g, " ")
+          .trim()
+      )
+      .filter((t) => {
+        if (t.length <= 60) return false; // drop nav/boilerplate fragments
+        // Reject anything that still looks like CSS/JS rather than prose.
+        if (/[{}]|@media|function\s*\(|=>|;\s*}|::?[a-z-]+\s*{/.test(t)) return false;
+        const letters = (t.match(/[A-Za-z؀-ۿ]/g) ?? []).length;
+        return letters / t.length > 0.5; // mostly words, not symbols
+      });
+    const text = paras.join("\n\n").trim();
+    return text.length > 200 ? text.slice(0, FULLTEXT_CHAR_CAP) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Scrape full text for the selected seeds in parallel, mutating each in place.
+// Best-effort: on failure a seed simply keeps its snippet, so drafting never
+// blocks on the scrape step.
+async function scrapeSelectedSeeds(seeds: RawSourceItem[]): Promise<number> {
+  let scraped = 0;
+  await Promise.all(
+    seeds.map(async (s) => {
+      const text = await scrapeFullText(s.url);
+      if (text) {
+        s.fullText = text;
+        scraped++;
+      }
+    })
+  );
+  return scraped;
 }
 
 // ── Relevance filter ──────────────────────────────────────────────────────────
@@ -1366,6 +1523,7 @@ async function runPipelineCore({
   slug,
   skipEnrichment = false,
   draftModel = "claude-sonnet-4-6",
+  feedStats,
 }: {
   selectedSeeds: RawSourceItem[];
   rawSources: RawSourceItem[];
@@ -1375,7 +1533,17 @@ async function runPipelineCore({
   slug: string;
   skipEnrichment?: boolean;
   draftModel?: string;
+  feedStats?: { total: number; failed: number; failedUrls: string[] };
 }): Promise<NextResponse> {
+  // ── Stage 2.5: full-text scrape of the selected seeds ──
+  // The single highest-leverage step: the drafting model writes 150–250 words
+  // per story, and until now it only saw a 250-char snippet. Scrape the real
+  // article body for the two chosen stories so the writing has substance to
+  // work from. Best-effort — a failed scrape falls back to the snippet.
+  console.log("[pipeline] stage 2.5 — scraping selected articles");
+  const scrapedCount = await scrapeSelectedSeeds(selectedSeeds);
+  console.log("[pipeline] stage 2.5 — scraped", { scraped: scrapedCount, of: selectedSeeds.length });
+
   // ── Stage 3: research enrichment (parallel web search) ──
   let enrichments: Awaited<ReturnType<typeof enrichStory>>[];
   if (skipEnrichment) {
@@ -1410,7 +1578,10 @@ async function runPipelineCore({
     .map((s, i) => {
       const role = i === 0 ? "ANCHOR" : "SUPPORTING THREAD";
       const enr = enrichments[i]?.notes ? `\n  Enrichment (verified facts to weave in): ${enrichments[i].notes}` : "";
-      return `${role}: "${s.title}" (${s.publisher})\n  ${s.snippet}${enr}`;
+      // Prefer the scraped full text; the numbered source list carries it too,
+      // but naming it here anchors the model to the right [N] for each seed.
+      const seedContent = s.fullText ?? s.snippet;
+      return `${role}: "${s.title}" (${s.publisher})\n  ${seedContent}${enr}`;
     })
     .join("\n\n");
   const connectionNote = connection
@@ -1612,6 +1783,14 @@ async function runPipelineCore({
         ✓ Validation passed — ${sourceRefs.length} source(s) referenced
       </div>`;
 
+  // Ingestion health — surface degraded feed runs instead of failing silently.
+  const feedHealthBadge =
+    feedStats && feedStats.failed > 0
+      ? `<div style="background:${feedStats.failed >= feedStats.total / 2 ? "#FEF3C7" : "#F3F4F6"};border:1px solid ${feedStats.failed >= feedStats.total / 2 ? "#F59E0B" : "#D1D5DB"};border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#4B5563;">
+          ${feedStats.failed >= feedStats.total / 2 ? "⚠ " : ""}Ingestion: ${feedStats.total - feedStats.failed}/${feedStats.total} feeds returned. ${feedStats.failed} failed${feedStats.failed >= feedStats.total / 2 ? " — candidate pool may be thin, review with extra care." : "."}
+        </div>`
+      : "";
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error: emailError } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "nusq <onboarding@resend.dev>",
@@ -1620,6 +1799,7 @@ async function runPipelineCore({
     html: `
       <div style="font-family:sans-serif;max-width:540px;color:#1C1C1C;">
         ${warningBadge}
+        ${feedHealthBadge}
         <p style="color:#737373;font-size:13px;margin:0 0 16px;">Today's briefing is ready for review.</p>
         <h2 style="font-size:18px;margin:0 0 8px;">${generated.title}</h2>
         <p style="color:#555;font-size:14px;margin:0 0 8px;">${generated.summary}</p>
@@ -1671,11 +1851,13 @@ export async function GET(request: NextRequest) {
 
   // Fetch recent briefing context and news in parallel
   let recentHeadlines: string[], usedSourceUrls: Set<string>, rawSourcesAll: RawSourceItem[];
+  let feedStats: { total: number; failed: number; failedUrls: string[] } | undefined;
   try {
     const [ctx, news] = await Promise.all([fetchRecentBriefingContext(3), fetchNewsWithSources()]);
     recentHeadlines = ctx.recentHeadlines;
     usedSourceUrls = ctx.usedSourceUrls;
     rawSourcesAll = news.rawSources;
+    feedStats = news.feedStats;
   } catch (fetchErr) {
     console.error("[pipeline] news fetch failed —", String(fetchErr));
     return NextResponse.json({ error: "News fetch failed", detail: String(fetchErr) }, { status: 500 });
@@ -1711,6 +1893,7 @@ export async function GET(request: NextRequest) {
     date,
     slug,
     draftModel: "claude-sonnet-4-6",
+    feedStats,
   });
 }
 
