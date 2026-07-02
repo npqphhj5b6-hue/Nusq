@@ -409,6 +409,59 @@ body {
 .ticker-track:hover { animation-play-state: paused; }
 
 /* ─────────────────────────────────────────
+   PIPELINE CARD RAIL (how-it-works)
+───────────────────────────────────────── */
+.pipeline-rail {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.pipeline-rail::-webkit-scrollbar { display: none; }
+.pipeline-card {
+  position: relative;
+  flex: none;
+  width: 220px;
+  scroll-snap-align: start;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--c-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-card);
+  padding: 20px 18px 22px;
+}
+
+/* ─────────────────────────────────────────
+   SOURCE LOGO MARQUEE (how-it-works)
+───────────────────────────────────────── */
+@keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.source-marquee {
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  width: 100vw;
+  overflow: hidden;
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  padding: 22px 0;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.source-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: marquee-scroll 26s linear infinite;
+}
+.source-marquee-track:hover { animation-play-state: paused; }
+
+/* ─────────────────────────────────────────
    MISC
 ───────────────────────────────────────── */
 .eyebrow {
