@@ -9,7 +9,6 @@ export default function Footer() {
           <span className="text-xs" style={{ color: "var(--c-text-3)" }}>MENA financial intelligence</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/about" className="text-xs transition-colors" style={{ color: "var(--c-text-3)" }}>About</Link>
           <Link href="/briefings" className="text-xs transition-colors" style={{ color: "var(--c-text-3)" }}>Briefings</Link>
           <Link href="/how-it-works" className="text-xs transition-colors sm:hidden" style={{ color: "var(--c-text-3)" }}>How Nusq Works</Link>
           <span className="text-xs" style={{ color: "var(--c-text-3)" }}>Not investment advice.</span>

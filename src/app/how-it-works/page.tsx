@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -169,13 +168,6 @@ export default function HowItWorksPage() {
               coverage actually reports.
             </p>
           </div>
-          <Link
-            href="/about"
-            className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
-            style={{ color: "var(--c-accent)" }}
-          >
-            Read the full story →
-          </Link>
         </div>
       </ScrollReveal>
       </div>

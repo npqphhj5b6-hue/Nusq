@@ -10,7 +10,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_URL,                        lastModified: new Date(), changeFrequency: "daily",   priority: 1.0 },
     { url: `${SITE_URL}/briefings`,         lastModified: new Date(), changeFrequency: "daily",   priority: 0.9 },
     { url: `${SITE_URL}/how-it-works`,      lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${SITE_URL}/about`,             lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   ];
 
   const briefingRoutes: MetadataRoute.Sitemap = briefings.map((b) => ({
