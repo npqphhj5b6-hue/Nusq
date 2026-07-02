@@ -21,17 +21,17 @@ export default function FeaturedCover({ issueNumber, title, tags, coverImageUrl 
     : null;
 
   return (
-    <div style={{ position: "relative", height: 430, overflow: "hidden" }}>
+    <div style={{ position: "relative", overflow: "hidden" }}>
       {/* 1 · Ghost number */}
       <span
         aria-hidden="true"
         style={{
           position: "absolute",
-          top: -38,
-          right: 18,
+          top: "clamp(-22px, -5vw, -38px)",
+          right: 12,
           fontFamily: "var(--font-display)",
           fontWeight: 800,
-          fontSize: 210,
+          fontSize: "clamp(88px, 24vw, 210px)",
           lineHeight: 1,
           color: "var(--c-accent-glow)",
           pointerEvents: "none",
@@ -42,14 +42,14 @@ export default function FeaturedCover({ issueNumber, title, tags, coverImageUrl 
       </span>
 
       {/* 2 · Text block */}
-      <div style={{ position: "relative", padding: "34px 34px 0" }}>
+      <div style={{ position: "relative", padding: "clamp(22px, 6vw, 34px) clamp(20px, 6vw, 34px) 0" }}>
         {regionTags.length > 0 && (
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
               gap: 8,
-              marginBottom: 20,
+              marginBottom: 16,
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               fontWeight: 500,
@@ -68,8 +68,8 @@ export default function FeaturedCover({ issueNumber, title, tags, coverImageUrl 
             margin: 0,
             fontFamily: "var(--font-display)",
             fontWeight: 800,
-            fontSize: 38,
-            lineHeight: 1.06,
+            fontSize: "clamp(1.5rem, 4vw + 1rem, 2.375rem)",
+            lineHeight: 1.12,
             letterSpacing: "-0.01em",
             color: "var(--c-text-1)",
             maxWidth: 560,
@@ -82,11 +82,9 @@ export default function FeaturedCover({ issueNumber, title, tags, coverImageUrl 
       {/* 3 · Image band */}
       <div
         style={{
-          position: "absolute",
-          left: 24,
-          right: 24,
-          bottom: 22,
-          height: 190,
+          position: "relative",
+          margin: "clamp(16px, 5vw, 22px) clamp(20px, 6vw, 24px)",
+          aspectRatio: "2.4 / 1",
           borderRadius: 16,
           overflow: "hidden",
         }}
