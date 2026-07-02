@@ -1808,7 +1808,9 @@ async function runPipelineCore({
       </div>
     `,
   });
-  if (emailError) console.warn(`Resend error (non-fatal): ${emailError.message}`);
+  if (emailError) {
+    console.error(`[pipeline] Resend email failed (non-fatal) — ${emailError.name}: ${emailError.message}`);
+  }
 
   return NextResponse.json({
     ok: true,
@@ -1819,6 +1821,7 @@ async function runPipelineCore({
     editsApplied: editsApplied.length,
     validationWarnings: validation.warnings.length,
     needsReview: validation.needsReview,
+    emailError: emailError ? `${emailError.name}: ${emailError.message}` : null,
   });
 }
 
