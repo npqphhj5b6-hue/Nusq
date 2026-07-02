@@ -194,7 +194,7 @@ export default function HowItWorksPage() {
 
         {/* ── What Nusq is not ── */}
         <ScrollReveal>
-          <div className="mb-14 pt-10 border-t border-[var(--c-border)]">
+          <div className="pt-10 border-t border-[var(--c-border)]">
             <span className="eyebrow block mb-4">What Nusq is not</span>
             <div className="prose-nusq">
               <p style={{ fontSize: 14.5, lineHeight: 1.7 }}>
@@ -208,21 +208,6 @@ export default function HowItWorksPage() {
                 without a human reviewing, editing, and approving it first. Nusq will
                 get things wrong sometimes; when it does, corrections happen in the
                 open, not quietly.
-              </p>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* ── Closing trust note ── */}
-        <ScrollReveal>
-          <div className="pt-10 border-t border-[var(--c-border)]">
-            <span className="eyebrow block mb-4">Who&apos;s behind this</span>
-            <div className="prose-nusq mb-2">
-              <p>
-                Nusq is written by Yousef Quaba, a student of Arabic and History who
-                spent a year studying and working in Cairo — and built Nusq to close
-                the gap between what happens in the Gulf and what English-language
-                coverage actually reports.
               </p>
             </div>
           </div>
