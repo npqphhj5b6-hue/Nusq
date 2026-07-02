@@ -7,7 +7,8 @@ interface Props {
 }
 
 function BarChart({ data }: { data: ChartData }) {
-  const { title, labels, values, unit, source } = data;
+  const { title, labels, values, unit } = data;
+  const source = (data.source ?? "").replace(/\s*\[\d+\]/g, "").trim();
   const W = 600;
   const H = 260;
   const PAD = { top: 28, right: 20, bottom: 60, left: 56 };
@@ -88,7 +89,8 @@ function BarChart({ data }: { data: ChartData }) {
 }
 
 function LineChart({ data }: { data: ChartData }) {
-  const { title, labels, values, unit, source } = data;
+  const { title, labels, values, unit } = data;
+  const source = (data.source ?? "").replace(/\s*\[\d+\]/g, "").trim();
 
   const W = 600;
   const H = 260;

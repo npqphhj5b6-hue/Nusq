@@ -4,18 +4,6 @@ interface Props {
   evidence: StoryEvidenceData;
 }
 
-const RELEVANCE_LABEL: Record<StoryEvidenceData["relevance"], string> = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-
-const RELEVANCE_COLOUR: Record<StoryEvidenceData["relevance"], string> = {
-  high: "text-emerald-400",
-  medium: "text-[var(--c-amber)]",
-  low: "text-[var(--c-text-3)]",
-};
-
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   if (isNaN(diff)) return "";
@@ -41,7 +29,7 @@ export default function StoryEvidence({ evidence }: Props) {
 
       {/* Sources reviewed · Verified · As of */}
       <div
-        className="text-[11px] text-[var(--c-text-2)] mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5"
+        className="text-[11px] text-[var(--c-text-2)] flex flex-wrap items-center gap-x-1.5 gap-y-0.5"
         style={{ fontFamily: "var(--font-geist-mono)" }}
       >
         <span>
@@ -50,49 +38,6 @@ export default function StoryEvidence({ evidence }: Props) {
         {verified && <span className="text-[var(--c-text-3)]">· Verified {verified}</span>}
         {asOf && <span className="text-[var(--c-text-3)]">· As of {asOf}</span>}
       </div>
-
-      {/* Market impact (directional clause) */}
-      {evidence.marketImpact && (
-        <p className="text-[11px] text-[var(--c-text-2)] leading-relaxed mb-1.5">
-          <span className="text-[var(--c-text-3)] mr-1">Market impact:</span>
-          {evidence.marketImpact}
-        </p>
-      )}
-
-      {/* Relevance + reason */}
-      {(evidence.relevance || evidence.relevanceReason) && (
-        <p className="text-[11px] text-[var(--c-text-2)] leading-relaxed mb-2.5">
-          <span className="text-[var(--c-text-3)] mr-1">Relevance:</span>
-          <span className={`font-medium ${RELEVANCE_COLOUR[evidence.relevance]}`}>
-            {RELEVANCE_LABEL[evidence.relevance]}
-          </span>
-          {evidence.relevanceReason && (
-            <span className="text-[var(--c-text-3)]"> — {evidence.relevanceReason}</span>
-          )}
-        </p>
-      )}
-
-      {/* Geography + sector pills */}
-      {(evidence.geographies.length > 0 || evidence.sectors.length > 0) && (
-        <div className="flex flex-wrap gap-1.5">
-          {evidence.geographies.map((g) => (
-            <span
-              key={`g-${g}`}
-              className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-amber)] bg-[#F59E0B]/10 px-2 py-0.5 rounded-full border border-[#F59E0B]/20"
-            >
-              {g}
-            </span>
-          ))}
-          {evidence.sectors.map((s) => (
-            <span
-              key={`s-${s}`}
-              className="text-[9px] font-semibold tracking-[0.08em] uppercase text-[var(--c-text-3)] bg-[var(--c-bg)] px-2 py-0.5 rounded-full border border-[var(--c-border)]"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

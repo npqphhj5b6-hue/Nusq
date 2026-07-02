@@ -6,12 +6,13 @@ import ShareButtons from "@/components/ShareButtons";
 import ScrollReveal from "@/components/ScrollReveal";
 import BookmarkButton from "@/components/BookmarkButton";
 import ReadTracker from "@/components/ReadTracker";
-import MenaMap from "@/components/MenaMap";
+import BriefingMap from "@/components/BriefingMap";
+import BriefingRailChart from "@/components/BriefingRailChart";
 import BriefingCheck from "@/components/BriefingCheck";
 import StoryEvidence from "@/components/StoryEvidence";
 import AnnotatedText from "@/components/AnnotatedText";
-import { annotateParagraph } from "@/lib/terms";
-import type { SourceRef, BriefingIntelligence, Counterpoint, Briefing } from "@/lib/types";
+import { annotateParagraph, annotateCitations } from "@/lib/terms";
+import type { SourceRef, BriefingIntelligence, Counterpoint, Briefing, ChartData } from "@/lib/types";
 import { getPublisherDomain } from "@/lib/source-credibility";
 
 interface Props {
@@ -25,15 +26,6 @@ function unsplashUrlFull(raw: string, w: number) {
   if (!raw.includes("images.unsplash.com")) return raw;
   return `${raw}&w=${w}&auto=format&q=80`;
 }
-
-const CHART_KEYWORDS: Record<string, RegExp> = {
-  brent_price: /\b(oil|crude|brent|barrel|opec|aramco|petroleum|energy price)/i,
-  gold:        /\b(gold|precious metal|safe.haven|bullion|xau)/i,
-  fx_egp:      /\b(egypt|egyptian|pound|egp|piast)/i,
-  fx_sar:      /\b(riyal|sar|saudi.+monetary|currency peg)/i,
-  gdp_growth:  /\b(gdp|gross domestic|economic growth|non.oil|pif|economy grew|expansion)/i,
-  inflation:   /\b(inflation|cpi|consumer price|cost of living|central bank|rate hold|rate cut|rate hike)/i,
-};
 
 export default function BriefingBody({ briefing, pageUrl, userId, initialSaved }: Props) {
   const sourceMap = new Map<number, SourceRef>(
@@ -56,334 +48,356 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved }
   const usedTermSlugs = new Set<string>();
 
   const bodyParagraphs = briefing.body.split("\n\n").filter((p) => p.trim().length > 0);
-  const usedIndices = new Set<number>();
-  const findInsertIndex = (pattern: RegExp): number => {
-    for (let i = 0; i < bodyParagraphs.length; i++) {
-      if (!bodyParagraphs[i].startsWith("## ") && !usedIndices.has(i) && pattern.test(bodyParagraphs[i])) return i;
-    }
-    return -1;
-  };
-  const chartInsertAfter = (() => {
-    if (!briefing.chartData) return -1;
-    const pattern = CHART_KEYWORDS[briefing.chartData.type];
-    if (!pattern) return -1;
-    const idx = findInsertIndex(pattern);
-    if (idx !== -1) usedIndices.add(idx);
-    return idx;
-  })();
+
+  // Anchor-story rail: the rail chart is driven by the first story's chart
+  // (falling back to the briefing-level chart). It is rendered in the rail, so
+  // it must be skipped inline in the story loop below.
+  const anchorChart: ChartData | null = hasStories
+    ? briefing.stories![0].chartData ?? briefing.chartData ?? null
+    : briefing.chartData ?? null;
+
+  const mapStories = hasStories
+    ? briefing.stories!.map((s) => ({
+        number: s.number,
+        headline: s.headline,
+        location: s.location,
+        city: s.city,
+      }))
+    : [];
+
+  // Inline source references are intentionally omitted from the prose — the
+  // Sources card and the per-story Evidence strip carry credibility instead
+  // (see the reasoning behind removing academic-style footnotes). Strip any
+  // [n] citation markers, cleaning the whitespace that precedes them.
+  const stripCitations = (t?: string | null) => (t ?? "").replace(/\s*\[\d+\]/g, "");
 
   return (
     <>
-      {/* Tags */}
-      <div className="flex flex-wrap gap-2 mb-5">
-        {briefing.tags.map((tag) => (
-          <span key={tag} className="tag-pill">
-            {tag}
-          </span>
-        ))}
-      </div>
-
-      {/* Headline */}
-      <h1
-        className="leading-[1.1] text-[var(--c-text-1)] mb-5"
-        style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.75rem, 5vw, 2.75rem)", letterSpacing: "-0.02em" }}
-      >
-        {briefing.title}
-      </h1>
-
-      {/* Summary */}
-      <p className="text-base md:text-[1.0625rem] text-[var(--c-text-2)] leading-[1.7] mb-6">
-        {briefing.summary}
-      </p>
-
-      <ReadTracker briefingId={briefing.id} userId={userId} />
-
-      {/* Meta row */}
-      <div className="flex items-center justify-between mb-6 pb-6 border-b border-[var(--c-border)]">
-        <div className="flex items-center gap-3 text-xs text-[var(--c-text-3)]" style={{ fontFamily: "var(--font-mono)" }}>
-          <span>{formatDate(briefing.date)}</span>
-          <span>·</span>
-          <span>{briefing.readingTime} min read</span>
-        </div>
+      {/* ── Header row (full width): back link + share ── */}
+      <div className="flex items-center justify-between mb-8">
+        <Link
+          href="/briefings"
+          className="back-link inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--c-text-2)] cursor-pointer"
+        >
+          ← Back to briefings
+        </Link>
         <div className="flex items-center gap-2">
           <BookmarkButton briefingId={briefing.id} initialSaved={initialSaved} />
           <ShareButtons title={briefing.title} url={pageUrl} />
         </div>
       </div>
 
-      {/* ── TL;DR card ── */}
-      {hasTldr && (
-        <ScrollReveal>
-          <div className="mb-8 rounded-xl border border-[var(--c-green)]/20 bg-[var(--c-green-bg)] overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[var(--c-green)]/15">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--c-green)]" />
-              <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[var(--c-green)]">
-                Key takeaways
-              </span>
-            </div>
-            <ul className="px-5 py-4 space-y-2.5">
-              {briefing.tldrBullets!.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs">→</span>
-                  <span className="text-sm text-[var(--c-text-1)] leading-relaxed">{bullet}</span>
-                </li>
-              ))}
-            </ul>
+      <ReadTracker briefingId={briefing.id} userId={userId} />
+
+      {/* ── Two-column dossier ── */}
+      <div className="dossier">
+        {/* ════════ LEFT: the story ════════ */}
+        <div className="dossier-main">
+          {/* Headline */}
+          <h1
+            className="text-[var(--c-text-1)] mb-4"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.75rem, 4vw, 2.125rem)", lineHeight: 1.17, letterSpacing: "-0.02em" }}
+          >
+            {briefing.title}
+          </h1>
+
+          {/* Meta */}
+          <div className="flex items-center gap-3 text-[13px] text-[var(--c-text-3)] mb-6" style={{ fontFamily: "var(--font-mono)" }}>
+            <span>{formatDate(briefing.date)}</span>
+            <span>·</span>
+            <span>{briefing.readingTime} min read</span>
           </div>
-        </ScrollReveal>
-      )}
 
-      {/* ── Briefing check card (legacy briefings only) ── */}
-      {!hasStoryEvidence && (
-        <BriefingCheck
-          intel={intel}
-          sources={sources}
-          validation={briefing.validation ?? null}
-          counterpoints={counterpoints}
-          checkedAt={checkedAt}
-        />
-      )}
-
-      {/* ── MENA Map (multi-story only) ── */}
-      {hasStories && (
-        <ScrollReveal>
-          <div className="mb-10">
-            <MenaMap
-              stories={briefing.stories!.map((s) => ({
-                number: s.number,
-                headline: s.headline,
-                location: s.location,
-                city: s.city,
-              }))}
-            />
-          </div>
-        </ScrollReveal>
-      )}
-
-      {/* ── MULTI-STORY FORMAT ── */}
-      {hasStories ? (
-        <div className="space-y-0">
-          {briefing.stories!.map((story, si) => {
-            const storyParagraphs = (story.body ?? "").split("\n\n").filter((p) => p.trim().length > 0);
-            return (
-              <ScrollReveal key={story.number} delay={si * 60}>
-                <article
-                  id={`story-${story.number}`}
-                  className="pt-10 pb-12 border-b border-[var(--c-border)] last:border-b-0 scroll-mt-20"
-                >
-                  {/* Story number + headline */}
-                  <div className="flex items-start gap-5 mb-6">
-                    <span
-                      className="shrink-0 text-[3.5rem] leading-none font-black text-[var(--c-border-2)] select-none"
-                      style={{ lineHeight: 0.9 }}
-                      aria-hidden="true"
-                    >
-                      {story.number}
-                    </span>
-                    <div className="pt-1">
-                      {story.location && (
-                        <p className="text-[9px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-2" style={{ fontFamily: "var(--font-mono)" }}>
-                          {story.city ? `${story.city}, ${story.location}` : story.location}
-                        </p>
-                      )}
-                      <h2
-                        className="leading-[1.15] text-[var(--c-text-1)]"
-                        style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.25rem, 3vw, 1.6rem)", letterSpacing: "-0.015em" }}
-                      >
-                        {story.headline}
-                      </h2>
-                    </div>
-                  </div>
-
-                  {/* Story image */}
-                  {story.imageUrl ? (
-                    <div className="relative w-full mb-7 overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
-                      <img
-                        src={unsplashUrlFull(story.imageUrl, 1200)}
-                        alt={story.headline}
-                        className="w-full h-full object-cover block"
-                      />
-                      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
-                      {story.imageCredit && (
-                        <a
-                          href={story.imageCreditLink ?? "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors"
-                        >
-                          {story.imageCredit}
-                        </a>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="relative w-full mb-7 overflow-hidden rounded-xl flex items-center justify-center bg-[var(--c-surface)] border border-[var(--c-border)]" style={{ aspectRatio: "16/9" }}>
-                      <span className="font-black select-none text-[var(--c-border-2)]" style={{ fontSize: "clamp(5rem, 15vw, 9rem)", lineHeight: 1 }} aria-hidden="true">
-                        {story.number}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Story body */}
-                  <div className="prose-nusq">
-                    {storyParagraphs.map((para, pi) => {
-                      if (para.startsWith("## ")) {
-                        return <h3 key={pi} className="text-base font-bold uppercase tracking-wide text-[var(--c-text-1)] mt-5 mb-2">{para.replace("## ", "")}</h3>;
-                      }
-                      const tokens = annotateParagraph(para, sourceMap, usedTermSlugs);
-                      return <p key={pi}><AnnotatedText tokens={tokens} /></p>;
-                    })}
-                  </div>
-
-                  {/* Story chart */}
-                  {story.chartData && (
-                    <ScrollReveal>
-                      <DataChart data={story.chartData} />
-                    </ScrollReveal>
-                  )}
-
-                  {/* Why this matters — pulled from evidence.marketImpact */}
-                  {story.evidence?.marketImpact && (
-                    <div className="mt-6 pl-4 border-l-2 border-[var(--c-green)]">
-                      <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--c-green)] mb-1.5">Why this matters</p>
-                      <p className="text-sm text-[var(--c-text-2)] leading-relaxed">{story.evidence.marketImpact}</p>
-                    </div>
-                  )}
-
-                  {/* Per-story evidence bubble */}
-                  {story.evidence && <StoryEvidence evidence={story.evidence} />}
-                </article>
-              </ScrollReveal>
-            );
-          })}
-        </div>
-      ) : (
-        /* ── LEGACY SINGLE-ARTICLE FORMAT ── */
-        <>
+          {/* Hero image */}
           {briefing.coverImageUrl && (
+            <div className="relative w-full mb-7 overflow-hidden rounded-2xl" style={{ height: 220 }}>
+              <img
+                src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
+                alt={briefing.title}
+                className="w-full h-full object-cover block"
+              />
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
+              {briefing.coverImageCredit && (
+                <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
+                  className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
+                  {briefing.coverImageCredit}
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Summary */}
+          <p className="text-base md:text-[1.0625rem] text-[var(--c-text-2)] leading-[1.7] mb-8">
+            <AnnotatedText tokens={annotateCitations(stripCitations(briefing.summary), sourceMap)} />
+          </p>
+
+          {/* ── TL;DR card ── */}
+          {hasTldr && (
             <ScrollReveal>
-              <div className="relative w-full mb-12 overflow-hidden rounded-xl">
-                <img
-                  src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
-                  alt={briefing.title}
-                  className="w-full h-auto block"
-                />
-                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
-                {briefing.coverImageCredit && (
-                  <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
-                    className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
-                    {briefing.coverImageCredit}
-                  </a>
-                )}
+              <div className="mb-8 rounded-xl border border-[var(--c-green)]/20 bg-[var(--c-green-bg)] overflow-hidden">
+                <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[var(--c-green)]/15">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--c-green)]" />
+                  <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[var(--c-green)]">
+                    Key takeaways
+                  </span>
+                </div>
+                <ul className="px-5 py-4 space-y-2.5">
+                  {briefing.tldrBullets!.map((bullet, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs">→</span>
+                      <span className="text-sm text-[var(--c-text-1)] leading-relaxed">
+                        <AnnotatedText tokens={annotateCitations(stripCitations(bullet), sourceMap)} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </ScrollReveal>
           )}
-          <div className="prose-nusq">
-            {bodyParagraphs.map((para, i) => {
-              let node: React.ReactNode;
-              if (para.startsWith("## ")) {
-                node = <ScrollReveal key={i}><h2>{para.replace("## ", "")}</h2></ScrollReveal>;
-              } else if (para.startsWith("**") && para.endsWith("**")) {
-                node = <p key={i}><strong>{para.slice(2, -2)}</strong></p>;
-              } else {
-                const tokens = annotateParagraph(para, sourceMap, usedTermSlugs);
-                node = <p key={i}><AnnotatedText tokens={tokens} /></p>;
-              }
-              return (
-                <React.Fragment key={i}>
-                  {node}
-                  {i === chartInsertAfter && briefing.chartData && (
-                    <ScrollReveal><DataChart data={briefing.chartData} /></ScrollReveal>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </>
-      )}
 
-      {/* ── Also Watching ── */}
-      {alsoWatching.length > 0 && (
-        <ScrollReveal>
-          <div className="mt-12 pt-8 border-t border-[var(--c-border)]">
-            <span className="eyebrow block mb-4">Also Watching</span>
-            <ul className="space-y-2.5">
-              {alsoWatching.map((item, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs" aria-hidden="true">→</span>
-                  <span className="text-sm text-[var(--c-text-2)] leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </ScrollReveal>
-      )}
+          {/* ── Briefing check card (legacy briefings only) ── */}
+          {!hasStoryEvidence && (
+            <BriefingCheck
+              intel={intel}
+              sources={sources}
+              validation={briefing.validation ?? null}
+              counterpoints={counterpoints}
+              checkedAt={checkedAt}
+            />
+          )}
+
+          {/* ── MULTI-STORY FORMAT ── */}
+          {hasStories ? (
+            <div className="space-y-0">
+              {briefing.stories!.map((story, si) => {
+                const storyParagraphs = (story.body ?? "").split("\n\n").filter((p) => p.trim().length > 0);
+                // The anchor story's chart lives in the rail — skip it inline.
+                const showInlineChart =
+                  !!story.chartData && !(si === 0 && story.chartData === anchorChart);
+                return (
+                  <ScrollReveal key={story.number} delay={si * 60}>
+                    <article
+                      id={`story-${story.number}`}
+                      className="pt-10 pb-12 border-b border-[var(--c-border)] last:border-b-0 scroll-mt-24"
+                    >
+                      {/* Story number + headline */}
+                      <div className="flex items-start gap-5 mb-6">
+                        <span
+                          className="shrink-0 text-[3.5rem] leading-none font-black text-[var(--c-border-2)] select-none"
+                          style={{ lineHeight: 0.9 }}
+                          aria-hidden="true"
+                        >
+                          {story.number}
+                        </span>
+                        <div className="pt-1">
+                          {story.location && (
+                            <p className="text-[9px] font-bold tracking-[0.14em] uppercase text-[var(--c-text-3)] mb-2" style={{ fontFamily: "var(--font-mono)" }}>
+                              {story.city ? `${story.city}, ${story.location}` : story.location}
+                            </p>
+                          )}
+                          <h2
+                            className="leading-[1.15] text-[var(--c-text-1)]"
+                            style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.25rem, 3vw, 1.6rem)", letterSpacing: "-0.015em" }}
+                          >
+                            {story.headline}
+                          </h2>
+                        </div>
+                      </div>
+
+                      {/* Story image */}
+                      {story.imageUrl ? (
+                        <div className="relative w-full mb-7 overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
+                          <img
+                            src={unsplashUrlFull(story.imageUrl, 1200)}
+                            alt={story.headline}
+                            className="w-full h-full object-cover block"
+                          />
+                          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
+                          {story.imageCredit && (
+                            <a
+                              href={story.imageCreditLink ?? "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors"
+                            >
+                              {story.imageCredit}
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="relative w-full mb-7 overflow-hidden rounded-xl flex items-center justify-center bg-[var(--c-surface)] border border-[var(--c-border)]" style={{ aspectRatio: "16/9" }}>
+                          <span className="font-black select-none text-[var(--c-border-2)]" style={{ fontSize: "clamp(5rem, 15vw, 9rem)", lineHeight: 1 }} aria-hidden="true">
+                            {story.number}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Story body */}
+                      <div className="prose-nusq">
+                        {storyParagraphs.map((para, pi) => {
+                          if (para.startsWith("## ")) {
+                            return <h3 key={pi} className="text-base font-bold uppercase tracking-wide text-[var(--c-text-1)] mt-5 mb-2">{para.replace("## ", "")}</h3>;
+                          }
+                          const tokens = annotateParagraph(stripCitations(para), sourceMap, usedTermSlugs);
+                          return <p key={pi}><AnnotatedText tokens={tokens} /></p>;
+                        })}
+                      </div>
+
+                      {/* Story chart (anchor story's chart is shown in the rail) */}
+                      {showInlineChart && (
+                        <ScrollReveal>
+                          <DataChart data={story.chartData!} />
+                        </ScrollReveal>
+                      )}
+
+                      {/* Why this matters — pulled from evidence.marketImpact */}
+                      {story.evidence?.marketImpact && (
+                        <div className="mt-6 rounded-r-lg bg-[var(--c-accent-glow)] border-l-[3px] border-[var(--c-accent)] px-4 py-3.5">
+                          <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--c-green)] mb-1.5">Why this matters</p>
+                          <p className="text-sm text-[var(--c-text-1)] leading-relaxed">
+                            <AnnotatedText tokens={annotateCitations(stripCitations(story.evidence.marketImpact), sourceMap)} />
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Per-story evidence bubble */}
+                      {story.evidence && <StoryEvidence evidence={story.evidence} />}
+                    </article>
+                  </ScrollReveal>
+                );
+              })}
+            </div>
+          ) : (
+            /* ── LEGACY SINGLE-ARTICLE FORMAT ── */
+            <div className="prose-nusq">
+              {bodyParagraphs.map((para, i) => {
+                if (para.startsWith("## ")) {
+                  return <ScrollReveal key={i}><h2>{para.replace("## ", "")}</h2></ScrollReveal>;
+                }
+                if (para.startsWith("**") && para.endsWith("**")) {
+                  return <p key={i}><strong>{para.slice(2, -2)}</strong></p>;
+                }
+                const tokens = annotateParagraph(stripCitations(para), sourceMap, usedTermSlugs);
+                return <p key={i}><AnnotatedText tokens={tokens} /></p>;
+              })}
+            </div>
+          )}
+
+          {/* ── Also Watching ── */}
+          {alsoWatching.length > 0 && (
+            <ScrollReveal>
+              <div className="mt-12 pt-8 border-t border-[var(--c-border)]">
+                <span className="eyebrow block mb-4">Also Watching</span>
+                <ul className="space-y-2.5">
+                  {alsoWatching.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="text-[var(--c-green)] mt-[3px] shrink-0 text-xs" aria-hidden="true">→</span>
+                      <span className="text-sm text-[var(--c-text-2)] leading-relaxed">
+                        <AnnotatedText tokens={annotateCitations(stripCitations(item), sourceMap)} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </ScrollReveal>
+          )}
+        </div>
+
+        {/* ════════ RIGHT: the dossier rail ════════ */}
+        <aside className="dossier-rail">
+          {/* Map card (multi-story only) */}
+          {hasStories && <BriefingMap stories={mapStories} />}
+
+          {/* Data card — anchor story's chart */}
+          {anchorChart && <BriefingRailChart data={anchorChart} />}
+
+          {/* Sources card */}
+          {hasSources && (
+            <div className="rail-card">
+              <div className="rail-card-head">
+                <span className="rail-tick" />
+                <span className="rail-eyebrow">Sources</span>
+              </div>
+              <div style={{ padding: "8px 8px" }}>
+                {sources.map((s) => {
+                  const pubDate = s.publishedAt
+                    ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+                    : null;
+                  const domain = s.domain || getPublisherDomain(s.publisher);
+                  const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64` : null;
+                  const isArabic = s.language === "ar";
+                  const initial = (s.publisher || "?").trim().charAt(0).toUpperCase();
+                  return (
+                    <a
+                      key={s.index}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="source-row group"
+                    >
+                      <span
+                        className="shrink-0 flex items-center justify-center overflow-hidden"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          background: "var(--c-surface-3)",
+                          border: "1px solid var(--c-border)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--c-text-2)",
+                        }}
+                      >
+                        {faviconUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={faviconUrl} width={28} height={28} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          initial
+                        )}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-green)] transition-colors truncate">
+                            {s.publisher}
+                          </span>
+                          {pubDate && (
+                            <>
+                              <span className="text-[10px] text-[var(--c-text-3)] shrink-0">·</span>
+                              <span className="text-[10px] text-[var(--c-text-3)] shrink-0" style={{ fontFamily: "var(--font-mono)" }}>
+                                {pubDate}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <p
+                          className={`text-[11px] text-[var(--c-text-3)] leading-snug mt-0.5 ${isArabic ? "text-right" : ""}`}
+                          dir={isArabic ? "rtl" : "ltr"}
+                          style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                        >
+                          {s.title}
+                        </p>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+              {intel?.confidenceNote && (
+                <p className="px-4 pb-4 pt-1 text-[10px] text-[var(--c-text-3)] leading-relaxed italic">
+                  {intel.confidenceNote}
+                </p>
+              )}
+            </div>
+          )}
+        </aside>
+      </div>
 
       {/* Bottom share row */}
-      <div className="mt-10 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
+      <div className="mt-12 pt-8 border-t border-[var(--c-border)] flex items-center justify-between">
         <Link href="/briefings" className="back-link inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--c-text-2)] cursor-pointer">
           ← All briefings
         </Link>
         <ShareButtons title={briefing.title} url={pageUrl} />
       </div>
-
-      {/* Sources */}
-      {hasSources && (
-        <ScrollReveal>
-          <div className="mt-10 pt-10 border-t border-[var(--c-border)]">
-            <span className="eyebrow block mb-4">Sources</span>
-            <div>
-              {sources.map((s) => {
-                const pubDate = s.publishedAt
-                  ? new Date(s.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                  : null;
-                const domain = s.domain || getPublisherDomain(s.publisher);
-                const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
-                const isArabic = s.language === "ar";
-                return (
-                  <a
-                    key={s.index}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-2.5 py-2.5 border-b border-[var(--c-border)] last:border-b-0 hover:bg-[var(--c-surface)] -mx-3 px-3 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
-                      {faviconUrl ? (
-                        <img src={faviconUrl} width={16} height={16} alt="" className="rounded-sm shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
-                      ) : (
-                        <div className="w-4 h-4 rounded-sm bg-[var(--c-border)] shrink-0" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-green)] transition-colors">
-                          {s.publisher}
-                        </span>
-                        {pubDate && (
-                          <span className="text-[10px] text-[var(--c-text-3)] ml-auto shrink-0" style={{ fontFamily: "var(--font-geist-mono)" }}>
-                            {pubDate}
-                          </span>
-                        )}
-                      </div>
-                      <p
-                        className={`text-[11px] text-[var(--c-text-3)] truncate mt-0.5 ${isArabic ? "text-right" : ""}`}
-                        dir={isArabic ? "rtl" : "ltr"}
-                      >
-                        {s.title}
-                      </p>
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-            {intel?.confidenceNote && (
-              <p className="mt-4 text-[11px] text-[var(--c-text-3)] leading-relaxed italic">
-                {intel.confidenceNote}
-              </p>
-            )}
-          </div>
-        </ScrollReveal>
-      )}
     </>
   );
 }

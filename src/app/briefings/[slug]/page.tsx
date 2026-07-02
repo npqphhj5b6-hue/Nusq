@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBriefingBySlug } from "@/lib/db";
 import { createClient } from "@/lib/supabase-server";
@@ -71,16 +70,7 @@ export default async function BriefingPage({
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 32px 90px" }} className="page-enter">
-      {/* Back */}
-      <Link
-        href="/briefings"
-        className="back-link inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--c-text-2)] cursor-pointer"
-        style={{ marginBottom: 28 }}
-      >
-        ← Back to briefings
-      </Link>
-
+    <div style={{ maxWidth: 1080, margin: "0 auto", padding: "48px 32px 90px" }} className="page-enter">
       <BriefingBody
         briefing={briefing}
         pageUrl={pageUrl}
@@ -89,7 +79,7 @@ export default async function BriefingPage({
       />
 
       {/* ── Post-read conversion: highest-intent moment ── */}
-      <div className="glass-card" style={{ padding: "28px 30px 32px", marginTop: 48 }}>
+      <div className="glass-card" style={{ padding: "28px 30px 32px", marginTop: 48, maxWidth: 680 }}>
         <div
           style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 19, color: "var(--c-text-1)", marginBottom: 6 }}
         >

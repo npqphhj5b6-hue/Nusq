@@ -92,6 +92,37 @@ export function annotateParagraph(
   return out;
 }
 
+/** Tokenizes **bold** and [n] citations only — no glossary-term wrapping. For
+ *  short recap text (TL;DR bullets, summary, Also Watching, "why this matters")
+ *  where inline click-to-define popovers would be noise. Note: callers currently
+ *  strip [n] markers before passing text in, so in practice this handles bold. */
+export function annotateCitations(
+  text: string,
+  sourceMap: Map<number, SourceRef>
+): AnnotatedToken[] {
+  const out: AnnotatedToken[] = [];
+  let lastIndex = 0;
+  MARKUP_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = MARKUP_REGEX.exec(text))) {
+    if (match.index > lastIndex) {
+      out.push({ type: "text", value: text.slice(lastIndex, match.index) });
+    }
+    if (match[1] !== undefined) {
+      out.push({ type: "bold", value: match[1] });
+    } else if (match[2] !== undefined) {
+      const n = parseInt(match[2], 10);
+      const source = sourceMap.get(n);
+      out.push({ type: "citation", n, url: source?.url ?? null });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    out.push({ type: "text", value: text.slice(lastIndex) });
+  }
+  return out;
+}
+
 /** For plain sentences with no markdown markup (e.g. Ishara block headline/detail). */
 export function annotateText(text: string, usedSlugs: Set<string>): AnnotatedToken[] {
   return splitTerms(text, usedSlugs);

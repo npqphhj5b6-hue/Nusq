@@ -181,6 +181,88 @@ body {
   transform: translateY(-6px);
 }
 
+/* ─────────────────────────────────────────
+   SIDEBAR DOSSIER (briefing detail layout)
+───────────────────────────────────────── */
+.dossier {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: flex-start;
+}
+.dossier-main { width: 100%; min-width: 0; }
+.dossier-rail {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+/* Two columns once there's room; below ~860px the rail stacks under the story. */
+@media (min-width: 860px) {
+  .dossier { flex-direction: row; gap: 52px; }
+  .dossier-main { flex: 1 1 auto; }
+  .dossier-rail { width: 320px; flex: none; position: sticky; top: 96px; }
+}
+
+/* Share pill in the article header row */
+.share-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+.share-pill:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: var(--c-accent-glow);
+}
+
+/* Shared rail card chrome */
+.rail-card {
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--c-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-card);
+}
+.rail-card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--c-border);
+}
+.rail-tick { width: 12px; height: 1.5px; background: var(--c-accent); display: inline-block; }
+.rail-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--c-text-3);
+}
+
+/* Sources card rows */
+.source-row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 12px 10px;
+  border-radius: 12px;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+.source-row:hover { background: var(--c-accent-glow); transform: translateX(3px); }
+
 /* Quieter feed cards (evidence bubbles, briefing check) */
 .card-glow {
   background: var(--c-surface);
