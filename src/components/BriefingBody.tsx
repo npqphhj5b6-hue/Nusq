@@ -102,34 +102,11 @@ export default function BriefingBody({ briefing, pageUrl, userId, initialSaved }
           </h1>
 
           {/* Meta */}
-          <div className="flex items-center gap-3 text-[13px] text-[var(--c-text-3)] mb-6" style={{ fontFamily: "var(--font-mono)" }}>
+          <div className="flex items-center gap-3 text-[13px] text-[var(--c-text-3)] mb-8" style={{ fontFamily: "var(--font-mono)" }}>
             <span>{formatDate(briefing.date)}</span>
             <span>·</span>
             <span>{briefing.readingTime} min read</span>
           </div>
-
-          {/* Hero image */}
-          {briefing.coverImageUrl && (
-            <div className="relative w-full mb-7 overflow-hidden rounded-2xl" style={{ height: 220 }}>
-              <img
-                src={unsplashUrlFull(briefing.coverImageUrl, 1400)}
-                alt={briefing.title}
-                className="w-full h-full object-cover block"
-              />
-              <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }} />
-              {briefing.coverImageCredit && (
-                <a href={briefing.coverImageCreditLink ?? "#"} target="_blank" rel="noopener noreferrer"
-                  className="absolute bottom-2 right-3 text-[10px] text-white/40 hover:text-white/70 transition-colors">
-                  {briefing.coverImageCredit}
-                </a>
-              )}
-            </div>
-          )}
-
-          {/* Summary */}
-          <p className="text-base md:text-[1.0625rem] text-[var(--c-text-2)] leading-[1.7] mb-8">
-            <AnnotatedText tokens={annotateCitations(stripCitations(briefing.summary), sourceMap)} />
-          </p>
 
           {/* ── TL;DR card ── */}
           {hasTldr && (
