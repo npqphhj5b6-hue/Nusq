@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getAllBriefings, formatDate, formatDateShort } from "@/lib/db";
+import { getAllBriefings, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import BriefingCover from "@/components/BriefingCover";
+import FeaturedCover from "@/components/FeaturedCover";
 import { createClient } from "@/lib/supabase-server";
 import { matchesBriefing } from "@/lib/preferences";
 import type { UserPreferences } from "@/lib/preferences";
@@ -56,48 +57,15 @@ export default async function BriefingsPage() {
         <ScrollReveal>
           <Link
             href={`/briefings/${featured.slug}`}
-            className="group block mb-14 pb-14 border-b border-[var(--c-border)] cursor-pointer"
+            className="glass-card group block"
+            style={{ overflow: "hidden", marginBottom: 48 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-start">
-              <div className="md:col-span-3 rounded-xl overflow-hidden img-wrap" style={{ aspectRatio: "16/10" }}>
-                <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} coverImageUrl={featured.coverImageUrl} />
-              </div>
-              <div className="md:col-span-2 md:pt-1">
-                <span className="eyebrow block mb-4">Latest</span>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {prefs && matchesBriefing(prefs, featured.tags) && (
-                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] bg-[var(--c-accent-glow)] px-2.5 py-1 rounded-full border border-[var(--c-accent)]/20">
-                      For You
-                    </span>
-                  )}
-                  {featured.tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[9px] font-bold tracking-[0.1em] uppercase text-[var(--c-accent)] bg-[var(--c-accent-glow)] px-2.5 py-1 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <h2
-                  className="leading-[1.2] text-[var(--c-text-1)] mb-3 group-hover:text-[var(--c-accent)] transition-colors duration-200"
-                  style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.015em" }}
-                >
-                  {featured.title}
-                </h2>
-                <p className="text-sm text-[var(--c-text-2)] leading-relaxed mb-5 line-clamp-3">
-                  {featured.summary}
-                </p>
-                <div
-                  className="flex items-center gap-3 text-xs text-[var(--c-text-3)]"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  <span>{formatDate(featured.date)}</span>
-                  <span>·</span>
-                  <span>{featured.readingTime} min read</span>
-                </div>
-              </div>
-            </div>
+            <FeaturedCover
+              issueNumber={issueNumbers.get(featured.slug)!}
+              title={featured.title}
+              tags={featured.tags}
+              coverImageUrl={featured.coverImageUrl}
+            />
           </Link>
         </ScrollReveal>
       )}
