@@ -3,6 +3,7 @@ import { getAllBriefings, formatDateShort } from "@/lib/db";
 import ScrollReveal from "@/components/ScrollReveal";
 import StreakBadge from "@/components/StreakBadge";
 import BriefingCover from "@/components/BriefingCover";
+import FeaturedCover from "@/components/FeaturedCover";
 import SubscribeForm from "@/components/SubscribeForm";
 
 export const dynamic = "force-dynamic";
@@ -87,33 +88,12 @@ export default async function Home() {
         {featured && (
           <ScrollReveal>
             <Link href={`/briefings/${featured.slug}`} className="glass-card group block" style={{ overflow: "hidden", marginBottom: 48 }}>
-              <div style={{ height: 224, overflow: "hidden" }}>
-                <div className="transition-transform duration-500 group-hover:scale-105 h-full">
-                  <BriefingCover issueNumber={issueNumbers.get(featured.slug)!} coverImageUrl={featured.coverImageUrl} />
-                </div>
-              </div>
-              <div style={{ padding: "28px 30px 32px" }}>
-                <div className="flex flex-wrap gap-2" style={{ marginBottom: 14 }}>
-                  {featured.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="tag-pill">{tag}</span>
-                  ))}
-                </div>
-                <h2
-                  style={{
-                    margin: "0 0 10px",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 24,
-                    lineHeight: 1.28,
-                    fontWeight: 700,
-                    color: "var(--c-text-1)",
-                  }}
-                >
-                  {featured.title}
-                </h2>
-                <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: "var(--c-text-2)" }}>
-                  {featured.summary}
-                </p>
-              </div>
+              <FeaturedCover
+                issueNumber={issueNumbers.get(featured.slug)!}
+                title={featured.title}
+                tags={featured.tags}
+                coverImageUrl={featured.coverImageUrl}
+              />
             </Link>
           </ScrollReveal>
         )}
