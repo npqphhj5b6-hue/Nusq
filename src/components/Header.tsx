@@ -20,17 +20,30 @@ export default function Header() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 21,
-              letterSpacing: "-0.02em",
-              color: "var(--c-text-1)",
-              transition: "opacity 0.2s ease",
-            }}
+            style={{ display: "flex", alignItems: "flex-end", gap: 7, transition: "opacity 0.2s ease" }}
             className="hover:opacity-65"
           >
-            Nusq
+            <svg
+              viewBox="0 0 48 48"
+              width={27}
+              height={27}
+              style={{ marginBottom: 1, flex: "none" }}
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="30" height="30" rx="4" fill="none" stroke="var(--c-accent-2)" strokeWidth="5.4" strokeLinejoin="round" />
+              <rect x="9" y="9" width="30" height="30" rx="4" fill="none" stroke="var(--c-accent)" strokeWidth="5.4" strokeLinejoin="round" transform="rotate(45 24 24)" />
+            </svg>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: 21,
+                letterSpacing: "-0.02em",
+                color: "var(--c-text-1)",
+              }}
+            >
+              Nusq
+            </span>
           </Link>
           <Link
             href="/how-it-works"
